@@ -1,0 +1,72 @@
+---
+import type { HeroProps } from "../../site.ts"
+
+const { props } = Astro.props as { props: HeroProps }
+---
+
+<section class="hero">
+  {props.eyebrow && <p class="eyebrow">{props.eyebrow}</p>}
+  <h1>{props.headline}</h1>
+  <p class="lede">{props.description}</p>
+  <div class="cta-row">
+    <a class="cta-primary" href="#contact">{props.primaryCta}</a>
+    {props.secondaryCta && (
+      <a class="cta-secondary" href="#contact">{props.secondaryCta}</a>
+    )}
+  </div>
+  {props.image && <img class="hero-image" src={props.image} alt="" loading="eager" />}
+</section>
+
+<style>
+  .hero {
+    display: grid;
+    gap: 1rem;
+    max-width: 46rem;
+  }
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--accent);
+    margin: 0;
+  }
+  h1 {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+  .lede {
+    font-size: 1.15rem;
+    max-width: 36rem;
+    margin: 0;
+  }
+  .cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .cta-primary,
+  .cta-secondary {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 700;
+  }
+  .cta-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .cta-secondary {
+    border: 1px solid currentColor;
+  }
+  .hero-image {
+    width: 100%;
+    max-height: 28rem;
+    object-fit: cover;
+    border-radius: 1.25rem;
+    margin-top: 1.5rem;
+  }
+</style>

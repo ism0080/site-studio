@@ -1,0 +1,45 @@
+---
+import type { ServicesProps } from "../../site.ts"
+
+const { props } = Astro.props as { props: ServicesProps }
+---
+
+<section class="services">
+  <h2>{props.title}</h2>
+  <div class="grid">
+    {
+      props.items.map((item) => (
+        <article class="card">
+          <h3>{item.title}</h3>
+          <p>{item.description}</p>
+        </article>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  h2 {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    letter-spacing: -0.02em;
+    margin: 0 0 1.5rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1rem;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 1.5rem;
+  }
+  h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+  }
+  p {
+    margin: 0;
+  }
+</style>

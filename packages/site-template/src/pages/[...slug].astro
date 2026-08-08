@@ -1,0 +1,13 @@
+---
+import SiteLayout from "../components/SiteLayout.astro"
+import { site } from "../site.data.ts"
+
+export function getStaticPaths() {
+  return site.pages
+    .filter((p) => p.slug !== "/")
+    .map((p) => ({ params: { slug: p.slug.replace(/^\//, "") }, props: { page: p } }))
+}
+
+const { page } = Astro.props
+---
+<SiteLayout site={site} page={page} />

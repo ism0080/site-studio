@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+out/
+.astro/
+
+# Alchemy state / local credentials
+.alchemy/
+
+# Environment (keep examples)
+.env
+.env.*
+!.env.example
+
+# Logs / OS
+*.log
+.DS_Store

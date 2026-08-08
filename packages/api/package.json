@@ -1,0 +1,27 @@
+{
+  "name": "@site-studio/api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun alchemy dev",
+    "plan": "bun alchemy plan",
+    "deploy": "bun alchemy deploy",
+    "destroy": "bun alchemy destroy",
+    "typecheck": "tsc --noEmit",
+    "smoke": "bun run scripts/smoke.ts",
+    "smoke:serving": "bun run scripts/smoke-serving.ts",
+    "smoke:dns": "bun run scripts/smoke-dns.ts"
+  },
+  "dependencies": {
+    "@effect/platform-bun": "4.0.0-beta.103",
+    "@effect/platform-node": "4.0.0-beta.103",
+    "alchemy": "^2.0.0-beta.70",
+    "better-auth": "1.6.26",
+    "effect": "4.0.0-beta.103"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260808.1",
+    "typescript": "^7.0.2"
+  }
+}
