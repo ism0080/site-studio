@@ -28,7 +28,11 @@ const wwwDomain =
 
 export default Cloudflare.Worker(
   "www",
-  { main: import.meta.url, ...(wwwDomain ? { domain: wwwDomain } : {}) },
+  {
+    main: import.meta.url,
+    ...(wwwDomain ? { domain: wwwDomain } : {}),
+    dev: { port: 8788 },
+  },
   Effect.gen(function* () {
     const bucket = yield* Cloudflare.R2.ReadBucket(SitesBucket)
     const db = yield* Cloudflare.D1.QueryDatabase(Database)

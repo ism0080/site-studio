@@ -32,7 +32,7 @@ const HttpPlatformStub = Layer.succeed(Http.HttpPlatform.HttpPlatform, {
 
 export default Cloudflare.Worker(
   "api",
-  { main: import.meta.url },
+  { main: import.meta.url, dev: { port: 8787 } },
   Effect.gen(function* () {
     const db = yield* Cloudflare.D1.QueryDatabase(Database)
     const bucket = yield* Cloudflare.R2.ReadWriteBucket(SitesBucket)
