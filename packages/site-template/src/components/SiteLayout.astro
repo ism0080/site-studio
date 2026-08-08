@@ -23,20 +23,25 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "/api"
 
 const template = templateFor(site)
 const layout = template.layout
-// The editor writes accent/font into settings; those win over the template's
-// defaults. The rest of the palette comes from the template.
+// Editor-written settings win over the template's defaults (each field
+// falls back to the template's palette).
 const accent = settings.accent || template.theme.accent
 const font = settings.font || template.font
+const bg = settings.bg || template.theme.bg
+const ink = settings.ink || template.theme.ink
+const surface = settings.surface || template.theme.surface
+const border = settings.border || template.theme.border
+const muted = settings.muted || template.theme.muted
 
 const themeCss = `
   :root {
     --accent: ${accent};
     --font: ${font};
-    --surface: ${template.theme.surface};
-    --border: ${template.theme.border};
-    --muted: ${template.theme.muted};
-    --ink: ${template.theme.ink};
-    --bg: ${template.theme.bg};
+    --surface: ${surface};
+    --border: ${border};
+    --muted: ${muted};
+    --ink: ${ink};
+    --bg: ${bg};
   }
   * { box-sizing: border-box; }
   body {

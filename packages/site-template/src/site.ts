@@ -54,6 +54,11 @@ export interface Settings {
   accent: string
   font: string
   showDirectory: boolean
+  bg?: string
+  ink?: string
+  surface?: string
+  border?: string
+  muted?: string
   analytics?: Analytics
 }
 

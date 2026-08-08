@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { SECTION_TYPES } from '../data/sections.js'
+import { FONTS, templates } from '../data/site.js'
 import {
   findPage,
   findSection,
@@ -16,6 +17,50 @@ function sectionSub(block) {
   const meta = SECTION_TYPES[block.type]
   if (!meta) return block.type
   return typeof meta.sub === 'function' ? meta.sub(block.props) : meta.sub
+}
+
+function ColorField({ label, value, onChange }) {
+  return (
+    <div className="field-group">
+      <label>{label}</label>
+      <div className="color-input">
+        <input type="color" value={value} onChange={(e) => onChange(e.target.value)} />
+        <span>{value}</span>
+      </div>
+    </div>
+  )
+}
+
+function ThemeSettings({ site, onUpdate }) {
+  const template = templates.find((t) => t.id === site.templateId) ?? templates[0]
+  const fallback = {
+    accent: template.palette[1],
+    bg: template.palette[0],
+    ink: template.palette[2],
+    surface: template.surface,
+  }
+  const value = (key) => site.settings[key] ?? fallback[key]
+  const set = (key) => (v) => onUpdate(updateSetting(site, key, v))
+
+  return (
+    <div className="theme-settings">
+      <div className="field-group">
+        <label>Font</label>
+        <select className="font-select" value={site.settings.font} onChange={(e) => set('font')(e.target.value)}>
+          {FONTS.map((font) => <option key={font}>{font}</option>)}
+        </select>
+      </div>
+      <div className="field-row">
+        <ColorField label="Accent" value={value('accent')} onChange={set('accent')} />
+        <ColorField label="Background" value={value('bg')} onChange={set('bg')} />
+      </div>
+      <div className="field-row">
+        <ColorField label="Text" value={value('ink')} onChange={set('ink')} />
+        <ColorField label="Cards" value={value('surface')} onChange={set('surface')} />
+      </div>
+      <p className="theme-hint">Custom colours override the {template.name} palette. The font and accent already do.</p>
+    </div>
+  )
 }
 
 function DomainSettings({ site, online, onSetDomain, onVerifyDomain, onRemoveDomain }) {
@@ -142,6 +187,15 @@ export default function EditorPanel({ site, online, saveState, onUpdate, onSetDo
           />
         </div>
 
+        <div className="content-divider" />
+
+        <div className="section-title">
+          <span>Theme</span>
+        </div>
+        <ThemeSettings site={site} onUpdate={onUpdate} />
+
+        <div className="content-divider" />
+
         {hero && (
           <>
             <div className="field-group">
@@ -154,18 +208,9 @@ export default function EditorPanel({ site, online, saveState, onUpdate, onSetDo
               <textarea rows="3" value={hero.props.description} onChange={(e) => onUpdate(updateSectionProp(site, page.id, hero.id, 'description', e.target.value))} />
             </div>
 
-            <div className="field-row">
-              <div className="field-group">
-                <label>Primary button</label>
-                <input value={hero.props.primaryCta} onChange={(e) => onUpdate(updateSectionProp(site, page.id, hero.id, 'primaryCta', e.target.value))} />
-              </div>
-              <div className="field-group">
-                <label>Accent color</label>
-                <div className="color-input">
-                  <input type="color" value={site.settings.accent} onChange={(e) => onUpdate(updateSetting(site, 'accent', e.target.value))} />
-                  <span>{site.settings.accent}</span>
-                </div>
-              </div>
+            <div className="field-group">
+              <label>Primary button</label>
+              <input value={hero.props.primaryCta} onChange={(e) => onUpdate(updateSectionProp(site, page.id, hero.id, 'primaryCta', e.target.value))} />
             </div>
           </>
         )}

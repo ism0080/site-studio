@@ -104,6 +104,11 @@ export const Settings = Schema.Struct({
   accent: Schema.String,
   font: Schema.String,
   showDirectory: Schema.Boolean,
+  bg: Schema.optional(Schema.String),
+  ink: Schema.optional(Schema.String),
+  surface: Schema.optional(Schema.String),
+  border: Schema.optional(Schema.String),
+  muted: Schema.optional(Schema.String),
   analytics: Schema.optional(Analytics),
 })
 export type Settings = typeof Settings["Type"]
