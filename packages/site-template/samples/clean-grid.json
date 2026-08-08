@@ -1,0 +1,101 @@
+{
+  "id": "site_clean_grid",
+  "ownerId": "dev-owner",
+  "templateId": "clean-grid",
+  "status": "published",
+  "business": {
+    "name": "Form Digital",
+    "category": "Independent creative studio",
+    "location": "Portland, Oregon",
+    "email": "hello@aurorastudio.co",
+    "phone": "(503) 555-0148",
+    "logo": "FORM /"
+  },
+  "settings": {
+    "accent": "#4567db",
+    "font": "Space Grotesk",
+    "showDirectory": true,
+    "analytics": {
+      "provider": "onedollarstats",
+      "siteId": "aurora"
+    }
+  },
+  "pages": [
+    {
+      "id": "page_home",
+      "slug": "/",
+      "title": "Homepage",
+      "sections": [
+        {
+          "id": "block_hero_01",
+          "type": "hero",
+          "props": {
+            "eyebrow": "Thoughtful work, beautifully made",
+            "headline": "Make space for what matters.",
+            "description": "A small, independent studio helping people and brands bring their best ideas into focus.",
+            "primaryCta": "Start a conversation",
+            "secondaryCta": "Explore our work",
+            "image": "https://images.unsplash.com/photo-1523726491678-bf852e717f6a?auto=format&fit=crop&w=1000&q=85"
+          }
+        },
+        {
+          "id": "block_services_01",
+          "type": "services",
+          "props": {
+            "title": "How we can help",
+            "items": [
+              {
+                "id": "service_01",
+                "title": "Brand direction",
+                "description": "Clarity, character, and a visual language that feels like you."
+              },
+              {
+                "id": "service_02",
+                "title": "Digital experiences",
+                "description": "Websites and tools that make good ideas easier to find."
+              },
+              {
+                "id": "service_03",
+                "title": "Ongoing support",
+                "description": "A thoughtful partner for the next chapter, whenever it arrives."
+              }
+            ]
+          }
+        },
+        {
+          "id": "block_about_01",
+          "type": "about",
+          "props": {
+            "eyebrow": "A little about us",
+            "title": "A considered approach to better work.",
+            "body": "We believe the most useful things are made with care. Our process is collaborative, clear, and shaped around the people we work with."
+          }
+        },
+        {
+          "id": "block_testimonials_01",
+          "type": "testimonials",
+          "props": {
+            "title": "Kind words from clients",
+            "items": [
+              {
+                "id": "t_01",
+                "quote": "Working with this team was a genuine delight.",
+                "author": "Maya Chen",
+                "role": "Founder, Field Notes"
+              },
+              {
+                "id": "t_02",
+                "quote": "Clear, kind, and incredibly skilled throughout.",
+                "author": "Jon Bell",
+                "role": "Creative Director"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "updatedAt": "2026-01-01T00:00:00.000Z",
+  "publishedAt": "2026-01-01T00:00:00.000Z"
+}

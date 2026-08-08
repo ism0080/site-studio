@@ -203,6 +203,22 @@ export default function App() {
     setPersistedFlag(true)
   }, [sites, updateSite, setPersistedFlag])
 
+  // Applying a template switches the site's templateId and seeds its palette
+  // (accent + font); the renderer keys the whole look off templateId.
+  const handleSelectTemplate = useCallback((template) => {
+    const next = {
+      ...siteRef.current,
+      templateId: template.id,
+      settings: {
+        ...siteRef.current.settings,
+        accent: template.palette[1],
+        font: template.font,
+      },
+    }
+    handleUpdate(next)
+    setActive('editor')
+  }, [handleUpdate])
+
   const goEditor = () => setActive('editor')
 
   if (authLoading) {
@@ -235,7 +251,7 @@ export default function App() {
           onSelectSite={handleSelectSite}
         />
         {active === 'overview' && <Overview onEdit={goEditor} site={site} sites={sites} />}
-        {active === 'templates' && <Templates onSelect={goEditor} />}
+        {active === 'templates' && <Templates onSelect={handleSelectTemplate} />}
         {active === 'leads' && <Leads site={site} online={online} onEdit={goEditor} />}
         {active === 'editor' && (
           <Editor

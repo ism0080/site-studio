@@ -1,10 +1,11 @@
 ---
 import type { HeroProps } from "../../site.ts"
 
-const { props } = Astro.props as { props: HeroProps }
+const { props, layout } = Astro.props as { props: HeroProps; layout: string }
+const mod = layout === "warm" ? " warm" : layout === "grid" ? " grid" : ""
 ---
 
-<section class="hero">
+<section class={`hero${mod}`}>
   {props.eyebrow && <p class="eyebrow">{props.eyebrow}</p>}
   <h1>{props.headline}</h1>
   <p class="lede">{props.description}</p>
@@ -68,5 +69,46 @@ const { props } = Astro.props as { props: HeroProps }
     object-fit: cover;
     border-radius: 1.25rem;
     margin-top: 1.5rem;
+  }
+
+  /* Warm: centered, softer, image as a full-width banner. */
+  .hero.warm {
+    max-width: 40rem;
+    justify-items: center;
+    text-align: center;
+    margin: 0 auto;
+  }
+  .hero.warm h1 {
+    font-size: clamp(2.5rem, 7vw, 4.5rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .hero.warm .lede {
+    max-width: 30rem;
+  }
+  .hero.warm .cta-row {
+    justify-content: center;
+  }
+  .hero.warm .hero-image {
+    max-height: 24rem;
+    border-radius: 2rem;
+  }
+
+  /* Grid: tighter, image framed. */
+  .hero.grid {
+    max-width: 100%;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 3rem;
+  }
+  .hero.grid h1 {
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    letter-spacing: -0.03em;
+  }
+  .hero.grid .hero-image {
+    max-height: 22rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border);
+    margin-top: 0;
   }
 </style>

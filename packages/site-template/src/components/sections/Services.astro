@@ -1,10 +1,11 @@
 ---
 import type { ServicesProps } from "../../site.ts"
 
-const { props } = Astro.props as { props: ServicesProps }
+const { props, layout } = Astro.props as { props: ServicesProps; layout: string }
+const mod = layout === "warm" ? " warm" : layout === "grid" ? " grid" : ""
 ---
 
-<section class="services">
+<section class={`services${mod}`}>
   <h2>{props.title}</h2>
   <div class="grid">
     {
@@ -41,5 +42,32 @@ const { props } = Astro.props as { props: ServicesProps }
   }
   p {
     margin: 0;
+  }
+
+  /* Warm: centered heading, softer rounded cards. */
+  .services.warm h2 {
+    text-align: center;
+  }
+  .services.warm .card {
+    border-radius: 1.5rem;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  /* Grid: bordered cells, no fill. */
+  .services.grid h2 {
+    font-size: 1.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .services.grid .card {
+    background: transparent;
+    border-radius: 0;
+    border-width: 1px;
+  }
+  .services.grid h3 {
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
   }
 </style>

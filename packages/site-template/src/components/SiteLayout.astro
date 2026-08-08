@@ -4,6 +4,7 @@ import Hero from "./sections/Hero.astro"
 import Services from "./sections/Services.astro"
 import About from "./sections/About.astro"
 import Testimonials from "./sections/Testimonials.astro"
+import { templateFor } from "../templates.ts"
 
 const { site, page } = Astro.props as { site: Site; page: Page }
 
@@ -20,33 +21,42 @@ const year = new Date().getFullYear()
 // e.g. PUBLIC_API_URL=https://api.site-studio.dev). Falls back to same-origin.
 const apiBase = import.meta.env.PUBLIC_API_URL ?? "/api"
 
+const template = templateFor(site)
+const layout = template.layout
+// The editor writes accent/font into settings; those win over the template's
+// defaults. The rest of the palette comes from the template.
+const accent = settings.accent || template.theme.accent
+const font = settings.font || template.font
+
 const themeCss = `
   :root {
-    --accent: ${settings.accent};
-    --font: ${settings.font};
-    --surface: #ffffff;
-    --border: color-mix(in srgb, ${settings.accent} 15%, #e5e5e5);
-    --muted: #6b7280;
-    --ink: #202320;
-    --bg: #f7f7f3;
+    --accent: ${accent};
+    --font: ${font};
+    --surface: ${template.theme.surface};
+    --border: ${template.theme.border};
+    --muted: ${template.theme.muted};
+    --ink: ${template.theme.ink};
+    --bg: ${template.theme.bg};
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: ${settings.font}, system-ui, -apple-system, sans-serif;
+    font-family: ${font}, system-ui, -apple-system, sans-serif;
     line-height: 1.6;
     color: var(--ink);
     background: var(--bg);
   }
-  main { max-width: 60rem; margin: 0 auto; padding: 0 1.5rem 6rem; }
+  main { max-width: 64rem; margin: 0 auto; padding: 0 1.5rem 6rem; }
   section { padding: 3.5rem 0; }
-  header.site-header { display: flex; align-items: center; max-width: 60rem; margin: 0 auto; padding: 1.5rem; }
+  header.site-header { display: flex; align-items: center; max-width: 64rem; margin: 0 auto; padding: 1.5rem; }
   header.site-header .logo { font-weight: 800; letter-spacing: 0.08em; text-decoration: none; color: inherit; }
   footer.site-footer { text-align: center; padding: 2rem 1rem 3rem; color: var(--muted); font-size: 0.9rem; }
   .lead-form { display: grid; gap: 0.75rem; max-width: 26rem; margin-top: 1.5rem; }
   .lead-form input, .lead-form textarea { font: inherit; padding: 0.7rem 0.9rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface); }
   .lead-form button { justify-self: start; border: 0; background: var(--accent); color: #fff; font: inherit; font-weight: 700; padding: 0.7rem 1.4rem; border-radius: 999px; cursor: pointer; }
   .lead-status { font-size: 0.9rem; margin: 0; }
+  .template-warm main { max-width: 52rem; }
+  .template-grid main { max-width: 68rem; }
 `
 ---
 
@@ -65,12 +75,12 @@ const themeCss = `
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href={`https://fonts.googleapis.com/css2?family=${settings.font.replaceAll(" ", "+")}:wght@400;600;800&display=swap`}
+      href={`https://fonts.googleapis.com/css2?family=${font.replaceAll(" ", "+")}:wght@400;600;800&display=swap`}
       rel="stylesheet"
     />
     <style is:inline set:html={themeCss} />
   </head>
-  <body>
+  <body class={`template-${layout}`}>
     <header class="site-header">
       <a class="logo" href="/">{business.logo}</a>
     </header>
@@ -78,7 +88,7 @@ const themeCss = `
       {
         page.sections.map((section) => {
           const Component = sectionComponents[section.type]
-          return <Component props={section.props} />
+          return <Component props={section.props} layout={layout} />
         })
       }
       <section id="contact">

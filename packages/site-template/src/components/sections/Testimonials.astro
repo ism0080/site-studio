@@ -1,10 +1,11 @@
 ---
 import type { TestimonialsProps } from "../../site.ts"
 
-const { props } = Astro.props as { props: TestimonialsProps }
+const { props, layout } = Astro.props as { props: TestimonialsProps; layout: string }
+const mod = layout === "warm" ? " warm" : layout === "grid" ? " grid" : ""
 ---
 
-<section class="testimonials">
+<section class={`testimonials${mod}`}>
   <h2>{props.title}</h2>
   <div class="grid">
     {
@@ -54,5 +55,28 @@ const { props } = Astro.props as { props: TestimonialsProps }
   }
   .role {
     color: var(--muted);
+  }
+
+  /* Warm: centered, softer. */
+  .testimonials.warm h2 {
+    text-align: center;
+  }
+  .testimonials.warm .card {
+    border-radius: 1.5rem;
+    text-align: center;
+  }
+  .testimonials.warm footer {
+    justify-items: center;
+  }
+
+  /* Grid: bordered cells, no fill. */
+  .testimonials.grid h2 {
+    font-size: 1.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .testimonials.grid .card {
+    background: transparent;
+    border-radius: 0;
   }
 </style>

@@ -23,7 +23,7 @@ export const initialSite = {
 }
 
 export const templates = [
-  { id: 'editorial-studio', name: 'Editorial Studio', category: 'Bold & considered', palette: ['#f7f7f3', '#e56645', '#202320'], brand: 'AURORA', title: ['Make space', 'for what', 'matters.'] },
-  { id: 'warm-minimal', name: 'Warm Minimal', category: 'Calm & welcoming', palette: ['#f2e9dc', '#a8764e', '#322d29'], brand: 'NORTH', title: ['Good work,', 'warmly.'] },
-  { id: 'clean-grid', name: 'Clean Grid', category: 'Clear & confident', palette: ['#f6f8fa', '#4567db', '#18202b'], brand: 'FORM /', title: ['Make it', 'clear.'] },
+  { id: 'editorial-studio', name: 'Editorial Studio', category: 'Bold & considered', palette: ['#f7f7f3', '#e56645', '#202320'], font: 'Manrope', brand: 'AURORA', title: ['Make space', 'for what', 'matters.'] },
+  { id: 'warm-minimal', name: 'Warm Minimal', category: 'Calm & welcoming', palette: ['#f2e9dc', '#a8764e', '#322d29'], font: 'Fraunces', brand: 'NORTH', title: ['Good work,', 'warmly.'] },
+  { id: 'clean-grid', name: 'Clean Grid', category: 'Clear & confident', palette: ['#f6f8fa', '#4567db', '#18202b'], font: 'Space Grotesk', brand: 'FORM /', title: ['Make it', 'clear.'] },
 ]

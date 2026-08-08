@@ -1,10 +1,11 @@
 ---
 import type { AboutProps } from "../../site.ts"
 
-const { props } = Astro.props as { props: AboutProps }
+const { props, layout } = Astro.props as { props: AboutProps; layout: string }
+const mod = layout === "warm" ? " warm" : layout === "grid" ? " grid" : ""
 ---
 
-<section class="about">
+<section class={`about${mod}`}>
   {props.eyebrow && <p class="eyebrow">{props.eyebrow}</p>}
   <h2>{props.title}</h2>
   <p class="body">{props.body}</p>
@@ -29,5 +30,27 @@ const { props } = Astro.props as { props: AboutProps }
     font-size: 1.1rem;
     line-height: 1.7;
     margin: 0;
+  }
+
+  /* Warm: centered, serif-friendly. */
+  .about.warm {
+    max-width: 34rem;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  /* Grid: split title / body columns. */
+  .about.grid {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 3rem;
+    max-width: 100%;
+    align-items: start;
+  }
+  .about.grid .eyebrow {
+    grid-column: 1 / -1;
+  }
+  .about.grid .body {
+    font-size: 1rem;
   }
 </style>

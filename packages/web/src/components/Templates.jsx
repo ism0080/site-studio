@@ -27,7 +27,7 @@ export default function Templates({ onSelect }) {
       </div>
       <div className="template-grid">
         {templates.map((template) => (
-          <button className="template-card" key={template.id} onClick={onSelect}>
+          <button className="template-card" key={template.id} onClick={() => onSelect(template)}>
             <TemplateArt template={template} />
             <div className="template-card-footer">
               <div>
