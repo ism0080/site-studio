@@ -2,7 +2,7 @@ import * as Cloudflare from "alchemy/Cloudflare"
 import * as Effect from "effect/Effect"
 import type { RuntimeContext } from "alchemy"
 import { Lead, LeadInput, LeadNotFound } from "./leads.ts"
-import { SiteNotFound } from "../site/site.ts"
+import { SiteNotFound, decodeSite } from "../site/site.ts"
 
 type Db = Cloudflare.D1.QueryDatabaseClient
 
@@ -37,6 +37,9 @@ export interface LeadRepository {
     leadId: string,
     ownerId: string,
   ) => Effect.Effect<void, SiteNotFound | LeadNotFound, RuntimeContext>
+  readonly siteContact: (
+    siteId: string,
+  ) => Effect.Effect<{ name: string; email: string } | null, never, RuntimeContext>
 }
 
 const siteExists = (db: Db, siteId: string, ownerId?: string) =>
@@ -108,4 +111,21 @@ export const makeLeadRepository = (db: Db): LeadRepository => ({
         return yield* Effect.fail(new LeadNotFound({}))
       }
     }),
+  siteContact: (siteId) =>
+    db
+      .prepare("SELECT document FROM sites WHERE id = ?")
+      .bind(siteId)
+      .first<{ document: string }>()
+      .pipe(
+        Effect.flatMap((row) => {
+          if (row === null) return Effect.succeed(null)
+          return decodeSite(JSON.parse(row.document)).pipe(
+            Effect.map((site) => ({
+              name: site.business.name,
+              email: site.business.email,
+            })),
+            Effect.catch(() => Effect.succeed(null)),
+          )
+        }),
+      ),
 })

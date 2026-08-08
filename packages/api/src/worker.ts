@@ -2,6 +2,7 @@ import * as Cloudflare from "alchemy/Cloudflare"
 import * as Config from "effect/Config"
 import * as Effect from "effect/Effect"
 import * as Layer from "effect/Layer"
+import * as Option from "effect/Option"
 import * as Path from "effect/Path"
 import * as Http from "effect/unstable/http"
 import * as HttpApi from "effect/unstable/httpapi"
@@ -12,6 +13,7 @@ import { Database } from "./site/database.ts"
 import { SiteApi } from "./site/siteApi.ts"
 import { makeSiteRepository } from "./site/SiteRepository.ts"
 import { makeLeadRepository } from "./leads/LeadRepository.ts"
+import { TooManyRequests } from "./leads/leads.ts"
 import {
   AUTH_PATH,
   CurrentUser,
@@ -43,6 +45,28 @@ export default Cloudflare.Worker(
     )
     const repo = makeSiteRepository(db)
     const leads = makeLeadRepository(db)
+
+    // Rate-limit public lead submissions per IP (5/min).
+    const throttle = yield* Cloudflare.RateLimit("LeadsRateLimit", {
+      namespaceId: 1001,
+      simple: { limit: 5, period: 60 },
+    })
+
+    // Optional email notification for new leads. Cloudflare's send_email
+    // binding only delivers to verified destination addresses, so this goes
+    // to a configured platform inbox (LEADS_NOTIFY_EMAIL) rather than the
+    // site owner's address directly.
+    const leadsNotifyEmail = yield* Config.option(Config.string("LEADS_NOTIFY_EMAIL"))
+    const leadsFromEmail = yield* Config.option(Config.string("LEADS_FROM_EMAIL"))
+    type SendClient = Effect.Success<ReturnType<typeof Cloudflare.Email.Send>>
+    let sendMail: SendClient | null = null
+    if (Option.isSome(leadsNotifyEmail) && Option.isSome(leadsFromEmail)) {
+      const sender = yield* Cloudflare.Email.SendEmail("LeadsNotify", {
+        allowedDestinationAddresses: [leadsNotifyEmail.value],
+        allowedSenderAddresses: [leadsFromEmail.value],
+      })
+      sendMail = yield* Cloudflare.Email.Send(sender)
+    }
 
     const config = yield* Effect.all({
       authSecret: Config.string("AUTH_SECRET").pipe(
@@ -139,7 +163,47 @@ export default Cloudflare.Worker(
       SiteApi,
       "LeadsPublic",
       (handlers) =>
-        handlers.handle("submit", ({ payload }) => leads.create(payload)),
+        handlers.handle("submit", ({ payload }) =>
+          Effect.gen(function* () {
+            const request = yield* HttpServerRequest
+            const ip = request.headers["cf-connecting-ip"] ?? "unknown"
+            const { success } = yield* throttle.limit({ key: ip }).pipe(
+              // Fail open: allow the request if the limiter itself errors.
+              Effect.catchTag("RateLimitError", () =>
+                Effect.succeed({ success: true }),
+              ),
+            )
+            if (!success) {
+              return yield* Effect.fail(new TooManyRequests({}))
+            }
+
+            const lead = yield* leads.create(payload)
+
+            if (sendMail !== null && Option.isSome(leadsNotifyEmail) && Option.isSome(leadsFromEmail)) {
+              const site = yield* leads.siteContact(lead.siteId)
+              if (site) {
+                yield* sendMail
+                  .send({
+                    from: leadsFromEmail.value,
+                    to: leadsNotifyEmail.value,
+                    subject: `New lead on ${site.name}`,
+                    text:
+                      `New contact form submission:\n\n` +
+                      `Name: ${lead.name}\n` +
+                      `Email: ${lead.email}\n` +
+                      `Message: ${lead.message ?? "(none)"}\n\n` +
+                      `Site: ${site.name} (${site.email})`,
+                  })
+                  .pipe(
+                    // Best-effort: a failed email must not fail the submission.
+                    Effect.catch(() => Effect.void),
+                  )
+              }
+            }
+
+            return lead
+          }),
+        ),
     )
 
     const httpEffect = yield* Http.HttpRouter.toHttpEffect(
@@ -203,5 +267,7 @@ export default Cloudflare.Worker(
   }).pipe(
     Effect.provide(Cloudflare.D1.QueryDatabaseBinding),
     Effect.provide(Cloudflare.R2.ReadWriteBucketBinding),
+    Effect.provide(Cloudflare.Workers.RateLimitBinding),
+    Effect.provide(Cloudflare.Email.SendBinding),
   ),
 )

@@ -26,6 +26,12 @@ export class LeadNotFound extends Schema.TaggedErrorClass<LeadNotFound>()(
   { httpApiStatus: 404 },
 ) {}
 
+export class TooManyRequests extends Schema.TaggedErrorClass<TooManyRequests>()(
+  "TooManyRequests",
+  {},
+  { httpApiStatus: 429 },
+) {}
+
 const LeadParams = Schema.Struct({
   id: Schema.String,
   leadId: Schema.String,
@@ -38,7 +44,7 @@ const LeadParams = Schema.Struct({
 const submitLead = HttpApi.HttpApiEndpoint.post("submit", "/", {
   payload: LeadInput,
   success: Lead,
-  error: SiteNotFound,
+  error: Schema.Union([SiteNotFound, TooManyRequests]),
 })
 
 export class LeadsPublicGroup extends HttpApi.HttpApiGroup.make("LeadsPublic")
