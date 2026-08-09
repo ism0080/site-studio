@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import { makeR2SiteStorage } from "../src/storage/SiteStorage.ts";
 import { run } from "./helpers.ts";
@@ -17,18 +17,18 @@ const makeFakeBucket = () => {
 };
 
 describe("SiteStorage (R2 layer)", () => {
-  test("put/getSiteDocument round-trips", async () => {
+  it("put/getSiteDocument round-trips", async () => {
     const storage = makeR2SiteStorage(makeFakeBucket() as never);
     await run(storage.putSiteDocument("site_1", '{"id":"site_1"}'));
     expect(await run(storage.getSiteDocument("site_1"))).toBe('{"id":"site_1"}');
   });
 
-  test("getSiteDocument returns null when missing", async () => {
+  it("getSiteDocument returns null when missing", async () => {
     const storage = makeR2SiteStorage(makeFakeBucket() as never);
     expect(await run(storage.getSiteDocument("missing"))).toBeNull();
   });
 
-  test("each site's document is keyed independently", async () => {
+  it("each site's document is keyed independently", async () => {
     const storage = makeR2SiteStorage(makeFakeBucket() as never);
     await run(storage.putSiteDocument("a", "A"));
     await run(storage.putSiteDocument("b", "B"));

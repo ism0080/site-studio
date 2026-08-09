@@ -38,29 +38,29 @@ const TestimonialsProps = Schema.Struct({
   items: Schema.Array(TestimonialItem),
 });
 
-const HeroSection = Schema.Struct({
+export class HeroSection extends Schema.Class<HeroSection>("HeroSection")({
   id: Schema.String,
   type: Schema.Literal("hero"),
   props: HeroProps,
-});
+}) {}
 
-const ServicesSection = Schema.Struct({
+export class ServicesSection extends Schema.Class<ServicesSection>("ServicesSection")({
   id: Schema.String,
   type: Schema.Literal("services"),
   props: ServicesProps,
-});
+}) {}
 
-const AboutSection = Schema.Struct({
+export class AboutSection extends Schema.Class<AboutSection>("AboutSection")({
   id: Schema.String,
   type: Schema.Literal("about"),
   props: AboutProps,
-});
+}) {}
 
-const TestimonialsSection = Schema.Struct({
+export class TestimonialsSection extends Schema.Class<TestimonialsSection>("TestimonialsSection")({
   id: Schema.String,
   type: Schema.Literal("testimonials"),
   props: TestimonialsProps,
-});
+}) {}
 
 export const Section = Schema.Union([
   HeroSection,
@@ -70,36 +70,33 @@ export const Section = Schema.Union([
 ]);
 export type Section = (typeof Section)["Type"];
 
-export const Page = Schema.Struct({
+export class Page extends Schema.Class<Page>("Page")({
   id: Schema.String,
   slug: Schema.String,
   title: Schema.String,
   sections: Schema.Array(Section),
-});
-export type Page = (typeof Page)["Type"];
+}) {}
 
-export const Business = Schema.Struct({
+export class Business extends Schema.Class<Business>("Business")({
   name: Schema.String,
   category: Schema.String,
   location: Schema.String,
   email: Schema.String,
   phone: Schema.String,
   logo: Schema.String,
-});
-export type Business = (typeof Business)["Type"];
+}) {}
 
 /**
  * The `analytics` slot is reserved for the optional $1/mo OneDollarStats
  * integration — each site can connect a OneDollarStats site id and the
  * published HTML embeds their tracking script.
  */
-export const Analytics = Schema.Struct({
+export class Analytics extends Schema.Class<Analytics>("Analytics")({
   provider: Schema.Literal("onedollarstats"),
   siteId: Schema.String,
-});
-export type Analytics = (typeof Analytics)["Type"];
+}) {}
 
-export const Settings = Schema.Struct({
+export class Settings extends Schema.Class<Settings>("Settings")({
   accent: Schema.String,
   font: Schema.String,
   showDirectory: Schema.Boolean,
@@ -109,15 +106,20 @@ export const Settings = Schema.Struct({
   border: Schema.optional(Schema.String),
   muted: Schema.optional(Schema.String),
   analytics: Schema.optional(Analytics),
-});
-export type Settings = (typeof Settings)["Type"];
+}) {}
 
 export const SiteStatus = Schema.Literals(["draft", "published"]);
 export type SiteStatus = (typeof SiteStatus)["Type"];
 
-export const Site = Schema.Struct({
-  id: Schema.String,
-  ownerId: Schema.String,
+export const SiteId = Schema.String.pipe(Schema.brand("SiteId"));
+export type SiteId = (typeof SiteId)["Type"];
+
+export const OwnerId = Schema.String.pipe(Schema.brand("OwnerId"));
+export type OwnerId = (typeof OwnerId)["Type"];
+
+export class Site extends Schema.Class<Site>("Site")({
+  id: SiteId,
+  ownerId: OwnerId,
   templateId: Schema.String,
   status: SiteStatus,
   business: Business,
@@ -127,8 +129,7 @@ export const Site = Schema.Struct({
   updatedAt: Schema.String,
   publishedAt: Schema.optional(Schema.String),
   customDomain: Schema.optional(Schema.String),
-});
-export type Site = (typeof Site)["Type"];
+}) {}
 
 export const CreateSite = Schema.Struct({
   name: Schema.String,

@@ -35,4 +35,4 @@ export const AUTH_PATH = "/api/auth";
 export class CurrentUser extends Context.Service<
   CurrentUser,
   { readonly id: string; readonly email: string }
->()("CurrentUser") {}
+>()("@app/CurrentUser") {}

@@ -12,6 +12,7 @@
     "build:template": "bun run --filter @site-studio/site-template build",
     "check:api": "bun run --filter @site-studio/api typecheck",
     "check:template": "bun run --filter @site-studio/site-template check",
+    "test": "bun run --filter @site-studio/api test",
     "test:api": "bun run --filter @site-studio/api smoke",
     "lint": "oxlint",
     "fmt": "oxfmt",

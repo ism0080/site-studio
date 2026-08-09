@@ -3,8 +3,8 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import type { RuntimeContext } from "alchemy";
-import { Lead, LeadInput, LeadNotFound } from "./leads.ts";
-import { SiteNotFound, decodeSite } from "../site/site.ts";
+import { Lead, LeadInput, LeadId, LeadNotFound } from "./leads.ts";
+import { SiteId, SiteNotFound, decodeSite } from "../site/site.ts";
 
 type Db = Cloudflare.D1.QueryDatabaseClient;
 
@@ -18,8 +18,8 @@ interface LeadRow {
 }
 
 const parse = (row: LeadRow): Lead => ({
-  id: row.id,
-  siteId: row.site_id,
+  id: LeadId.make(row.id),
+  siteId: SiteId.make(row.site_id),
   name: row.name,
   email: row.email,
   message: row.message ?? undefined,
@@ -51,75 +51,63 @@ const siteExists = (db: Db, siteId: string, ownerId?: string) =>
     : db.prepare("SELECT id FROM sites WHERE id = ?").bind(siteId).first<{ id: string }>();
 
 export const makeLeadRepository = (db: Db): LeadRepositoryShape => ({
-  create: (input) =>
-    Effect.gen(function* () {
-      const site = yield* siteExists(db, input.siteId);
-      if (site === null) {
-        return yield* Effect.fail(new SiteNotFound({ id: input.siteId }));
-      }
-      const lead: Lead = {
-        id: crypto.randomUUID(),
-        siteId: input.siteId,
-        name: input.name,
-        email: input.email,
-        message: input.message,
-        createdAt: new Date().toISOString(),
-      };
-      yield* db
-        .prepare(
-          "INSERT INTO leads (id, site_id, name, email, message, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-        )
-        .bind(lead.id, lead.siteId, lead.name, lead.email, lead.message ?? null, lead.createdAt)
-        .run();
-      return lead;
-    }),
-  listForSite: (siteId, ownerId) =>
-    Effect.gen(function* () {
-      const site = yield* siteExists(db, siteId, ownerId);
-      if (site === null) {
-        return yield* Effect.fail(new SiteNotFound({ id: siteId }));
-      }
-      const rows = yield* db
-        .prepare("SELECT * FROM leads WHERE site_id = ? ORDER BY created_at DESC")
-        .bind(siteId)
-        .all<LeadRow>();
-      return rows.results.map(parse);
-    }),
-  remove: (siteId, leadId, ownerId) =>
-    Effect.gen(function* () {
-      const site = yield* siteExists(db, siteId, ownerId);
-      if (site === null) {
-        return yield* Effect.fail(new SiteNotFound({ id: siteId }));
-      }
-      const result = yield* db
-        .prepare("DELETE FROM leads WHERE id = ? AND site_id = ?")
-        .bind(leadId, siteId)
-        .run();
-      if (result.meta.changes === 0) {
-        return yield* Effect.fail(new LeadNotFound({}));
-      }
-    }),
-  siteContact: (siteId) =>
-    db
+  create: Effect.fn("LeadRepository.create")(function* (input: LeadInput) {
+    const site = yield* siteExists(db, input.siteId);
+    if (site === null) return yield* new SiteNotFound({ id: input.siteId });
+    const lead: Lead = {
+      id: LeadId.make(crypto.randomUUID()),
+      siteId: input.siteId,
+      name: input.name,
+      email: input.email,
+      message: input.message,
+      createdAt: new Date().toISOString(),
+    };
+    yield* db
+      .prepare(
+        "INSERT INTO leads (id, site_id, name, email, message, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+      )
+      .bind(lead.id, lead.siteId, lead.name, lead.email, lead.message ?? null, lead.createdAt)
+      .run();
+    return lead;
+  }),
+  listForSite: Effect.fn("LeadRepository.listForSite")(function* (siteId: string, ownerId: string) {
+    const site = yield* siteExists(db, siteId, ownerId);
+    if (site === null) return yield* new SiteNotFound({ id: siteId });
+    const rows = yield* db
+      .prepare("SELECT * FROM leads WHERE site_id = ? ORDER BY created_at DESC")
+      .bind(siteId)
+      .all<LeadRow>();
+    return rows.results.map(parse);
+  }),
+  remove: Effect.fn("LeadRepository.remove")(function* (
+    siteId: string,
+    leadId: string,
+    ownerId: string,
+  ) {
+    const site = yield* siteExists(db, siteId, ownerId);
+    if (site === null) return yield* new SiteNotFound({ id: siteId });
+    const result = yield* db
+      .prepare("DELETE FROM leads WHERE id = ? AND site_id = ?")
+      .bind(leadId, siteId)
+      .run();
+    if (result.meta.changes === 0) return yield* new LeadNotFound({});
+  }),
+  siteContact: Effect.fn("LeadRepository.siteContact")(function* (siteId: string) {
+    const row = yield* db
       .prepare("SELECT document FROM sites WHERE id = ?")
       .bind(siteId)
-      .first<{ document: string }>()
-      .pipe(
-        Effect.flatMap((row) => {
-          if (row === null) return Effect.succeed(null);
-          return decodeSite(JSON.parse(row.document)).pipe(
-            Effect.map((site) => ({
-              name: site.business.name,
-              email: site.business.email,
-            })),
-            Effect.catch(() => Effect.succeed(null)),
-          );
-        }),
-      ),
+      .first<{ document: string }>();
+    if (row === null) return null;
+    const site = yield* decodeSite(JSON.parse(row.document)).pipe(
+      Effect.catch(() => Effect.succeed(null)),
+    );
+    if (site === null) return null;
+    return { name: site.business.name, email: site.business.email };
+  }),
 });
 
 export class LeadRepository extends Context.Service<LeadRepository, LeadRepositoryShape>()(
-  "LeadRepository",
+  "@app/LeadRepository",
 ) {}
 
 export const LeadRepositoryLayer = (db: Db) =>

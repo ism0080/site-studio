@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import { BuildRunner } from "../src/publish/BuildRunner.ts";
@@ -52,20 +52,16 @@ const site = Schema.decodeUnknownSync(Site)({
 });
 
 describe("LocalBuildRunner", () => {
-  test(
-    "publishes a site through the template publish.mjs",
-    async () => {
-      const result = await Effect.runPromise(
-        Effect.gen(function* () {
-          const runner = yield* BuildRunner;
-          return yield* runner.publish(site);
-        }).pipe(Effect.provide(LocalBuildRunner)),
-      );
+  it("publishes a site through the template publish.mjs", { timeout: 30000 }, async () => {
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const runner = yield* BuildRunner;
+        return yield* runner.publish(site);
+      }).pipe(Effect.provide(LocalBuildRunner)),
+    );
 
-      expect(result.exitCode).toBe(0);
-      expect(result.output).toContain("rendered");
-      expect(result.buildId).toContain(site.id);
-    },
-    { timeout: 30000 },
-  );
+    expect(result.exitCode).toBe(0);
+    expect(result.output).toContain("rendered");
+    expect(result.buildId).toContain(site.id);
+  });
 });

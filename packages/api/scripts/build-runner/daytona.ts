@@ -14,13 +14,14 @@
 
 import { Daytona } from "@daytona/sdk";
 import * as Config from "effect/Config";
+import * as Redacted from "effect/Redacted";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import type { Site } from "../../src/site/site.ts";
 import { BuildError, BuildRunner, type BuildResult } from "../../src/publish/BuildRunner.ts";
 
 const config = Effect.all({
-  apiKey: Config.string("DAYTONA_API_KEY"),
+  apiKey: Config.redacted("DAYTONA_API_KEY"),
   apiUrl: Config.option(Config.string("DAYTONA_API_URL")),
   snapshot: Config.option(Config.string("DAYTONA_SNAPSHOT")),
   image: Config.option(Config.string("DAYTONA_IMAGE")),
@@ -32,7 +33,9 @@ const config = Effect.all({
   r2Endpoint: Config.string("R2_ENDPOINT").pipe(Config.withDefault("")),
   r2Bucket: Config.string("R2_BUCKET").pipe(Config.withDefault("")),
   r2AccessKeyId: Config.string("R2_ACCESS_KEY_ID").pipe(Config.withDefault("")),
-  r2SecretAccessKey: Config.string("R2_SECRET_ACCESS_KEY").pipe(Config.withDefault("")),
+  r2SecretAccessKey: Config.redacted("R2_SECRET_ACCESS_KEY").pipe(
+    Config.withDefault(Redacted.make("")),
+  ),
   publicApiUrl: Config.option(Config.string("PUBLIC_API_URL")),
 });
 
@@ -41,7 +44,7 @@ export const DaytonaBuildRunner = Layer.effect(
   Effect.gen(function* () {
     const env = yield* config;
     const client = new Daytona({
-      apiKey: env.apiKey,
+      apiKey: Redacted.value(env.apiKey),
       ...(env.apiUrl._tag === "Some" ? { apiUrl: env.apiUrl.value } : {}),
     });
 
@@ -58,7 +61,7 @@ export const DaytonaBuildRunner = Layer.effect(
               R2_ENDPOINT: env.r2Endpoint,
               R2_BUCKET: env.r2Bucket,
               R2_ACCESS_KEY_ID: env.r2AccessKeyId,
-              R2_SECRET_ACCESS_KEY: env.r2SecretAccessKey,
+              R2_SECRET_ACCESS_KEY: Redacted.value(env.r2SecretAccessKey),
               PUBLIC_API_URL: env.publicApiUrl._tag === "Some" ? env.publicApiUrl.value : "",
             },
             resources: { cpu: env.cpu, memory: env.memory },
@@ -78,7 +81,7 @@ export const DaytonaBuildRunner = Layer.effect(
                 R2_ENDPOINT: env.r2Endpoint,
                 R2_BUCKET: env.r2Bucket,
                 R2_ACCESS_KEY_ID: env.r2AccessKeyId,
-                R2_SECRET_ACCESS_KEY: env.r2SecretAccessKey,
+                R2_SECRET_ACCESS_KEY: Redacted.value(env.r2SecretAccessKey),
                 PUBLIC_API_URL: env.publicApiUrl._tag === "Some" ? env.publicApiUrl.value : "",
               },
               600,

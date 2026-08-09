@@ -1,9 +1,9 @@
-import { describe, expect, test, beforeEach } from "bun:test";
-import { Database } from "bun:sqlite";
+import { describe, expect, it, beforeEach } from "@effect/vitest";
+import { DatabaseSync } from "node:sqlite";
 import { makeDb, memoryD1, run } from "./helpers.ts";
 import { makeSiteRepository } from "../src/site/SiteRepository.ts";
 
-let db: Database;
+let db: DatabaseSync;
 
 beforeEach(() => {
   db = makeDb();
@@ -12,7 +12,7 @@ beforeEach(() => {
 const repo = () => makeSiteRepository(memoryD1(db) as never);
 
 describe("SiteRepository", () => {
-  test("create -> get -> list -> update -> remove", async () => {
+  it("create -> get -> list -> update -> remove", async () => {
     const r = repo();
     const created = await run(
       r.create({ name: "Aurora Studio", templateId: "editorial-studio" }, "owner-1"),
@@ -40,7 +40,7 @@ describe("SiteRepository", () => {
     expect(await run(r.list("owner-1"))).toHaveLength(0);
   });
 
-  test("owner scoping — other owners cannot read a site", async () => {
+  it("owner scoping — other owners cannot read a site", async () => {
     const r = repo();
     const created = await run(r.create({ name: "A", templateId: "t" }, "owner-1"));
     await expect(run(r.get(created.id, "owner-2"))).rejects.toMatchObject({
@@ -48,7 +48,7 @@ describe("SiteRepository", () => {
     });
   });
 
-  test("markPublished sets status and publishedAt", async () => {
+  it("markPublished sets status and publishedAt", async () => {
     const r = repo();
     const created = await run(r.create({ name: "A", templateId: "t" }, "owner-1"));
     const published = await run(r.markPublished(created.id, "owner-1", "2026-08-09T00:00:00.000Z"));
@@ -56,7 +56,7 @@ describe("SiteRepository", () => {
     expect(published.publishedAt).toBe("2026-08-09T00:00:00.000Z");
   });
 
-  test("setDomain -> verify (TXT ok) -> remove", async () => {
+  it("setDomain -> verify (TXT ok) -> remove", async () => {
     const r = makeSiteRepository(memoryD1(db) as never, {
       verifyTxt: () => Promise.resolve(true),
     });
@@ -75,7 +75,7 @@ describe("SiteRepository", () => {
     expect(removed.customDomain).toBeUndefined();
   });
 
-  test("verify fails when the TXT record is missing", async () => {
+  it("verify fails when the TXT record is missing", async () => {
     const r = makeSiteRepository(memoryD1(db) as never, {
       verifyTxt: () => Promise.resolve(false),
     });
@@ -86,7 +86,7 @@ describe("SiteRepository", () => {
     });
   });
 
-  test("a domain already claimed by another site is rejected", async () => {
+  it("a domain already claimed by another site is rejected", async () => {
     const r = repo();
     const a = await run(r.create({ name: "A", templateId: "t" }, "owner-1"));
     const b = await run(r.create({ name: "B", templateId: "t" }, "owner-1"));

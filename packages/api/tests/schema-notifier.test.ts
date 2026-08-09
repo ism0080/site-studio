@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "@effect/vitest";
 import * as Schema from "effect/Schema";
 import { makeNoopNotifier } from "../src/leads/LeadNotifier.ts";
 import { Lead } from "../src/leads/leads.ts";
@@ -45,7 +45,7 @@ const sample = Schema.decodeUnknownSync(Site)({
 });
 
 describe("schema", () => {
-  test("Site round-trips through encode/decode", () => {
+  it("Site round-trips through encode/decode", () => {
     const encoded = encodeSite(sample);
     const decoded = Schema.decodeUnknownSync(Site)(JSON.parse(JSON.stringify(encoded)));
     expect(decoded.id).toBe(sample.id);
@@ -54,7 +54,7 @@ describe("schema", () => {
     expect(decoded.settings.accent).toBe("#e56645");
   });
 
-  test("Lead schema decodes", () => {
+  it("Lead schema decodes", () => {
     const lead = Schema.decodeUnknownSync(Lead)({
       id: "lead_1",
       siteId: "site_1",
@@ -68,7 +68,7 @@ describe("schema", () => {
 });
 
 describe("LeadNotifier", () => {
-  test("noop notifier is a no-op success", async () => {
+  it("noop notifier is a no-op success", async () => {
     const notifier = makeNoopNotifier();
     const lead = Schema.decodeUnknownSync(Lead)({
       id: "l",

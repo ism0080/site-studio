@@ -4,6 +4,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
+import * as Redacted from "effect/Redacted";
 import * as Http from "effect/unstable/http";
 import * as HttpApi from "effect/unstable/httpapi";
 import { HttpServerRequest } from "effect/unstable/http/HttpServerRequest";
@@ -13,7 +14,7 @@ import { Database } from "./site/database.ts";
 import { SiteApi } from "./site/siteApi.ts";
 import { makeSiteRepository, SiteRepository } from "./site/SiteRepository.ts";
 import { makeLeadRepository, LeadRepository } from "./leads/LeadRepository.ts";
-import { TooManyRequests } from "./leads/leads.ts";
+import { LeadInput, TooManyRequests } from "./leads/leads.ts";
 import { LeadNotifier, makeCloudflareNotifier, makeNoopNotifier } from "./leads/LeadNotifier.ts";
 import { SiteStorage, makeR2SiteStorage } from "./storage/SiteStorage.ts";
 import { AUTH_PATH, CurrentUser, createAuth } from "./auth/auth.ts";
@@ -64,25 +65,64 @@ export default Cloudflare.Worker(
         : makeNoopNotifier();
 
     const config = yield* Effect.all({
-      authSecret: Config.string("AUTH_SECRET").pipe(
-        Config.withDefault("dev-only-secret-0123456789abcdef0123456789abcdef"),
+      authSecret: Config.redacted("AUTH_SECRET").pipe(
+        Config.withDefault(Redacted.make("dev-only-secret-0123456789abcdef0123456789abcdef")),
       ),
       authBaseUrl: Config.string("AUTH_BASE_URL").pipe(Config.withDefault("http://localhost:8787")),
       trustedOrigins: Config.string("TRUSTED_ORIGINS").pipe(
         Config.withDefault("http://localhost:5173"),
       ),
       googleClientId: Config.string("GOOGLE_CLIENT_ID").pipe(Config.withDefault("")),
-      googleClientSecret: Config.string("GOOGLE_CLIENT_SECRET").pipe(Config.withDefault("")),
+      googleClientSecret: Config.redacted("GOOGLE_CLIENT_SECRET").pipe(
+        Config.withDefault(Redacted.make("")),
+      ),
     });
     const auth = createAuth(rawDb, {
-      secret: config.authSecret,
+      secret: Redacted.value(config.authSecret),
       baseURL: config.authBaseUrl,
       trustedOrigins: config.trustedOrigins
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean),
       googleClientId: config.googleClientId,
-      googleClientSecret: config.googleClientSecret,
+      googleClientSecret: Redacted.value(config.googleClientSecret),
+    });
+
+    const publishSite = Effect.fn("api.publishSite")(function* (siteId: string) {
+      const user = yield* CurrentUser;
+      const repo = yield* SiteRepository;
+      const storage = yield* SiteStorage;
+      const site = yield* repo.get(siteId, user.id);
+      const publishedAt = new Date().toISOString();
+      // Store the site document as the buildable artifact. Static HTML is
+      // generated from it by the Astro template pipeline
+      // (packages/site-template) and uploaded to R2 under the same key.
+      const path = `sites/${site.id}/site.json`;
+      yield* storage.putSiteDocument(site.id, JSON.stringify(site, null, 2)).pipe(Effect.orDie);
+      yield* repo.markPublished(siteId, user.id, publishedAt);
+      return { siteId: site.id, path, publishedAt };
+    });
+
+    const submitLead = Effect.fn("api.submitLead")(function* (payload: LeadInput) {
+      const request = yield* HttpServerRequest;
+      const ip = request.headers["cf-connecting-ip"] ?? "unknown";
+      const { success } = yield* throttle.limit({ key: ip }).pipe(
+        // Fail open: allow the request if the limiter itself errors.
+        Effect.catchTag("RateLimitError", () => Effect.succeed({ success: true })),
+      );
+      if (!success) return yield* new TooManyRequests({});
+
+      const leads = yield* LeadRepository;
+      const lead = yield* leads.create(payload);
+
+      // Best-effort notification — a failed email must not fail the submission.
+      const site = yield* leads.siteContact(lead.siteId);
+      if (site) {
+        const notifier = yield* LeadNotifier;
+        yield* notifier.notify(lead, site).pipe(Effect.catch(() => Effect.void));
+      }
+
+      return lead;
     });
 
     const sitesGroup = HttpApi.HttpApiBuilder.group(SiteApi, "Sites", (handlers) =>
@@ -104,24 +144,7 @@ export default Cloudflare.Worker(
         .handle("remove", ({ params }) =>
           CurrentUser.use((user) => SiteRepository.use((repo) => repo.remove(params.id, user.id))),
         )
-        .handle("publish", ({ params }) =>
-          Effect.gen(function* () {
-            const user = yield* CurrentUser;
-            const repo = yield* SiteRepository;
-            const storage = yield* SiteStorage;
-            const site = yield* repo.get(params.id, user.id);
-            const publishedAt = new Date().toISOString();
-            // Store the site document as the buildable artifact. Static HTML
-            // is generated from it by the Astro template pipeline
-            // (packages/site-template) and uploaded to R2 under the same key.
-            const path = `sites/${site.id}/site.json`;
-            yield* storage
-              .putSiteDocument(site.id, JSON.stringify(site, null, 2))
-              .pipe(Effect.orDie);
-            yield* repo.markPublished(params.id, user.id, publishedAt);
-            return { siteId: site.id, path, publishedAt };
-          }),
-        )
+        .handle("publish", ({ params }) => publishSite(params.id))
         .handle("setDomain", ({ params, payload }) =>
           CurrentUser.use((user) =>
             SiteRepository.use((repo) => repo.setDomain(params.id, user.id, payload.domain)),
@@ -155,32 +178,7 @@ export default Cloudflare.Worker(
 
     // Public — visitor contact-form submissions (no session).
     const leadsPublicGroup = HttpApi.HttpApiBuilder.group(SiteApi, "LeadsPublic", (handlers) =>
-      handlers.handle("submit", ({ payload }) =>
-        Effect.gen(function* () {
-          const request = yield* HttpServerRequest;
-          const ip = request.headers["cf-connecting-ip"] ?? "unknown";
-          const { success } = yield* throttle.limit({ key: ip }).pipe(
-            // Fail open: allow the request if the limiter itself errors.
-            Effect.catchTag("RateLimitError", () => Effect.succeed({ success: true })),
-          );
-          if (!success) {
-            return yield* Effect.fail(new TooManyRequests({}));
-          }
-
-          const leads = yield* LeadRepository;
-          const lead = yield* leads.create(payload);
-
-          // Best-effort notification — a failed email must not fail the
-          // submission.
-          const site = yield* leads.siteContact(lead.siteId);
-          if (site) {
-            const notifier = yield* LeadNotifier;
-            yield* notifier.notify(lead, site).pipe(Effect.catch(() => Effect.void));
-          }
-
-          return lead;
-        }),
-      ),
+      handlers.handle("submit", ({ payload }) => submitLead(payload)),
     );
 
     const httpEffect = yield* Http.HttpRouter.toHttpEffect(

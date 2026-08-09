@@ -30,7 +30,7 @@ export interface LeadNotifierShape {
 }
 
 export class LeadNotifier extends Context.Service<LeadNotifier, LeadNotifierShape>()(
-  "LeadNotifier",
+  "@app/LeadNotifier",
 ) {}
 
 export const makeNoopNotifier = (): LeadNotifierShape => ({
@@ -53,8 +53,8 @@ export const makeCloudflareNotifier = () =>
     const mail = yield* Cloudflare.Email.Send(sender);
 
     return {
-      notify: (lead, site) =>
-        mail
+      notify: Effect.fn("LeadNotifier.notify")(function* (lead: Lead, site: NotifyTarget) {
+        return yield* mail
           .send({
             from: fromEmail,
             to: notifyEmail,
@@ -75,7 +75,8 @@ export const makeCloudflareNotifier = () =>
                   cause,
                 }),
             ),
-          ),
+          );
+      }),
     } satisfies LeadNotifierShape;
   });
 

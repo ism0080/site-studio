@@ -26,7 +26,9 @@ export interface SiteStorageShape {
   ) => Effect.Effect<string | null, SiteStorageError, RuntimeContext>;
 }
 
-export class SiteStorage extends Context.Service<SiteStorage, SiteStorageShape>()("SiteStorage") {}
+export class SiteStorage extends Context.Service<SiteStorage, SiteStorageShape>()(
+  "@app/SiteStorage",
+) {}
 
 const siteKey = (siteId: string) => `sites/${siteId}/site.json`;
 
@@ -37,19 +39,19 @@ const toStorageError = (cause: unknown) =>
   });
 
 export const makeR2SiteStorage = (bucket: Bucket): SiteStorageShape => ({
-  putSiteDocument: (siteId, document) =>
-    bucket
+  putSiteDocument: Effect.fn("SiteStorage.putSiteDocument")(function* (
+    siteId: string,
+    document: string,
+  ) {
+    return yield* bucket
       .put(siteKey(siteId), document)
-      .pipe(Effect.as(undefined), Effect.mapError(toStorageError)),
-  getSiteDocument: (siteId) =>
-    bucket.get(siteKey(siteId)).pipe(
-      Effect.mapError(toStorageError),
-      Effect.flatMap((object) =>
-        object === null
-          ? Effect.succeed(null)
-          : object.text().pipe(Effect.mapError(toStorageError)),
-      ),
-    ),
+      .pipe(Effect.as(undefined), Effect.mapError(toStorageError));
+  }),
+  getSiteDocument: Effect.fn("SiteStorage.getSiteDocument")(function* (siteId: string) {
+    const object = yield* bucket.get(siteKey(siteId)).pipe(Effect.mapError(toStorageError));
+    if (object === null) return null;
+    return yield* object.text().pipe(Effect.mapError(toStorageError));
+  }),
 });
 
 export const R2SiteStorageLayer = (bucket: Bucket) =>

@@ -26,4 +26,4 @@ export class BuildRunner extends Context.Service<
   {
     readonly publish: (site: Site) => Effect.Effect<BuildResult, BuildError>;
   }
->()("BuildRunner") {}
+>()("@app/BuildRunner") {}

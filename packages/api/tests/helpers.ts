@@ -1,4 +1,4 @@
-import { Database } from "bun:sqlite";
+import { DatabaseSync } from "node:sqlite";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,8 +8,8 @@ import { RuntimeContext } from "alchemy";
 const migrationsDir = fileURLToPath(new URL("../migrations", import.meta.url));
 
 /** In-memory SQLite with all migrations applied. */
-export const makeDb = (): Database => {
-  const db = new Database(":memory:");
+export const makeDb = (): DatabaseSync => {
+  const db = new DatabaseSync(":memory:");
   for (const file of readdirSync(migrationsDir)
     .filter((f) => f.endsWith(".sql"))
     .toSorted()) {
@@ -19,10 +19,10 @@ export const makeDb = (): Database => {
 };
 
 /**
- * Minimal D1 QueryDatabaseClient shim over bun:sqlite — enough of the
+ * Minimal D1 QueryDatabaseClient shim over node:sqlite — enough of the
  * prepare/bind/all/first/run surface the repositories use.
  */
-export const memoryD1 = (db: Database) => ({
+export const memoryD1 = (db: DatabaseSync) => ({
   prepare: (sql: string) => ({
     bind: (...params: unknown[]) => {
       const stmt = db.prepare(sql);

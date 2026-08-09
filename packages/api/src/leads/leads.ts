@@ -1,24 +1,26 @@
 import * as HttpApi from "effect/unstable/httpapi";
 import * as Schema from "effect/Schema";
-import { SiteNotFound } from "../site/site.ts";
+import { SiteId, SiteNotFound } from "../site/site.ts";
+
+export const LeadId = Schema.String.pipe(Schema.brand("LeadId"));
+export type LeadId = (typeof LeadId)["Type"];
 
 export const LeadInput = Schema.Struct({
-  siteId: Schema.String,
+  siteId: SiteId,
   name: Schema.String,
   email: Schema.String,
   message: Schema.optional(Schema.String),
 });
 export type LeadInput = (typeof LeadInput)["Type"];
 
-export const Lead = Schema.Struct({
-  id: Schema.String,
-  siteId: Schema.String,
+export class Lead extends Schema.Class<Lead>("Lead")({
+  id: LeadId,
+  siteId: SiteId,
   name: Schema.String,
   email: Schema.String,
   message: Schema.optional(Schema.String),
   createdAt: Schema.String,
-});
-export type Lead = (typeof Lead)["Type"];
+}) {}
 
 export class LeadNotFound extends Schema.TaggedErrorClass<LeadNotFound>()(
   "LeadNotFound",

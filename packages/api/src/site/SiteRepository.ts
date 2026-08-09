@@ -5,13 +5,14 @@ import * as Layer from "effect/Layer";
 import type { RuntimeContext } from "alchemy";
 import {
   CreateSite,
+  OwnerId,
+  SiteId,
   DomainInUse,
   DomainNotVerified,
   DomainSetup,
   Site,
   SiteNotFound,
   decodeSite,
-  encodeSite,
 } from "./site.ts";
 import { normalizeDomain } from "./keys.ts";
 import { newVerificationToken, verifyTxtRecord } from "./dns.ts";
@@ -57,7 +58,7 @@ export interface SiteRepositoryShape {
 const parse = (document: string) => decodeSite(JSON.parse(document)).pipe(Effect.orDie);
 
 // The `document` column is TEXT; encode the schema then serialize to JSON.
-const serialize = (site: Site) => JSON.stringify(encodeSite(site));
+const serialize = (site: Site) => JSON.stringify(site);
 
 export const makeSiteRepository = (
   db: Db,
@@ -65,31 +66,29 @@ export const makeSiteRepository = (
 ): SiteRepositoryShape => {
   const checkTxt = deps.verifyTxt ?? verifyTxtRecord;
   return {
-    list: (ownerId) =>
-      db
+    list: Effect.fn("SiteRepository.list")(function* (ownerId: string) {
+      return yield* db
         .prepare("SELECT document FROM sites WHERE owner_id = ? ORDER BY updated_at DESC")
         .bind(ownerId)
         .all<{ document: string }>()
         .pipe(
           Effect.map((result) => result.results.map((row) => row.document)),
           Effect.flatMap((documents) => Effect.all(documents.map(parse))),
-        ),
-    get: (id, ownerId) =>
-      db
+        );
+    }),
+    get: Effect.fn("SiteRepository.get")(function* (id: string, ownerId: string) {
+      const row = yield* db
         .prepare("SELECT document FROM sites WHERE id = ? AND owner_id = ?")
         .bind(id, ownerId)
-        .first<{ document: string }>()
-        .pipe(
-          Effect.flatMap((row) => {
-            if (row === null) return Effect.fail(new SiteNotFound({ id }));
-            return parse(row.document);
-          }),
-        ),
-    create: (payload, ownerId) => {
+        .first<{ document: string }>();
+      if (row === null) return yield* new SiteNotFound({ id });
+      return yield* parse(row.document);
+    }),
+    create: Effect.fn("SiteRepository.create")(function* (payload: CreateSite, ownerId: string) {
       const now = new Date().toISOString();
       const site: Site = {
-        id: crypto.randomUUID(),
-        ownerId,
+        id: SiteId.make(crypto.randomUUID()),
+        ownerId: OwnerId.make(ownerId),
         templateId: payload.templateId,
         status: "draft",
         business: {
@@ -118,7 +117,7 @@ export const makeSiteRepository = (
         updatedAt: now,
         publishedAt: undefined,
       };
-      return db
+      return yield* db
         .prepare(
           "INSERT INTO sites (id, owner_id, template_id, status, document, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
         )
@@ -133,183 +132,178 @@ export const makeSiteRepository = (
         )
         .run()
         .pipe(Effect.as(site));
-    },
-    update: (id, site, ownerId) =>
-      Effect.gen(function* () {
-        const existing = yield* db
-          .prepare("SELECT id FROM sites WHERE id = ? AND owner_id = ?")
-          .bind(id, ownerId)
-          .first<{ id: string }>();
-        if (existing === null) {
-          return yield* Effect.fail(new SiteNotFound({ id }));
-        }
-        const updated = {
-          ...site,
+    }),
+    update: Effect.fn("SiteRepository.update")(function* (id: string, site: Site, ownerId: string) {
+      const existing = yield* db
+        .prepare("SELECT id FROM sites WHERE id = ? AND owner_id = ?")
+        .bind(id, ownerId)
+        .first<{ id: string }>();
+      if (existing === null) return yield* new SiteNotFound({ id });
+      const updated = {
+        ...site,
+        id: SiteId.make(id),
+        ownerId: OwnerId.make(ownerId),
+        updatedAt: new Date().toISOString(),
+      };
+      yield* db
+        .prepare(
+          "UPDATE sites SET template_id = ?, status = ?, document = ?, updated_at = ? WHERE id = ? AND owner_id = ?",
+        )
+        .bind(
+          updated.templateId,
+          updated.status,
+          serialize(updated),
+          updated.updatedAt,
           id,
           ownerId,
-          updatedAt: new Date().toISOString(),
-        };
-        yield* db
-          .prepare(
-            "UPDATE sites SET template_id = ?, status = ?, document = ?, updated_at = ? WHERE id = ? AND owner_id = ?",
-          )
-          .bind(
-            updated.templateId,
-            updated.status,
-            serialize(updated),
-            updated.updatedAt,
-            id,
-            ownerId,
-          )
-          .run();
-        return updated;
-      }),
-    remove: (id, ownerId) =>
-      db
+        )
+        .run();
+      return updated;
+    }),
+    remove: Effect.fn("SiteRepository.remove")(function* (id: string, ownerId: string) {
+      const result = yield* db
         .prepare("DELETE FROM sites WHERE id = ? AND owner_id = ?")
         .bind(id, ownerId)
-        .run()
-        .pipe(
-          Effect.flatMap((result) =>
-            result.meta.changes === 0 ? Effect.fail(new SiteNotFound({ id })) : Effect.void,
-          ),
-        ),
-    markPublished: (id, ownerId, publishedAt) =>
-      Effect.gen(function* () {
-        const row = yield* db
-          .prepare("SELECT document FROM sites WHERE id = ? AND owner_id = ?")
-          .bind(id, ownerId)
-          .first<{ document: string }>();
-        if (row === null) return yield* Effect.fail(new SiteNotFound({ id }));
-        const current = yield* parse(row.document);
-        const updated = {
-          ...current,
-          status: "published" as const,
-          publishedAt,
-          updatedAt: publishedAt,
-        };
-        yield* db
-          .prepare(
-            "UPDATE sites SET status = ?, document = ?, updated_at = ?, published_at = ? WHERE id = ? AND owner_id = ?",
-          )
-          .bind(
-            updated.status,
-            serialize(updated),
-            updated.updatedAt,
-            updated.publishedAt,
-            id,
-            ownerId,
-          )
-          .run();
-        return updated;
-      }),
-    setDomain: (id, ownerId, inputDomain) =>
-      Effect.gen(function* () {
-        const site = yield* db
-          .prepare("SELECT document FROM sites WHERE id = ? AND owner_id = ?")
-          .bind(id, ownerId)
-          .first<{ document: string }>();
-        if (site === null) return yield* Effect.fail(new SiteNotFound({ id }));
-        const current = yield* parse(site.document);
+        .run();
+      if (result.meta.changes === 0) return yield* new SiteNotFound({ id });
+    }),
+    markPublished: Effect.fn("SiteRepository.markPublished")(function* (
+      id: string,
+      ownerId: string,
+      publishedAt: string,
+    ) {
+      const row = yield* db
+        .prepare("SELECT document FROM sites WHERE id = ? AND owner_id = ?")
+        .bind(id, ownerId)
+        .first<{ document: string }>();
+      if (row === null) return yield* new SiteNotFound({ id });
+      const current = yield* parse(row.document);
+      const updated = {
+        ...current,
+        status: "published" as const,
+        publishedAt,
+        updatedAt: publishedAt,
+      };
+      yield* db
+        .prepare(
+          "UPDATE sites SET status = ?, document = ?, updated_at = ?, published_at = ? WHERE id = ? AND owner_id = ?",
+        )
+        .bind(
+          updated.status,
+          serialize(updated),
+          updated.updatedAt,
+          updated.publishedAt,
+          id,
+          ownerId,
+        )
+        .run();
+      return updated;
+    }),
+    setDomain: Effect.fn("SiteRepository.setDomain")(function* (
+      id: string,
+      ownerId: string,
+      inputDomain: string,
+    ) {
+      const site = yield* db
+        .prepare("SELECT document FROM sites WHERE id = ? AND owner_id = ?")
+        .bind(id, ownerId)
+        .first<{ document: string }>();
+      if (site === null) return yield* new SiteNotFound({ id });
+      const current = yield* parse(site.document);
 
-        const domain = normalizeDomain(inputDomain);
-        if (!domain) return yield* Effect.fail(new SiteNotFound({ id }));
+      const domain = normalizeDomain(inputDomain);
+      if (!domain) return yield* new SiteNotFound({ id });
 
-        // A domain can only be claimed by one site (pending or verified).
-        const existing = yield* db
-          .prepare("SELECT site_id FROM site_domains WHERE domain = ?")
-          .bind(domain)
-          .first<{ site_id: string }>();
-        if (existing !== null) {
-          return yield* Effect.fail(new DomainInUse({ domain }));
-        }
+      const existing = yield* db
+        .prepare("SELECT site_id FROM site_domains WHERE domain = ?")
+        .bind(domain)
+        .first<{ site_id: string }>();
+      if (existing !== null) return yield* new DomainInUse({ domain });
 
-        const token = newVerificationToken();
-        const now = new Date().toISOString();
-        yield* db
-          .prepare(
-            "INSERT OR IGNORE INTO site_domains (domain, site_id, verification_token, verified, created_at) VALUES (?, ?, ?, 0, ?)",
-          )
-          .bind(domain, id, token, now)
-          .run();
+      const token = newVerificationToken();
+      const now = new Date().toISOString();
+      yield* db
+        .prepare(
+          "INSERT OR IGNORE INTO site_domains (domain, site_id, verification_token, verified, created_at) VALUES (?, ?, ?, 0, ?)",
+        )
+        .bind(domain, id, token, now)
+        .run();
 
-        return {
-          domain,
-          status: "pending" as const,
-          txtName: `_site-studio-verify.${domain}`,
-          txtValue: token,
-          site: current,
-        };
-      }),
-    verifyDomain: (id, ownerId) =>
-      Effect.gen(function* () {
-        const site = yield* db
-          .prepare("SELECT document FROM sites WHERE id = ? AND owner_id = ?")
-          .bind(id, ownerId)
-          .first<{ document: string }>();
-        if (site === null) return yield* Effect.fail(new SiteNotFound({ id }));
-        const current = yield* parse(site.document);
+      return {
+        domain,
+        status: "pending" as const,
+        txtName: "_site-studio-verify." + domain,
+        txtValue: token,
+        site: current,
+      };
+    }),
+    verifyDomain: Effect.fn("SiteRepository.verifyDomain")(function* (id: string, ownerId: string) {
+      const site = yield* db
+        .prepare("SELECT document FROM sites WHERE id = ? AND owner_id = ?")
+        .bind(id, ownerId)
+        .first<{ document: string }>();
+      if (site === null) return yield* new SiteNotFound({ id });
+      const current = yield* parse(site.document);
 
-        const pending = yield* db
-          .prepare(
-            "SELECT domain, verification_token FROM site_domains WHERE site_id = ? AND verified = 0 LIMIT 1",
-          )
-          .bind(id)
-          .first<{ domain: string; verification_token: string }>();
-        if (pending === null) return yield* Effect.fail(new SiteNotFound({ id }));
+      const pending = yield* db
+        .prepare(
+          "SELECT domain, verification_token FROM site_domains WHERE site_id = ? AND verified = 0 LIMIT 1",
+        )
+        .bind(id)
+        .first<{ domain: string; verification_token: string }>();
+      if (pending === null) return yield* new SiteNotFound({ id });
 
-        const verified = yield* Effect.tryPromise(() =>
-          checkTxt(pending.domain, pending.verification_token),
-        ).pipe(Effect.catch(() => Effect.succeed(false)));
-        if (!verified) {
-          return yield* Effect.fail(new DomainNotVerified({ domain: pending.domain }));
-        }
+      const verified = yield* Effect.tryPromise(() =>
+        checkTxt(pending.domain, pending.verification_token),
+      ).pipe(Effect.catch(() => Effect.succeed(false)));
+      if (!verified) {
+        return yield* new DomainNotVerified({ domain: pending.domain });
+      }
 
-        const now = new Date().toISOString();
-        const twin = pending.domain.startsWith("www.")
-          ? pending.domain.slice(4)
-          : `www.${pending.domain}`;
-        yield* db.prepare("UPDATE site_domains SET verified = 1 WHERE site_id = ?").bind(id).run();
-        yield* db
-          .prepare(
-            "INSERT OR IGNORE INTO site_domains (domain, site_id, verification_token, verified, created_at) VALUES (?, ?, ?, 1, ?)",
-          )
-          .bind(twin, id, pending.verification_token, now)
-          .run();
+      const now = new Date().toISOString();
+      const twin = pending.domain.startsWith("www.")
+        ? pending.domain.slice(4)
+        : "www." + pending.domain;
+      yield* db.prepare("UPDATE site_domains SET verified = 1 WHERE site_id = ?").bind(id).run();
+      yield* db
+        .prepare(
+          "INSERT OR IGNORE INTO site_domains (domain, site_id, verification_token, verified, created_at) VALUES (?, ?, ?, 1, ?)",
+        )
+        .bind(twin, id, pending.verification_token, now)
+        .run();
 
-        const updated = { ...current, customDomain: pending.domain, updatedAt: now };
-        yield* db
-          .prepare(
-            "UPDATE sites SET document = ?, custom_domain = ?, updated_at = ? WHERE id = ? AND owner_id = ?",
-          )
-          .bind(serialize(updated), pending.domain, now, id, ownerId)
-          .run();
-        return updated;
-      }),
-    removeDomain: (id, ownerId) =>
-      Effect.gen(function* () {
-        const site = yield* db
-          .prepare("SELECT document FROM sites WHERE id = ? AND owner_id = ?")
-          .bind(id, ownerId)
-          .first<{ document: string }>();
-        if (site === null) return yield* Effect.fail(new SiteNotFound({ id }));
-        const current = yield* parse(site.document);
+      const updated = { ...current, customDomain: pending.domain, updatedAt: now };
+      yield* db
+        .prepare(
+          "UPDATE sites SET document = ?, custom_domain = ?, updated_at = ? WHERE id = ? AND owner_id = ?",
+        )
+        .bind(serialize(updated), pending.domain, now, id, ownerId)
+        .run();
+      return updated;
+    }),
+    removeDomain: Effect.fn("SiteRepository.removeDomain")(function* (id: string, ownerId: string) {
+      const site = yield* db
+        .prepare("SELECT document FROM sites WHERE id = ? AND owner_id = ?")
+        .bind(id, ownerId)
+        .first<{ document: string }>();
+      if (site === null) return yield* new SiteNotFound({ id });
+      const current = yield* parse(site.document);
 
-        const now = new Date().toISOString();
-        yield* db.prepare("DELETE FROM site_domains WHERE site_id = ?").bind(id).run();
-        const updated = { ...current, customDomain: undefined, updatedAt: now };
-        yield* db
-          .prepare(
-            "UPDATE sites SET document = ?, custom_domain = NULL, updated_at = ? WHERE id = ? AND owner_id = ?",
-          )
-          .bind(serialize(updated), now, id, ownerId)
-          .run();
-        return updated;
-      }),
+      const now = new Date().toISOString();
+      yield* db.prepare("DELETE FROM site_domains WHERE site_id = ?").bind(id).run();
+      const updated = { ...current, customDomain: undefined, updatedAt: now };
+      yield* db
+        .prepare(
+          "UPDATE sites SET document = ?, custom_domain = NULL, updated_at = ? WHERE id = ? AND owner_id = ?",
+        )
+        .bind(serialize(updated), now, id, ownerId)
+        .run();
+      return updated;
+    }),
   };
 };
 export class SiteRepository extends Context.Service<SiteRepository, SiteRepositoryShape>()(
-  "SiteRepository",
+  "@app/SiteRepository",
 ) {}
 
 export const SiteRepositoryLayer = (db: Db) =>

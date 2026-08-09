@@ -13,7 +13,7 @@
     "smoke:serving": "bun run scripts/smoke-serving.ts",
     "smoke:dns": "bun run scripts/smoke-dns.ts",
     "build-publish": "bun run scripts/build-publish.ts",
-    "test": "bun test"
+    "test": "vitest run"
   },
   "dependencies": {
     "@daytona/sdk": "0.203.0",
@@ -26,6 +26,8 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260808.1",
     "@effect/language-service": "^0.87.2",
-    "typescript": "^7.0.2"
+    "@effect/vitest": "^4.0.0-beta.106",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   }
 }
