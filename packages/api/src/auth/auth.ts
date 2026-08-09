@@ -1,12 +1,12 @@
-import * as Context from "effect/Context"
-import { betterAuth } from "better-auth"
+import * as Context from "effect/Context";
+import { betterAuth } from "better-auth";
 
 export interface AuthConfig {
-  readonly secret: string
-  readonly baseURL: string
-  readonly trustedOrigins: string[]
-  readonly googleClientId: string
-  readonly googleClientSecret: string
+  readonly secret: string;
+  readonly baseURL: string;
+  readonly trustedOrigins: string[];
+  readonly googleClientId: string;
+  readonly googleClientSecret: string;
 }
 
 export const createAuth = (d1: D1Database, config: AuthConfig) =>
@@ -21,11 +21,11 @@ export const createAuth = (d1: D1Database, config: AuthConfig) =>
         clientSecret: config.googleClientSecret,
       },
     },
-  })
+  });
 
-export type Auth = ReturnType<typeof createAuth>
+export type Auth = ReturnType<typeof createAuth>;
 
-export const AUTH_PATH = "/api/auth"
+export const AUTH_PATH = "/api/auth";
 
 /**
  * The authenticated user resolved from the session. Provided per-request by

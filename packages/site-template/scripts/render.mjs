@@ -18,61 +18,58 @@
  * `sites/<site-id>/`.
  */
 
-import { execSync } from "node:child_process"
-import { mkdirSync, readFileSync, renameSync, rmSync, statSync } from "node:fs"
-import { writeFileSync } from "node:fs"
-import { dirname, join, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
+import { execSync } from "node:child_process";
+import { mkdirSync, readFileSync, renameSync, rmSync, statSync } from "node:fs";
+import { writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const here = dirname(fileURLToPath(import.meta.url))
-export const templateRoot = resolve(here, "..")
+const here = dirname(fileURLToPath(import.meta.url));
+export const templateRoot = resolve(here, "..");
 
 export async function render(site, outDir) {
-  const dataModule = join(templateRoot, "src", "site.data.ts")
-  const dist = join(templateRoot, "dist")
+  const dataModule = join(templateRoot, "src", "site.data.ts");
+  const dist = join(templateRoot, "dist");
 
-  const serialized = JSON.stringify(site, null, 2).replace(/</g, "\\u003c")
+  const serialized = JSON.stringify(site, null, 2).replace(/</g, "\\u003c");
   const generated = `// GENERATED FILE — written by scripts/render.mjs. Do not edit by hand.
 import type { Site } from "./site.ts"
 
 export const site: Site = ${serialized} as Site
-`
-  mkdirSync(dirname(dataModule), { recursive: true })
-  rmSync(dataModule, { force: true })
-  writeFileSync(dataModule, generated)
+`;
+  mkdirSync(dirname(dataModule), { recursive: true });
+  rmSync(dataModule, { force: true });
+  writeFileSync(dataModule, generated);
 
   // Public API base URL for the site's contact form. Falls back to a same-origin
   // path if unset (works when the site is served behind the API).
-  const apiUrl =
-    process.env.PUBLIC_API_URL ?? process.env.API_URL ?? "https://api.site-studio.dev"
+  const apiUrl = process.env.PUBLIC_API_URL ?? process.env.API_URL ?? "https://api.site-studio.dev";
   execSync("bun run astro build", {
     cwd: templateRoot,
     stdio: "inherit",
     env: { ...process.env, PUBLIC_API_URL: apiUrl },
-  })
+  });
 
-  rmSync(outDir, { recursive: true, force: true })
-  mkdirSync(dirname(outDir), { recursive: true })
-  renameSync(dist, outDir)
+  rmSync(outDir, { recursive: true, force: true });
+  mkdirSync(dirname(outDir), { recursive: true });
+  renameSync(dist, outDir);
 
-  const bytes = statSync(outDir).size
-  console.log(`rendered ${site.id} -> ${outDir} (${(bytes / 1024).toFixed(1)} KiB)`)
-  return outDir
+  const bytes = statSync(outDir).size;
+  console.log(`rendered ${site.id} -> ${outDir} (${(bytes / 1024).toFixed(1)} KiB)`);
+  return outDir;
 }
 
 if (import.meta.main) {
-  const [sitePath, outDirArg] = process.argv.slice(2)
+  const [sitePath, outDirArg] = process.argv.slice(2);
   if (!sitePath) {
-    console.error("Usage: bun run scripts/render.mjs <site.json> [outDir]")
-    process.exit(1)
+    console.error("Usage: bun run scripts/render.mjs <site.json> [outDir]");
+    process.exit(1);
   }
-  const site = JSON.parse(readFileSync(resolve(sitePath), "utf8"))
+  const site = JSON.parse(readFileSync(resolve(sitePath), "utf8"));
   if (!site?.id) {
-    console.error("site.json must contain a site document with an `id`")
-    process.exit(1)
+    console.error("site.json must contain a site document with an `id`");
+    process.exit(1);
   }
-  const outDir = outDirArg
-    ? resolve(outDirArg)
-    : join(templateRoot, "out", site.id)
-  await render(site, outDir)
+  const outDir = outDirArg ? resolve(outDirArg) : join(templateRoot, "out", site.id);
+  await render(site, outDir);
 }

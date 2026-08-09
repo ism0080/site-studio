@@ -1,20 +1,20 @@
 export interface TemplateTheme {
-  bg: string
-  accent: string
-  ink: string
-  surface: string
-  border: string
-  muted: string
+  bg: string;
+  accent: string;
+  ink: string;
+  surface: string;
+  border: string;
+  muted: string;
 }
 
-export type TemplateLayout = "editorial" | "warm" | "grid"
+export type TemplateLayout = "editorial" | "warm" | "grid";
 
 export interface SiteTemplate {
-  id: string
-  name: string
-  font: string
-  layout: TemplateLayout
-  theme: TemplateTheme
+  id: string;
+  name: string;
+  font: string;
+  layout: TemplateLayout;
+  theme: TemplateTheme;
 }
 
 /**
@@ -65,7 +65,7 @@ export const TEMPLATES: Record<string, SiteTemplate> = {
       muted: "#64748b",
     },
   },
-}
+};
 
 export const templateFor = (site: { templateId?: string }): SiteTemplate =>
-  TEMPLATES[site.templateId ?? ""] ?? TEMPLATES["editorial-studio"]
+  TEMPLATES[site.templateId ?? ""] ?? TEMPLATES["editorial-studio"];

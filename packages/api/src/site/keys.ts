@@ -15,13 +15,13 @@ const CONTENT_TYPES: Record<string, string> = {
   ".avif": "image/avif",
   ".ico": "image/x-icon",
   ".woff2": "font/woff2",
-}
+};
 
 export const contentTypeFor = (key: string): string => {
-  const dot = key.lastIndexOf(".")
-  const ext = dot === -1 ? "" : key.slice(dot)
-  return CONTENT_TYPES[ext] ?? "application/octet-stream"
-}
+  const dot = key.lastIndexOf(".");
+  const ext = dot === -1 ? "" : key.slice(dot);
+  return CONTENT_TYPES[ext] ?? "application/octet-stream";
+};
 
 /**
  * Normalizes a hostname for the `site_domains` lookup: lowercase, no scheme,
@@ -34,7 +34,7 @@ export const normalizeDomain = (input: string): string =>
     .replace(/^https?:\/\//, "")
     .split("/")[0]!
     .split(":")[0]!
-    .replace(/\.$/, "")
+    .replace(/\.$/, "");
 
 /**
  * Resolves a site-relative request path to the object path within a site's
@@ -42,16 +42,15 @@ export const normalizeDomain = (input: string): string =>
  * extension are returned as-is. An empty path (site root) maps to `index.html`.
  */
 export const siteObjectPath = (sitePath: string): string => {
-  const restPath =
-    sitePath.replace(/^\/+/, "").replace(/\/+$/, "") || "index.html"
-  return /\.\w+$/.test(restPath) ? restPath : `${restPath}/index.html`
-}
+  const restPath = sitePath.replace(/^\/+/, "").replace(/\/+$/, "") || "index.html";
+  return /\.\w+$/.test(restPath) ? restPath : `${restPath}/index.html`;
+};
 
 /**
  * Full R2 object key for `sitePath` inside `siteId`'s published tree.
  */
 export const siteObjectKey = (siteId: string, sitePath: string): string =>
-  `sites/${siteId}/${siteObjectPath(sitePath)}`
+  `sites/${siteId}/${siteObjectPath(sitePath)}`;
 
 /**
  * Legacy path-based resolution: maps a request pathname like
@@ -59,11 +58,11 @@ export const siteObjectKey = (siteId: string, sitePath: string): string =>
  * present in the path.
  */
 export const resolveSiteObjectKey = (pathname: string): string | null => {
-  const segments = pathname.split("/").filter(Boolean)
-  const siteId = segments[0]
-  if (!siteId) return null
-  return siteObjectKey(siteId, segments.slice(1).join("/"))
-}
+  const segments = pathname.split("/").filter(Boolean);
+  const siteId = segments[0];
+  if (!siteId) return null;
+  return siteObjectKey(siteId, segments.slice(1).join("/"));
+};
 
 /**
  * Resolves a request to an R2 object key. When `siteIdByDomain` (from the
@@ -76,13 +75,13 @@ export const resolveRequestKey = (
   pathname: string,
   siteIdByDomain: string | null,
 ): string | null => {
-  let siteId = siteIdByDomain
-  let sitePath = pathname.replace(/^\//, "")
+  let siteId = siteIdByDomain;
+  let sitePath = pathname.replace(/^\//, "");
   if (siteId === null) {
-    const segments = pathname.split("/").filter(Boolean)
-    siteId = segments[0] ?? null
-    sitePath = segments.slice(1).join("/")
+    const segments = pathname.split("/").filter(Boolean);
+    siteId = segments[0] ?? null;
+    sitePath = segments.slice(1).join("/");
   }
-  if (siteId === null) return null
-  return siteObjectKey(siteId, sitePath)
-}
+  if (siteId === null) return null;
+  return siteObjectKey(siteId, sitePath);
+};

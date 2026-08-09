@@ -1,8 +1,10 @@
 {
   "name": "site-studio",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "type": "module",
-  "workspaces": ["packages/*"],
   "scripts": {
     "dev": "bun run --filter @site-studio/web dev",
     "dev:api": "bun run --filter @site-studio/api dev",
@@ -10,11 +12,18 @@
     "build:template": "bun run --filter @site-studio/site-template build",
     "check:api": "bun run --filter @site-studio/api typecheck",
     "check:template": "bun run --filter @site-studio/site-template check",
-    "test:api": "bun run --filter @site-studio/api smoke"
+    "test:api": "bun run --filter @site-studio/api smoke",
+    "lint": "oxlint",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.62.0",
+    "oxlint": "^1.77.0"
   },
   "overrides": {
-    "effect": "4.0.0-beta.103",
     "@effect/platform-bun": "4.0.0-beta.103",
-    "@effect/platform-node": "4.0.0-beta.103"
+    "@effect/platform-node": "4.0.0-beta.103",
+    "effect": "4.0.0-beta.103"
   }
 }

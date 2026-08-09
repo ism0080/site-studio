@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { SECTION_TYPES } from '../data/sections.js'
-import { FONTS, templates } from '../data/site.js'
+import { useState } from "react";
+import { SECTION_TYPES } from "../data/sections.js";
+import { FONTS, templates } from "../data/site.js";
 import {
   findPage,
   findSection,
@@ -11,12 +11,12 @@ import {
   addSection,
   removeSection,
   moveSection,
-} from '../lib/siteUpdates.js'
+} from "../lib/siteUpdates.js";
 
 function sectionSub(block) {
-  const meta = SECTION_TYPES[block.type]
-  if (!meta) return block.type
-  return typeof meta.sub === 'function' ? meta.sub(block.props) : meta.sub
+  const meta = SECTION_TYPES[block.type];
+  if (!meta) return block.type;
+  return typeof meta.sub === "function" ? meta.sub(block.props) : meta.sub;
 }
 
 function ColorField({ label, value, onChange }) {
@@ -28,46 +28,54 @@ function ColorField({ label, value, onChange }) {
         <span>{value}</span>
       </div>
     </div>
-  )
+  );
 }
 
 function ThemeSettings({ site, onUpdate }) {
-  const template = templates.find((t) => t.id === site.templateId) ?? templates[0]
+  const template = templates.find((t) => t.id === site.templateId) ?? templates[0];
   const fallback = {
     accent: template.palette[1],
     bg: template.palette[0],
     ink: template.palette[2],
     surface: template.surface,
-  }
-  const value = (key) => site.settings[key] ?? fallback[key]
-  const set = (key) => (v) => onUpdate(updateSetting(site, key, v))
+  };
+  const value = (key) => site.settings[key] ?? fallback[key];
+  const set = (key) => (v) => onUpdate(updateSetting(site, key, v));
 
   return (
     <div className="theme-settings">
       <div className="field-group">
         <label>Font</label>
-        <select className="font-select" value={site.settings.font} onChange={(e) => set('font')(e.target.value)}>
-          {FONTS.map((font) => <option key={font}>{font}</option>)}
+        <select
+          className="font-select"
+          value={site.settings.font}
+          onChange={(e) => set("font")(e.target.value)}
+        >
+          {FONTS.map((font) => (
+            <option key={font}>{font}</option>
+          ))}
         </select>
       </div>
       <div className="field-row">
-        <ColorField label="Accent" value={value('accent')} onChange={set('accent')} />
-        <ColorField label="Background" value={value('bg')} onChange={set('bg')} />
+        <ColorField label="Accent" value={value("accent")} onChange={set("accent")} />
+        <ColorField label="Background" value={value("bg")} onChange={set("bg")} />
       </div>
       <div className="field-row">
-        <ColorField label="Text" value={value('ink')} onChange={set('ink')} />
-        <ColorField label="Cards" value={value('surface')} onChange={set('surface')} />
+        <ColorField label="Text" value={value("ink")} onChange={set("ink")} />
+        <ColorField label="Cards" value={value("surface")} onChange={set("surface")} />
       </div>
-      <p className="theme-hint">Custom colours override the {template.name} palette. The font and accent already do.</p>
+      <p className="theme-hint">
+        Custom colours override the {template.name} palette. The font and accent already do.
+      </p>
     </div>
-  )
+  );
 }
 
 function DomainSettings({ site, online, onSetDomain, onVerifyDomain, onRemoveDomain }) {
-  const [domainInput, setDomainInput] = useState('')
-  const [setup, setSetup] = useState(null)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(null)
+  const [domainInput, setDomainInput] = useState("");
+  const [setup, setSetup] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
 
   if (online !== true) {
     return (
@@ -75,62 +83,71 @@ function DomainSettings({ site, online, onSetDomain, onVerifyDomain, onRemoveDom
         <label>Custom domain</label>
         <p className="domain-hint">Connect the API to attach your own domain.</p>
       </div>
-    )
+    );
   }
 
-  const active = site.customDomain
+  const active = site.customDomain;
 
   const connect = async () => {
-    const domain = domainInput.trim()
-    if (!domain) return
-    setBusy(true)
-    setError(null)
+    const domain = domainInput.trim();
+    if (!domain) return;
+    setBusy(true);
+    setError(null);
     try {
-      const result = await onSetDomain(domain)
-      setSetup(result)
+      const result = await onSetDomain(domain);
+      setSetup(result);
     } catch (e) {
-      setError(e.message)
-      setSetup(null)
+      setError(e.message);
+      setSetup(null);
     } finally {
-      setBusy(false)
+      setBusy(false);
     }
-  }
+  };
 
   const verify = async () => {
-    setBusy(true)
-    setError(null)
+    setBusy(true);
+    setError(null);
     try {
-      await onVerifyDomain()
-      setSetup(null)
-      setDomainInput('')
+      await onVerifyDomain();
+      setSetup(null);
+      setDomainInput("");
     } catch (e) {
-      setError(e.message)
+      setError(e.message);
     } finally {
-      setBusy(false)
+      setBusy(false);
     }
-  }
+  };
 
   const remove = async () => {
-    setBusy(true)
-    setError(null)
+    setBusy(true);
+    setError(null);
     try {
-      await onRemoveDomain()
-      setSetup(null)
-      setDomainInput('')
+      await onRemoveDomain();
+      setSetup(null);
+      setDomainInput("");
     } catch (e) {
-      setError(e.message)
+      setError(e.message);
     } finally {
-      setBusy(false)
+      setBusy(false);
     }
-  }
+  };
 
   return (
     <div className="field-group">
       <label>Custom domain</label>
       {active && (
         <div className="domain-active">
-          <span className="status-pill"><i /> {active}</span>
-          <button className="section-btn remove" onClick={remove} disabled={busy} aria-label="Remove domain">×</button>
+          <span className="status-pill">
+            <i /> {active}
+          </span>
+          <button
+            className="section-btn remove"
+            onClick={remove}
+            disabled={busy}
+            aria-label="Remove domain"
+          >
+            ×
+          </button>
         </div>
       )}
       {!active && !setup && (
@@ -140,33 +157,51 @@ function DomainSettings({ site, online, onSetDomain, onVerifyDomain, onRemoveDom
             value={domainInput}
             onChange={(e) => setDomainInput(e.target.value)}
           />
-          <button className="dark-button" onClick={connect} disabled={busy}>Connect</button>
+          <button className="dark-button" onClick={connect} disabled={busy}>
+            Connect
+          </button>
         </div>
       )}
       {setup && (
         <div className="domain-records">
           <p className="domain-hint">Add this TXT record at your DNS provider, then verify.</p>
-          <div className="record"><code>{setup.txtName}</code><code>{setup.txtValue}</code></div>
-          <button className="dark-button" onClick={verify} disabled={busy}>Verify ownership</button>
+          <div className="record">
+            <code>{setup.txtName}</code>
+            <code>{setup.txtValue}</code>
+          </div>
+          <button className="dark-button" onClick={verify} disabled={busy}>
+            Verify ownership
+          </button>
         </div>
       )}
       {error && <p className="domain-error">{error}</p>}
     </div>
-  )
+  );
 }
 
-export default function EditorPanel({ site, online, saveState, onUpdate, onSetDomain, onVerifyDomain, onRemoveDomain }) {
-  const page = findPage(site)
-  const hero = findSection(page, 'hero')
-  const services = findSection(page, 'services')
+export default function EditorPanel({
+  site,
+  online,
+  saveState,
+  onUpdate,
+  onSetDomain,
+  onVerifyDomain,
+  onRemoveDomain,
+}) {
+  const page = findPage(site);
+  const hero = findSection(page, "hero");
+  const services = findSection(page, "services");
 
-  const handleAddSection = (type) => onUpdate(addSection(site, page.id, SECTION_TYPES[type].create()))
-  const handleRemoveSection = (blockId) => onUpdate(removeSection(site, page.id, blockId))
-  const handleMoveSection = (blockId, direction) => onUpdate(moveSection(site, page.id, blockId, direction))
+  const handleAddSection = (type) =>
+    onUpdate(addSection(site, page.id, SECTION_TYPES[type].create()));
+  const handleRemoveSection = (blockId) => onUpdate(removeSection(site, page.id, blockId));
+  const handleMoveSection = (blockId, direction) =>
+    onUpdate(moveSection(site, page.id, blockId, direction));
 
-  const addable = Object.entries(SECTION_TYPES).filter(([type]) => !findSection(page, type))
+  const addable = Object.entries(SECTION_TYPES).filter(([type]) => !findSection(page, type));
 
-  const savedLabel = saveState === 'saving' ? 'Saving…' : saveState === 'error' ? 'Save failed' : 'Saved'
+  const savedLabel =
+    saveState === "saving" ? "Saving…" : saveState === "error" ? "Save failed" : "Saved";
 
   return (
     <aside className="editor-panel">
@@ -175,7 +210,9 @@ export default function EditorPanel({ site, online, saveState, onUpdate, onSetDo
           <p className="overline">Site editor</p>
           <h2>Homepage</h2>
         </div>
-        <span className="saved"><i /> {savedLabel}</span>
+        <span className="saved">
+          <i /> {savedLabel}
+        </span>
       </div>
 
       <div className="panel-scroll">
@@ -199,36 +236,75 @@ export default function EditorPanel({ site, online, saveState, onUpdate, onSetDo
         {hero && (
           <>
             <div className="field-group">
-              <label>Headline <span className="field-type">hero.headline</span></label>
-              <textarea rows="3" value={hero.props.headline} onChange={(e) => onUpdate(updateSectionProp(site, page.id, hero.id, 'headline', e.target.value))} />
+              <label>
+                Headline <span className="field-type">hero.headline</span>
+              </label>
+              <textarea
+                rows="3"
+                value={hero.props.headline}
+                onChange={(e) =>
+                  onUpdate(updateSectionProp(site, page.id, hero.id, "headline", e.target.value))
+                }
+              />
             </div>
 
             <div className="field-group">
-              <label>Short description <span className="field-type">hero.description</span></label>
-              <textarea rows="3" value={hero.props.description} onChange={(e) => onUpdate(updateSectionProp(site, page.id, hero.id, 'description', e.target.value))} />
+              <label>
+                Short description <span className="field-type">hero.description</span>
+              </label>
+              <textarea
+                rows="3"
+                value={hero.props.description}
+                onChange={(e) =>
+                  onUpdate(updateSectionProp(site, page.id, hero.id, "description", e.target.value))
+                }
+              />
             </div>
 
             <div className="field-group">
               <label>Primary button</label>
-              <input value={hero.props.primaryCta} onChange={(e) => onUpdate(updateSectionProp(site, page.id, hero.id, 'primaryCta', e.target.value))} />
+              <input
+                value={hero.props.primaryCta}
+                onChange={(e) =>
+                  onUpdate(updateSectionProp(site, page.id, hero.id, "primaryCta", e.target.value))
+                }
+              />
             </div>
           </>
         )}
 
-        {services && services.props.items.map((item, i) => (
-          <div className="field-group service-fields" key={item.id}>
-            <label>Service {i + 1} <span className="field-type">services.items</span></label>
-            <input
-              value={item.title}
-              onChange={(e) => onUpdate(updateSectionItem(site, page.id, services.id, item.id, 'title', e.target.value))}
-            />
-            <textarea
-              rows="2"
-              value={item.description}
-              onChange={(e) => onUpdate(updateSectionItem(site, page.id, services.id, item.id, 'description', e.target.value))}
-            />
-          </div>
-        ))}
+        {services &&
+          services.props.items.map((item, i) => (
+            <div className="field-group service-fields" key={item.id}>
+              <label>
+                Service {i + 1} <span className="field-type">services.items</span>
+              </label>
+              <input
+                value={item.title}
+                onChange={(e) =>
+                  onUpdate(
+                    updateSectionItem(site, page.id, services.id, item.id, "title", e.target.value),
+                  )
+                }
+              />
+              <textarea
+                rows="2"
+                value={item.description}
+                onChange={(e) =>
+                  onUpdate(
+                    updateSectionItem(
+                      site,
+                      page.id,
+                      services.id,
+                      item.id,
+                      "description",
+                      e.target.value,
+                    ),
+                  )
+                }
+              />
+            </div>
+          ))}
 
         <div className="content-divider" />
 
@@ -237,10 +313,12 @@ export default function EditorPanel({ site, online, saveState, onUpdate, onSetDo
         </div>
 
         {page.sections.map((block, i) => {
-          const meta = SECTION_TYPES[block.type]
+          const meta = SECTION_TYPES[block.type];
           return (
             <div className="section-card" key={block.id}>
-              <div className="drag" aria-hidden="true">⠿</div>
+              <div className="drag" aria-hidden="true">
+                ⠿
+              </div>
               <div className="section-card-body">
                 <strong>{meta ? meta.label : block.type}</strong>
                 <small>{sectionSub(block)}</small>
@@ -252,33 +330,43 @@ export default function EditorPanel({ site, online, saveState, onUpdate, onSetDo
                   aria-label="Move section up"
                   disabled={i === 0}
                   onClick={() => handleMoveSection(block.id, -1)}
-                >↑</button>
+                >
+                  ↑
+                </button>
                 <button
                   type="button"
                   className="section-btn"
                   aria-label="Move section down"
                   disabled={i === page.sections.length - 1}
                   onClick={() => handleMoveSection(block.id, 1)}
-                >↓</button>
+                >
+                  ↓
+                </button>
                 <button
                   type="button"
                   className="section-btn remove"
                   aria-label="Remove section"
                   onClick={() => handleRemoveSection(block.id)}
-                >×</button>
+                >
+                  ×
+                </button>
               </div>
             </div>
-          )
+          );
         })}
 
         {addable.map(([type, meta]) => (
           <div className="section-card muted-card" key={type}>
-            <div className="drag" aria-hidden="true">+</div>
+            <div className="drag" aria-hidden="true">
+              +
+            </div>
             <div className="section-card-body">
               <strong>{meta.label}</strong>
               <small>{meta.hint}</small>
             </div>
-            <button type="button" className="add-small" onClick={() => handleAddSection(type)}>Add</button>
+            <button type="button" className="add-small" onClick={() => handleAddSection(type)}>
+              Add
+            </button>
           </div>
         ))}
 
@@ -293,5 +381,5 @@ export default function EditorPanel({ site, online, saveState, onUpdate, onSetDo
         />
       </div>
     </aside>
-  )
+  );
 }

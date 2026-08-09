@@ -12,16 +12,12 @@
  *   PUBLIC_API_URL (passed into the sandbox for the upload step)
  */
 
-import { Daytona } from "@daytona/sdk"
-import * as Config from "effect/Config"
-import * as Effect from "effect/Effect"
-import * as Layer from "effect/Layer"
-import type { Site } from "../../src/site/site.ts"
-import {
-  BuildError,
-  BuildRunner,
-  type BuildResult,
-} from "../../src/publish/BuildRunner.ts"
+import { Daytona } from "@daytona/sdk";
+import * as Config from "effect/Config";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
+import type { Site } from "../../src/site/site.ts";
+import { BuildError, BuildRunner, type BuildResult } from "../../src/publish/BuildRunner.ts";
 
 const config = Effect.all({
   apiKey: Config.string("DAYTONA_API_KEY"),
@@ -38,16 +34,16 @@ const config = Effect.all({
   r2AccessKeyId: Config.string("R2_ACCESS_KEY_ID").pipe(Config.withDefault("")),
   r2SecretAccessKey: Config.string("R2_SECRET_ACCESS_KEY").pipe(Config.withDefault("")),
   publicApiUrl: Config.option(Config.string("PUBLIC_API_URL")),
-})
+});
 
 export const DaytonaBuildRunner = Layer.effect(
   BuildRunner,
   Effect.gen(function* () {
-    const env = yield* config
+    const env = yield* config;
     const client = new Daytona({
       apiKey: env.apiKey,
       ...(env.apiUrl._tag === "Some" ? { apiUrl: env.apiUrl.value } : {}),
-    })
+    });
 
     return {
       publish: (site: Site) =>
@@ -63,19 +59,18 @@ export const DaytonaBuildRunner = Layer.effect(
               R2_BUCKET: env.r2Bucket,
               R2_ACCESS_KEY_ID: env.r2AccessKeyId,
               R2_SECRET_ACCESS_KEY: env.r2SecretAccessKey,
-              PUBLIC_API_URL:
-                env.publicApiUrl._tag === "Some" ? env.publicApiUrl.value : "",
+              PUBLIC_API_URL: env.publicApiUrl._tag === "Some" ? env.publicApiUrl.value : "",
             },
             resources: { cpu: env.cpu, memory: env.memory },
             autoDeleteInterval: 30,
             labels: { app: "site-studio", site: site.id },
-          })
+          });
 
           try {
             await sandbox.fs.uploadFile(
               Buffer.from(JSON.stringify(site, null, 2), "utf8"),
               `${env.repoDir}/site.json`,
-            )
+            );
             const result = await sandbox.process.executeCommand(
               "bun run publish site.json --upload",
               env.repoDir,
@@ -84,18 +79,17 @@ export const DaytonaBuildRunner = Layer.effect(
                 R2_BUCKET: env.r2Bucket,
                 R2_ACCESS_KEY_ID: env.r2AccessKeyId,
                 R2_SECRET_ACCESS_KEY: env.r2SecretAccessKey,
-                PUBLIC_API_URL:
-                  env.publicApiUrl._tag === "Some" ? env.publicApiUrl.value : "",
+                PUBLIC_API_URL: env.publicApiUrl._tag === "Some" ? env.publicApiUrl.value : "",
               },
               600,
-            )
+            );
             return {
               buildId: sandbox.id,
               exitCode: result.exitCode,
               output: result.result,
-            }
+            };
           } finally {
-            await client.delete(sandbox).catch(() => {})
+            await client.delete(sandbox).catch(() => {});
           }
         }).pipe(
           Effect.mapError(
@@ -106,6 +100,6 @@ export const DaytonaBuildRunner = Layer.effect(
               }),
           ),
         ),
-    }
+    };
   }),
-)
+);

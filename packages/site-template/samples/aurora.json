@@ -41,9 +41,21 @@
           "props": {
             "title": "How we can help",
             "items": [
-              { "id": "service_01", "title": "Brand direction", "description": "Clarity, character, and a visual language that feels like you." },
-              { "id": "service_02", "title": "Digital experiences", "description": "Websites and tools that make good ideas easier to find." },
-              { "id": "service_03", "title": "Ongoing support", "description": "A thoughtful partner for the next chapter, whenever it arrives." }
+              {
+                "id": "service_01",
+                "title": "Brand direction",
+                "description": "Clarity, character, and a visual language that feels like you."
+              },
+              {
+                "id": "service_02",
+                "title": "Digital experiences",
+                "description": "Websites and tools that make good ideas easier to find."
+              },
+              {
+                "id": "service_03",
+                "title": "Ongoing support",
+                "description": "A thoughtful partner for the next chapter, whenever it arrives."
+              }
             ]
           }
         },
@@ -62,8 +74,18 @@
           "props": {
             "title": "Kind words from clients",
             "items": [
-              { "id": "t_01", "quote": "Working with this team was a genuine delight.", "author": "Maya Chen", "role": "Founder, Field Notes" },
-              { "id": "t_02", "quote": "Clear, kind, and incredibly skilled throughout.", "author": "Jon Bell", "role": "Creative Director" }
+              {
+                "id": "t_01",
+                "quote": "Working with this team was a genuine delight.",
+                "author": "Maya Chen",
+                "role": "Founder, Field Notes"
+              },
+              {
+                "id": "t_02",
+                "quote": "Clear, kind, and incredibly skilled throughout.",
+                "author": "Jon Bell",
+                "role": "Creative Director"
+              }
             ]
           }
         }

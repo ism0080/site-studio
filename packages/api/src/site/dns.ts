@@ -4,16 +4,19 @@
  * TXT record, which only the domain owner can do.
  */
 
-export const TXT_PREFIX = "_site-studio-verify"
+export const TXT_PREFIX = "_site-studio-verify";
 
 export const newVerificationToken = (): string =>
-  `site-studio-verify=${crypto.randomUUID().replaceAll("-", "")}`
+  `site-studio-verify=${crypto.randomUUID().replaceAll("-", "")}`;
 
 export interface DnsFetch {
-  (url: string, init?: { headers?: Record<string, string> }): Promise<{
-    ok: boolean
-    json(): Promise<unknown>
-  }>
+  (
+    url: string,
+    init?: { headers?: Record<string, string> },
+  ): Promise<{
+    ok: boolean;
+    json(): Promise<unknown>;
+  }>;
 }
 
 /**
@@ -25,18 +28,16 @@ export const verifyTxtRecord = async (
   token: string,
   fetchFn: DnsFetch = fetch as DnsFetch,
 ): Promise<boolean> => {
-  const name = `${TXT_PREFIX}.${domain}`
+  const name = `${TXT_PREFIX}.${domain}`;
   try {
     const res = await fetchFn(
       `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=TXT`,
       { headers: { accept: "application/dns-json" } },
-    )
-    if (!res.ok) return false
-    const json = (await res.json()) as { Answer?: Array<{ data?: string }> }
-    return (json.Answer ?? []).some(
-      (answer) => answer.data?.replace(/^"|"$/g, "") === token,
-    )
+    );
+    if (!res.ok) return false;
+    const json = (await res.json()) as { Answer?: Array<{ data?: string }> };
+    return (json.Answer ?? []).some((answer) => answer.data?.replace(/^"|"$/g, "") === token);
   } catch {
-    return false
+    return false;
   }
-}
+};

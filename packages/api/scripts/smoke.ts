@@ -1,5 +1,5 @@
-import * as Schema from "effect/Schema"
-import { Site, decodeSite, encodeSite } from "../src/site/site.ts"
+import * as Schema from "effect/Schema";
+import { Site, encodeSite } from "../src/site/site.ts";
 
 const site = Schema.decodeUnknownSync(Site)({
   id: "site_test",
@@ -52,17 +52,15 @@ const site = Schema.decodeUnknownSync(Site)({
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
   publishedAt: "2026-01-01T00:00:00.000Z",
-})
+});
 
-const encoded = encodeSite(site)
-const decoded = Schema.decodeUnknownSync(Site)(
-  JSON.parse(JSON.stringify(encoded)),
-)
+const encoded = encodeSite(site);
+const decoded = Schema.decodeUnknownSync(Site)(JSON.parse(JSON.stringify(encoded)));
 console.log(
   "round-trip ok:",
   decoded.id === site.id &&
     decoded.status === site.status &&
     decoded.pages.length === 1 &&
     decoded.pages[0].sections[0].type === "hero",
-)
-console.log("settings.analytics:", decoded.settings.analytics?.siteId)
+);
+console.log("settings.analytics:", decoded.settings.analytics?.siteId);

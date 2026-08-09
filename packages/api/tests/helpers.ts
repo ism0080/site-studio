@@ -1,22 +1,22 @@
-import { Database } from "bun:sqlite"
-import { readdirSync, readFileSync } from "node:fs"
-import { join } from "node:path"
-import { fileURLToPath } from "node:url"
-import * as Effect from "effect/Effect"
-import { RuntimeContext } from "alchemy"
+import { Database } from "bun:sqlite";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import * as Effect from "effect/Effect";
+import { RuntimeContext } from "alchemy";
 
-const migrationsDir = fileURLToPath(new URL("../migrations", import.meta.url))
+const migrationsDir = fileURLToPath(new URL("../migrations", import.meta.url));
 
 /** In-memory SQLite with all migrations applied. */
 export const makeDb = (): Database => {
-  const db = new Database(":memory:")
+  const db = new Database(":memory:");
   for (const file of readdirSync(migrationsDir)
     .filter((f) => f.endsWith(".sql"))
-    .sort()) {
-    db.exec(readFileSync(join(migrationsDir, file), "utf8"))
+    .toSorted()) {
+    db.exec(readFileSync(join(migrationsDir, file), "utf8"));
   }
-  return db
-}
+  return db;
+};
 
 /**
  * Minimal D1 QueryDatabaseClient shim over bun:sqlite — enough of the
@@ -25,25 +25,27 @@ export const makeDb = (): Database => {
 export const memoryD1 = (db: Database) => ({
   prepare: (sql: string) => ({
     bind: (...params: unknown[]) => {
-      const stmt = db.prepare(sql)
+      const stmt = db.prepare(sql);
       return {
         all: <T>() =>
           Effect.sync(() => ({
-            results: stmt.all(...(params as Array<string | number | null>)),
+            results: stmt.all(...(params as Array<string | number | null>)) as unknown as T[],
           })),
         first: <T>() =>
-          Effect.sync(() => (stmt.get(...(params as Array<string | number | null>)) ?? null) as T | null),
-        run: <T>() =>
+          Effect.sync(
+            () => (stmt.get(...(params as Array<string | number | null>)) ?? null) as T | null,
+          ),
+        run: () =>
           Effect.sync(
             () =>
               ({
                 meta: { changes: stmt.run(...(params as Array<string | number | null>)).changes },
               }) as never,
           ),
-      }
+      };
     },
   }),
-})
+});
 
 /**
  * Runs a repository/storage Effect. The real D1/R2 clients type these effects
@@ -51,6 +53,4 @@ export const memoryD1 = (db: Database) => ({
  * service is provided to satisfy the type.
  */
 export const run = <A, E>(effect: Effect.Effect<A, E, any>) =>
-  Effect.runPromise(
-    effect.pipe(Effect.provideService(RuntimeContext, {} as never)),
-  )
+  Effect.runPromise(effect.pipe(Effect.provideService(RuntimeContext, {} as never)));

@@ -1,4 +1,4 @@
-import { findPage } from '../lib/siteUpdates.js'
+import { findPage } from "../lib/siteUpdates.js";
 
 function Hero({ block }) {
   return (
@@ -8,8 +8,12 @@ function Hero({ block }) {
         <h1>{block.props.headline}</h1>
         <p className="hero-description">{block.props.description}</p>
         <div className="hero-actions">
-          <button className="site-primary">{block.props.primaryCta} <span>↗</span></button>
-          <button className="site-secondary">{block.props.secondaryCta} <span>↓</span></button>
+          <button className="site-primary">
+            {block.props.primaryCta} <span>↗</span>
+          </button>
+          <button className="site-secondary">
+            {block.props.secondaryCta} <span>↓</span>
+          </button>
         </div>
       </div>
       {block.props.image && (
@@ -19,14 +23,14 @@ function Hero({ block }) {
         </div>
       )}
     </section>
-  )
+  );
 }
 
 function Services({ block, index }) {
   return (
     <section className="services">
       <div className="section-intro">
-        <span className="section-number">{String(index + 1).padStart(2, '0')}</span>
+        <span className="section-number">{String(index + 1).padStart(2, "0")}</span>
         <h2>{block.props.title}</h2>
       </div>
       <div className="service-list">
@@ -42,7 +46,7 @@ function Services({ block, index }) {
         ))}
       </div>
     </section>
-  )
+  );
 }
 
 function About({ block }) {
@@ -52,14 +56,14 @@ function About({ block }) {
       <h2>{block.props.title}</h2>
       <p>{block.props.body}</p>
     </section>
-  )
+  );
 }
 
 function Testimonials({ block, index }) {
   return (
     <section className="testimonials">
       <div className="section-intro">
-        <span className="section-number">{String(index + 1).padStart(2, '0')}</span>
+        <span className="section-number">{String(index + 1).padStart(2, "0")}</span>
         <h2>{block.props.title}</h2>
       </div>
       <div className="testimonial-list">
@@ -74,7 +78,7 @@ function Testimonials({ block, index }) {
         ))}
       </div>
     </section>
-  )
+  );
 }
 
 const renderers = {
@@ -82,23 +86,32 @@ const renderers = {
   services: Services,
   about: About,
   testimonials: Testimonials,
-}
+};
 
 export default function Preview({ site, device }) {
-  const page = findPage(site)
+  const page = findPage(site);
   return (
     <div className={`preview-canvas ${device}`}>
-      <div className="public-site" style={{ '--accent': site.settings.accent }}>
-        <div className="site-topbar"><span>{site.business.category}</span><span>{site.business.location}</span></div>
+      <div className="public-site" style={{ "--accent": site.settings.accent }}>
+        <div className="site-topbar">
+          <span>{site.business.category}</span>
+          <span>{site.business.location}</span>
+        </div>
         <header className="site-header">
           <div className="site-logo">{site.business.logo}</div>
-          <nav><span>About</span><span>Services</span><span>Journal</span></nav>
-          <button className="site-menu">Menu <span>↘</span></button>
+          <nav>
+            <span>About</span>
+            <span>Services</span>
+            <span>Journal</span>
+          </nav>
+          <button className="site-menu">
+            Menu <span>↘</span>
+          </button>
         </header>
         <main>
           {page.sections.map((block, index) => {
-            const Component = renderers[block.type]
-            return Component ? <Component key={block.id} block={block} index={index} /> : null
+            const Component = renderers[block.type];
+            return Component ? <Component key={block.id} block={block} index={index} /> : null;
           })}
         </main>
         <footer className="site-footer">
@@ -108,5 +121,5 @@ export default function Preview({ site, device }) {
         </footer>
       </div>
     </div>
-  )
+  );
 }

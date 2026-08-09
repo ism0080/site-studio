@@ -1,20 +1,20 @@
-import * as Cloudflare from "alchemy/Cloudflare"
-import * as Config from "effect/Config"
-import * as Context from "effect/Context"
-import * as Data from "effect/Data"
-import * as Effect from "effect/Effect"
-import * as Layer from "effect/Layer"
-import type { RuntimeContext } from "alchemy"
-import type { Lead } from "./leads.ts"
+import * as Cloudflare from "alchemy/Cloudflare";
+import * as Config from "effect/Config";
+import * as Context from "effect/Context";
+import * as Data from "effect/Data";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
+import type { RuntimeContext } from "alchemy";
+import type { Lead } from "./leads.ts";
 
 export class LeadNotifierError extends Data.TaggedError("LeadNotifierError")<{
-  message: string
-  cause?: unknown
+  message: string;
+  cause?: unknown;
 }> {}
 
 export interface NotifyTarget {
-  readonly name: string
-  readonly email: string
+  readonly name: string;
+  readonly email: string;
 }
 
 /**
@@ -26,17 +26,16 @@ export interface LeadNotifierShape {
   readonly notify: (
     lead: Lead,
     site: NotifyTarget,
-  ) => Effect.Effect<void, LeadNotifierError, RuntimeContext>
+  ) => Effect.Effect<void, LeadNotifierError, RuntimeContext>;
 }
 
-export class LeadNotifier extends Context.Service<
-  LeadNotifier,
-  LeadNotifierShape
->()("LeadNotifier") {}
+export class LeadNotifier extends Context.Service<LeadNotifier, LeadNotifierShape>()(
+  "LeadNotifier",
+) {}
 
 export const makeNoopNotifier = (): LeadNotifierShape => ({
   notify: () => Effect.void,
-})
+});
 
 /**
  * Sends via Cloudflare's `send_email` binding. Requires Email Routing on the
@@ -45,13 +44,13 @@ export const makeNoopNotifier = (): LeadNotifierShape => ({
  */
 export const makeCloudflareNotifier = () =>
   Effect.gen(function* () {
-    const notifyEmail = yield* Config.string("LEADS_NOTIFY_EMAIL")
-    const fromEmail = yield* Config.string("LEADS_FROM_EMAIL")
+    const notifyEmail = yield* Config.string("LEADS_NOTIFY_EMAIL");
+    const fromEmail = yield* Config.string("LEADS_FROM_EMAIL");
     const sender = yield* Cloudflare.Email.SendEmail("LeadsNotify", {
       allowedDestinationAddresses: [notifyEmail],
       allowedSenderAddresses: [fromEmail],
-    })
-    const mail = yield* Cloudflare.Email.Send(sender)
+    });
+    const mail = yield* Cloudflare.Email.Send(sender);
 
     return {
       notify: (lead, site) =>
@@ -72,21 +71,14 @@ export const makeCloudflareNotifier = () =>
             Effect.mapError(
               (cause) =>
                 new LeadNotifierError({
-                  message:
-                    cause instanceof Error ? cause.message : String(cause),
+                  message: cause instanceof Error ? cause.message : String(cause),
                   cause,
                 }),
             ),
           ),
-    } satisfies LeadNotifierShape
-  })
+    } satisfies LeadNotifierShape;
+  });
 
-export const NoopLeadNotifier = Layer.effect(
-  LeadNotifier,
-  Effect.succeed(makeNoopNotifier()),
-)
+export const NoopLeadNotifier = Layer.effect(LeadNotifier, Effect.succeed(makeNoopNotifier()));
 
-export const CloudflareLeadNotifier = Layer.effect(
-  LeadNotifier,
-  makeCloudflareNotifier(),
-)
+export const CloudflareLeadNotifier = Layer.effect(LeadNotifier, makeCloudflareNotifier());

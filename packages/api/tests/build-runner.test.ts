@@ -1,9 +1,9 @@
-import { describe, expect, test } from "bun:test"
-import * as Effect from "effect/Effect"
-import * as Schema from "effect/Schema"
-import { BuildRunner } from "../src/publish/BuildRunner.ts"
-import { LocalBuildRunner } from "../scripts/build-runner/local.ts"
-import { Site } from "../src/site/site.ts"
+import { describe, expect, test } from "bun:test";
+import * as Effect from "effect/Effect";
+import * as Schema from "effect/Schema";
+import { BuildRunner } from "../src/publish/BuildRunner.ts";
+import { LocalBuildRunner } from "../scripts/build-runner/local.ts";
+import { Site } from "../src/site/site.ts";
 
 const site = Schema.decodeUnknownSync(Site)({
   id: "site_test_build",
@@ -49,7 +49,7 @@ const site = Schema.decodeUnknownSync(Site)({
   ],
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
-})
+});
 
 describe("LocalBuildRunner", () => {
   test(
@@ -57,15 +57,15 @@ describe("LocalBuildRunner", () => {
     async () => {
       const result = await Effect.runPromise(
         Effect.gen(function* () {
-          const runner = yield* BuildRunner
-          return yield* runner.publish(site)
+          const runner = yield* BuildRunner;
+          return yield* runner.publish(site);
         }).pipe(Effect.provide(LocalBuildRunner)),
-      )
+      );
 
-      expect(result.exitCode).toBe(0)
-      expect(result.output).toContain("rendered")
-      expect(result.buildId).toContain(site.id)
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain("rendered");
+      expect(result.buildId).toContain(site.id);
     },
     { timeout: 30000 },
-  )
-})
+  );
+});

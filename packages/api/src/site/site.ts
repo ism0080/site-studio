@@ -1,5 +1,4 @@
-import * as HttpApi from "effect/unstable/httpapi"
-import * as Schema from "effect/Schema"
+import * as Schema from "effect/Schema";
 
 const HeroProps = Schema.Struct({
   eyebrow: Schema.String,
@@ -8,76 +7,76 @@ const HeroProps = Schema.Struct({
   primaryCta: Schema.String,
   secondaryCta: Schema.String,
   image: Schema.String,
-})
+});
 
 const ServiceItem = Schema.Struct({
   id: Schema.String,
   title: Schema.String,
   description: Schema.String,
-})
+});
 
 const ServicesProps = Schema.Struct({
   title: Schema.String,
   items: Schema.Array(ServiceItem),
-})
+});
 
 const AboutProps = Schema.Struct({
   eyebrow: Schema.String,
   title: Schema.String,
   body: Schema.String,
-})
+});
 
 const TestimonialItem = Schema.Struct({
   id: Schema.String,
   quote: Schema.String,
   author: Schema.String,
   role: Schema.String,
-})
+});
 
 const TestimonialsProps = Schema.Struct({
   title: Schema.String,
   items: Schema.Array(TestimonialItem),
-})
+});
 
 const HeroSection = Schema.Struct({
   id: Schema.String,
   type: Schema.Literal("hero"),
   props: HeroProps,
-})
+});
 
 const ServicesSection = Schema.Struct({
   id: Schema.String,
   type: Schema.Literal("services"),
   props: ServicesProps,
-})
+});
 
 const AboutSection = Schema.Struct({
   id: Schema.String,
   type: Schema.Literal("about"),
   props: AboutProps,
-})
+});
 
 const TestimonialsSection = Schema.Struct({
   id: Schema.String,
   type: Schema.Literal("testimonials"),
   props: TestimonialsProps,
-})
+});
 
 export const Section = Schema.Union([
   HeroSection,
   ServicesSection,
   AboutSection,
   TestimonialsSection,
-])
-export type Section = typeof Section["Type"]
+]);
+export type Section = (typeof Section)["Type"];
 
 export const Page = Schema.Struct({
   id: Schema.String,
   slug: Schema.String,
   title: Schema.String,
   sections: Schema.Array(Section),
-})
-export type Page = typeof Page["Type"]
+});
+export type Page = (typeof Page)["Type"];
 
 export const Business = Schema.Struct({
   name: Schema.String,
@@ -86,8 +85,8 @@ export const Business = Schema.Struct({
   email: Schema.String,
   phone: Schema.String,
   logo: Schema.String,
-})
-export type Business = typeof Business["Type"]
+});
+export type Business = (typeof Business)["Type"];
 
 /**
  * The `analytics` slot is reserved for the optional $1/mo OneDollarStats
@@ -97,8 +96,8 @@ export type Business = typeof Business["Type"]
 export const Analytics = Schema.Struct({
   provider: Schema.Literal("onedollarstats"),
   siteId: Schema.String,
-})
-export type Analytics = typeof Analytics["Type"]
+});
+export type Analytics = (typeof Analytics)["Type"];
 
 export const Settings = Schema.Struct({
   accent: Schema.String,
@@ -110,11 +109,11 @@ export const Settings = Schema.Struct({
   border: Schema.optional(Schema.String),
   muted: Schema.optional(Schema.String),
   analytics: Schema.optional(Analytics),
-})
-export type Settings = typeof Settings["Type"]
+});
+export type Settings = (typeof Settings)["Type"];
 
-export const SiteStatus = Schema.Literals(["draft", "published"])
-export type SiteStatus = typeof SiteStatus["Type"]
+export const SiteStatus = Schema.Literals(["draft", "published"]);
+export type SiteStatus = (typeof SiteStatus)["Type"];
 
 export const Site = Schema.Struct({
   id: Schema.String,
@@ -128,21 +127,21 @@ export const Site = Schema.Struct({
   updatedAt: Schema.String,
   publishedAt: Schema.optional(Schema.String),
   customDomain: Schema.optional(Schema.String),
-})
-export type Site = typeof Site["Type"]
+});
+export type Site = (typeof Site)["Type"];
 
 export const CreateSite = Schema.Struct({
   name: Schema.String,
   templateId: Schema.String,
-})
-export type CreateSite = typeof CreateSite["Type"]
+});
+export type CreateSite = (typeof CreateSite)["Type"];
 
 export const PublishResult = Schema.Struct({
   siteId: Schema.String,
   path: Schema.String,
   publishedAt: Schema.String,
-})
-export type PublishResult = typeof PublishResult["Type"]
+});
+export type PublishResult = (typeof PublishResult)["Type"];
 
 export class SiteNotFound extends Schema.TaggedErrorClass<SiteNotFound>()(
   "SiteNotFound",
@@ -173,10 +172,10 @@ export const DomainSetup = Schema.Struct({
   txtName: Schema.String,
   txtValue: Schema.String,
   site: Site,
-})
-export type DomainSetup = typeof DomainSetup["Type"]
+});
+export type DomainSetup = (typeof DomainSetup)["Type"];
 
-export const DomainError = Schema.Union([SiteNotFound, DomainNotVerified, DomainInUse])
+export const DomainError = Schema.Union([SiteNotFound, DomainNotVerified, DomainInUse]);
 
-export const decodeSite = Schema.decodeUnknownEffect(Site)
-export const encodeSite = Schema.encodeUnknownSync(Site)
+export const decodeSite = Schema.decodeUnknownEffect(Site);
+export const encodeSite = Schema.encodeUnknownSync(Site);

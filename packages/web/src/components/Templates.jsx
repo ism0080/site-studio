@@ -1,16 +1,22 @@
-import Icon from './Icon.jsx'
-import { templates } from '../data/site.js'
+import { templates } from "../data/site.js";
 
 function TemplateArt({ template }) {
   return (
     <div className="template-art" style={{ background: template.palette[0] }}>
-      <div className="art-brand" style={{ color: template.palette[2] }}>{template.brand}</div>
+      <div className="art-brand" style={{ color: template.palette[2] }}>
+        {template.brand}
+      </div>
       <div className="art-title" style={{ color: template.palette[2] }}>
-        {template.title.map((line) => <span key={line}>{line}<br /></span>)}
+        {template.title.map((line) => (
+          <span key={line}>
+            {line}
+            <br />
+          </span>
+        ))}
       </div>
       <div className="art-block" style={{ background: template.palette[1] }} />
     </div>
-  )
+  );
 }
 
 export default function Templates({ onSelect }) {
@@ -23,7 +29,9 @@ export default function Templates({ onSelect }) {
           <button>Retail</button>
           <button>Creative</button>
         </div>
-        <button className="light-button">Sort by <span>Featured⌄</span></button>
+        <button className="light-button">
+          Sort by <span>Featured⌄</span>
+        </button>
       </div>
       <div className="template-grid">
         {templates.map((template) => (
@@ -40,5 +48,5 @@ export default function Templates({ onSelect }) {
         ))}
       </div>
     </div>
-  )
+  );
 }
