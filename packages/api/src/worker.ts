@@ -11,9 +11,15 @@ import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse"
 import { SitesBucket } from "./site/bucket.ts"
 import { Database } from "./site/database.ts"
 import { SiteApi } from "./site/siteApi.ts"
-import { makeSiteRepository } from "./site/SiteRepository.ts"
-import { makeLeadRepository } from "./leads/LeadRepository.ts"
+import { makeSiteRepository, SiteRepository } from "./site/SiteRepository.ts"
+import { makeLeadRepository, LeadRepository } from "./leads/LeadRepository.ts"
 import { TooManyRequests } from "./leads/leads.ts"
+import {
+  LeadNotifier,
+  makeCloudflareNotifier,
+  makeNoopNotifier,
+} from "./leads/LeadNotifier.ts"
+import { SiteStorage, makeR2SiteStorage } from "./storage/SiteStorage.ts"
 import {
   AUTH_PATH,
   CurrentUser,
@@ -43,8 +49,6 @@ export default Cloudflare.Worker(
     const rawDb = yield* Effect.sync(
       () => (env as Record<string, D1Database>)["Database"]!,
     )
-    const repo = makeSiteRepository(db)
-    const leads = makeLeadRepository(db)
 
     // Rate-limit public lead submissions per IP (5/min).
     const throttle = yield* Cloudflare.RateLimit("LeadsRateLimit", {
@@ -52,21 +56,22 @@ export default Cloudflare.Worker(
       simple: { limit: 5, period: 60 },
     })
 
-    // Optional email notification for new leads. Cloudflare's send_email
-    // binding only delivers to verified destination addresses, so this goes
-    // to a configured platform inbox (LEADS_NOTIFY_EMAIL) rather than the
-    // site owner's address directly.
+    // Service implementations. These are the swap points: the interfaces are
+    // the Context tags above, and each impl is built here in init and provided
+    // per-request to the router.
+    const repo = makeSiteRepository(db)
+    const leads = makeLeadRepository(db)
+    const storage = makeR2SiteStorage(bucket)
+
+    // Lead notifications are best-effort and swappable. Cloudflare's
+    // send_email binding only reaches verified destination addresses, so the
+    // Cloudflare impl sends to a platform inbox when configured.
     const leadsNotifyEmail = yield* Config.option(Config.string("LEADS_NOTIFY_EMAIL"))
     const leadsFromEmail = yield* Config.option(Config.string("LEADS_FROM_EMAIL"))
-    type SendClient = Effect.Success<ReturnType<typeof Cloudflare.Email.Send>>
-    let sendMail: SendClient | null = null
-    if (Option.isSome(leadsNotifyEmail) && Option.isSome(leadsFromEmail)) {
-      const sender = yield* Cloudflare.Email.SendEmail("LeadsNotify", {
-        allowedDestinationAddresses: [leadsNotifyEmail.value],
-        allowedSenderAddresses: [leadsFromEmail.value],
-      })
-      sendMail = yield* Cloudflare.Email.Send(sender)
-    }
+    const notifier =
+      Option.isSome(leadsNotifyEmail) && Option.isSome(leadsFromEmail)
+        ? yield* makeCloudflareNotifier()
+        : makeNoopNotifier()
 
     const config = yield* Effect.all({
       authSecret: Config.string("AUTH_SECRET").pipe(
@@ -101,45 +106,65 @@ export default Cloudflare.Worker(
       "Sites",
       (handlers) =>
         handlers
-          .handle("list", () => CurrentUser.use((user) => repo.list(user.id)))
+          .handle("list", () =>
+            CurrentUser.use((user) =>
+              SiteRepository.use((repo) => repo.list(user.id)),
+            ),
+          )
           .handle("get", ({ params }) =>
-            CurrentUser.use((user) => repo.get(params.id, user.id)),
+            CurrentUser.use((user) =>
+              SiteRepository.use((repo) => repo.get(params.id, user.id)),
+            ),
           )
           .handle("create", ({ payload }) =>
-            CurrentUser.use((user) => repo.create(payload, user.id)),
+            CurrentUser.use((user) =>
+              SiteRepository.use((repo) => repo.create(payload, user.id)),
+            ),
           )
           .handle("update", ({ params, payload }) =>
-            CurrentUser.use((user) => repo.update(params.id, payload, user.id)),
+            CurrentUser.use((user) =>
+              SiteRepository.use((repo) => repo.update(params.id, payload, user.id)),
+            ),
           )
           .handle("remove", ({ params }) =>
-            CurrentUser.use((user) => repo.remove(params.id, user.id)),
+            CurrentUser.use((user) =>
+              SiteRepository.use((repo) => repo.remove(params.id, user.id)),
+            ),
           )
           .handle("publish", ({ params }) =>
             Effect.gen(function* () {
               const user = yield* CurrentUser
+              const repo = yield* SiteRepository
+              const storage = yield* SiteStorage
               const site = yield* repo.get(params.id, user.id)
               const publishedAt = new Date().toISOString()
               // Store the site document as the buildable artifact. Static HTML
               // is generated from it by the Astro template pipeline
               // (packages/site-template) and uploaded to R2 under the same key.
               const path = `sites/${site.id}/site.json`
-              yield* bucket.put(path, JSON.stringify(site, null, 2)).pipe(
-                Effect.orDie,
-              )
+              yield* storage
+                .putSiteDocument(site.id, JSON.stringify(site, null, 2))
+                .pipe(Effect.orDie)
               yield* repo.markPublished(params.id, user.id, publishedAt)
               return { siteId: site.id, path, publishedAt }
             }),
           )
           .handle("setDomain", ({ params, payload }) =>
             CurrentUser.use((user) =>
-              repo.setDomain(params.id, user.id, payload.domain),
+              SiteRepository.use((repo) =>
+                repo.setDomain(params.id, user.id, payload.domain),
+              ),
             ),
           )
           .handle("verifyDomain", ({ params }) =>
-            CurrentUser.use((user) => repo.verifyDomain(params.id, user.id)),
+            CurrentUser.use((user) =>
+              SiteRepository.use((repo) => repo.verifyDomain(params.id, user.id)),
+            ),
           )
           .handle("removeDomain", ({ params }) =>
-            CurrentUser.use((user) => repo.removeDomain(params.id, user.id)),
+            CurrentUser.use((user) =>
+              SiteRepository.use((repo) => repo.removeDomain(params.id, user.id)),
+            ),
           ),
     )
 
@@ -149,11 +174,17 @@ export default Cloudflare.Worker(
       (handlers) =>
         handlers
           .handle("listLeads", ({ params }) =>
-            CurrentUser.use((user) => leads.listForSite(params.id, user.id)),
+            CurrentUser.use((user) =>
+              LeadRepository.use((leads) =>
+                leads.listForSite(params.id, user.id),
+              ),
+            ),
           )
           .handle("deleteLead", ({ params }) =>
             CurrentUser.use((user) =>
-              leads.remove(params.id, params.leadId, user.id),
+              LeadRepository.use((leads) =>
+                leads.remove(params.id, params.leadId, user.id),
+              ),
             ),
           ),
     )
@@ -177,28 +208,17 @@ export default Cloudflare.Worker(
               return yield* Effect.fail(new TooManyRequests({}))
             }
 
+            const leads = yield* LeadRepository
             const lead = yield* leads.create(payload)
 
-            if (sendMail !== null && Option.isSome(leadsNotifyEmail) && Option.isSome(leadsFromEmail)) {
-              const site = yield* leads.siteContact(lead.siteId)
-              if (site) {
-                yield* sendMail
-                  .send({
-                    from: leadsFromEmail.value,
-                    to: leadsNotifyEmail.value,
-                    subject: `New lead on ${site.name}`,
-                    text:
-                      `New contact form submission:\n\n` +
-                      `Name: ${lead.name}\n` +
-                      `Email: ${lead.email}\n` +
-                      `Message: ${lead.message ?? "(none)"}\n\n` +
-                      `Site: ${site.name} (${site.email})`,
-                  })
-                  .pipe(
-                    // Best-effort: a failed email must not fail the submission.
-                    Effect.catch(() => Effect.void),
-                  )
-              }
+            // Best-effort notification — a failed email must not fail the
+            // submission.
+            const site = yield* leads.siteContact(lead.siteId)
+            if (site) {
+              const notifier = yield* LeadNotifier
+              yield* notifier
+                .notify(lead, site)
+                .pipe(Effect.catch(() => Effect.void))
             }
 
             return lead
@@ -226,9 +246,19 @@ export default Cloudflare.Worker(
       { error: "Unauthorized" },
       { status: 401 },
     )
-    // The router effect requires CurrentUser (private groups use it). Public
-    // submissions never read it, so a guest identity keeps the type satisfied.
+    // The router effect requires the service context (CurrentUser + the
+    // swappable impls). Public submissions never read CurrentUser, so a guest
+    // identity keeps the type satisfied.
     const guestUser = { id: "guest", email: "" }
+
+    const provideServices = (user: { id: string; email: string }) =>
+      httpEffect.pipe(
+        Effect.provideService(CurrentUser, user),
+        Effect.provideService(SiteRepository, repo),
+        Effect.provideService(LeadRepository, leads),
+        Effect.provideService(SiteStorage, storage),
+        Effect.provideService(LeadNotifier, notifier),
+      )
 
     return {
       // The fetch is the HttpEffect value the worker invokes per request.
@@ -245,9 +275,7 @@ export default Cloudflare.Worker(
 
         // Public contact-form submissions — no session required.
         if (new URL(nativeRequest.url).pathname.startsWith("/api/leads")) {
-          return yield* httpEffect.pipe(
-            Effect.provideService(CurrentUser, guestUser),
-          )
+          return yield* provideServices(guestUser)
         }
 
         // Resolve the session and scope site queries to the owner.
@@ -256,12 +284,10 @@ export default Cloudflare.Worker(
         )
         if (!session) return yield* unauthorized
 
-        return yield* httpEffect.pipe(
-          Effect.provideService(CurrentUser, {
-            id: session.user.id,
-            email: session.user.email,
-          }),
-        )
+        return yield* provideServices({
+          id: session.user.id,
+          email: session.user.email,
+        })
       }),
     }
   }).pipe(

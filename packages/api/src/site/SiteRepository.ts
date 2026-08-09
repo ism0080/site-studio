@@ -1,5 +1,7 @@
 import * as Cloudflare from "alchemy/Cloudflare"
+import * as Context from "effect/Context"
 import * as Effect from "effect/Effect"
+import * as Layer from "effect/Layer"
 import type { RuntimeContext } from "alchemy"
 import {
   CreateSite,
@@ -16,7 +18,7 @@ import { newVerificationToken, verifyTxtRecord } from "./dns.ts"
 
 type Db = Cloudflare.D1.QueryDatabaseClient
 
-export interface SiteRepository {
+export interface SiteRepositoryShape {
   readonly list: (
     ownerId: string,
   ) => Effect.Effect<ReadonlyArray<Site>, never, RuntimeContext>
@@ -60,7 +62,7 @@ export interface SiteRepository {
 const parse = (document: string) =>
   decodeSite(JSON.parse(document)).pipe(Effect.orDie)
 
-export const makeSiteRepository = (db: Db): SiteRepository => ({
+export const makeSiteRepository = (db: Db): SiteRepositoryShape => ({
   list: (ownerId) =>
     db
       .prepare(
@@ -315,3 +317,11 @@ export const makeSiteRepository = (db: Db): SiteRepository => ({
       return updated
     }),
 })
+
+export class SiteRepository extends Context.Service<
+  SiteRepository,
+  SiteRepositoryShape
+>()("SiteRepository") {}
+
+export const SiteRepositoryLayer = (db: Db) =>
+  Layer.effect(SiteRepository, Effect.sync(() => makeSiteRepository(db)))

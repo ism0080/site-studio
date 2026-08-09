@@ -1,5 +1,7 @@
 import * as Cloudflare from "alchemy/Cloudflare"
+import * as Context from "effect/Context"
 import * as Effect from "effect/Effect"
+import * as Layer from "effect/Layer"
 import type { RuntimeContext } from "alchemy"
 import { Lead, LeadInput, LeadNotFound } from "./leads.ts"
 import { SiteNotFound, decodeSite } from "../site/site.ts"
@@ -24,7 +26,7 @@ const parse = (row: LeadRow): Lead => ({
   createdAt: row.created_at,
 })
 
-export interface LeadRepository {
+export interface LeadRepositoryShape {
   readonly create: (
     input: LeadInput,
   ) => Effect.Effect<Lead, SiteNotFound, RuntimeContext>
@@ -53,7 +55,7 @@ const siteExists = (db: Db, siteId: string, ownerId?: string) =>
         .bind(siteId)
         .first<{ id: string }>()
 
-export const makeLeadRepository = (db: Db): LeadRepository => ({
+export const makeLeadRepository = (db: Db): LeadRepositoryShape => ({
   create: (input) =>
     Effect.gen(function* () {
       const site = yield* siteExists(db, input.siteId)
@@ -129,3 +131,11 @@ export const makeLeadRepository = (db: Db): LeadRepository => ({
         }),
       ),
 })
+
+export class LeadRepository extends Context.Service<
+  LeadRepository,
+  LeadRepositoryShape
+>()("LeadRepository") {}
+
+export const LeadRepositoryLayer = (db: Db) =>
+  Layer.effect(LeadRepository, Effect.sync(() => makeLeadRepository(db)))
