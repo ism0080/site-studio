@@ -12,7 +12,8 @@
     "smoke": "bun run scripts/smoke.ts",
     "smoke:serving": "bun run scripts/smoke-serving.ts",
     "smoke:dns": "bun run scripts/smoke-dns.ts",
-    "build-publish": "bun run scripts/build-publish.ts"
+    "build-publish": "bun run scripts/build-publish.ts",
+    "test": "bun test"
   },
   "dependencies": {
     "@daytona/sdk": "0.203.0",

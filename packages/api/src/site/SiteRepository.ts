@@ -62,7 +62,15 @@ export interface SiteRepositoryShape {
 const parse = (document: string) =>
   decodeSite(JSON.parse(document)).pipe(Effect.orDie)
 
-export const makeSiteRepository = (db: Db): SiteRepositoryShape => ({
+// The `document` column is TEXT; encode the schema then serialize to JSON.
+const serialize = (site: Site) => JSON.stringify(encodeSite(site))
+
+export const makeSiteRepository = (
+  db: Db,
+  deps: { verifyTxt?: typeof verifyTxtRecord } = {},
+): SiteRepositoryShape => {
+  const checkTxt = deps.verifyTxt ?? verifyTxtRecord
+  return {
   list: (ownerId) =>
     db
       .prepare(
@@ -127,7 +135,7 @@ export const makeSiteRepository = (db: Db): SiteRepositoryShape => ({
         site.ownerId,
         site.templateId,
         site.status,
-        encodeSite(site),
+        serialize(site),
         site.createdAt,
         site.updatedAt,
       )
@@ -156,7 +164,7 @@ export const makeSiteRepository = (db: Db): SiteRepositoryShape => ({
         .bind(
           updated.templateId,
           updated.status,
-          encodeSite(updated),
+          serialize(updated),
           updated.updatedAt,
           id,
           ownerId,
@@ -196,7 +204,7 @@ export const makeSiteRepository = (db: Db): SiteRepositoryShape => ({
         )
         .bind(
           updated.status,
-          encodeSite(updated),
+          serialize(updated),
           updated.updatedAt,
           updated.publishedAt,
           id,
@@ -261,7 +269,7 @@ export const makeSiteRepository = (db: Db): SiteRepositoryShape => ({
       if (pending === null) return yield* Effect.fail(new SiteNotFound({ id }))
 
       const verified = yield* Effect.tryPromise(() =>
-        verifyTxtRecord(pending.domain, pending.verification_token),
+        checkTxt(pending.domain, pending.verification_token),
       ).pipe(Effect.catch(() => Effect.succeed(false)))
       if (!verified) {
         return yield* Effect.fail(
@@ -289,7 +297,7 @@ export const makeSiteRepository = (db: Db): SiteRepositoryShape => ({
         .prepare(
           "UPDATE sites SET document = ?, custom_domain = ?, updated_at = ? WHERE id = ? AND owner_id = ?",
         )
-        .bind(encodeSite(updated), pending.domain, now, id, ownerId)
+        .bind(serialize(updated), pending.domain, now, id, ownerId)
         .run()
       return updated
     }),
@@ -312,12 +320,12 @@ export const makeSiteRepository = (db: Db): SiteRepositoryShape => ({
         .prepare(
           "UPDATE sites SET document = ?, custom_domain = NULL, updated_at = ? WHERE id = ? AND owner_id = ?",
         )
-        .bind(encodeSite(updated), now, id, ownerId)
+        .bind(serialize(updated), now, id, ownerId)
         .run()
       return updated
     }),
-})
-
+  }
+}
 export class SiteRepository extends Context.Service<
   SiteRepository,
   SiteRepositoryShape
