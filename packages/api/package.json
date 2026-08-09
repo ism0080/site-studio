@@ -11,9 +11,11 @@
     "typecheck": "tsc --noEmit",
     "smoke": "bun run scripts/smoke.ts",
     "smoke:serving": "bun run scripts/smoke-serving.ts",
-    "smoke:dns": "bun run scripts/smoke-dns.ts"
+    "smoke:dns": "bun run scripts/smoke-dns.ts",
+    "build-publish": "bun run scripts/build-publish.ts"
   },
   "dependencies": {
+    "@daytona/sdk": "0.203.0",
     "@effect/platform-bun": "4.0.0-beta.103",
     "@effect/platform-node": "4.0.0-beta.103",
     "alchemy": "^2.0.0-beta.70",
