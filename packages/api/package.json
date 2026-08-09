@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260808.1",
+    "@effect/language-service": "^0.87.2",
     "typescript": "^7.0.2"
   }
 }
