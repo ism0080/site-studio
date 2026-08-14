@@ -6,14 +6,12 @@ import About from "./sections/About.astro"
 import Testimonials from "./sections/Testimonials.astro"
 import { templateFor } from "../templates.ts"
 
-const { site, page } = Astro.props as { site: Site; page: Page }
+interface Props {
+  site: Site
+  page: Page
+}
 
-const sectionComponents = {
-  hero: Hero,
-  services: Services,
-  about: About,
-  testimonials: Testimonials,
-} as const
+const { site, page } = Astro.props
 
 const { business, settings } = site
 const year = new Date().getFullYear()
@@ -92,8 +90,16 @@ const themeCss = `
     <main>
       {
         page.sections.map((section) => {
-          const Component = sectionComponents[section.type]
-          return <Component props={section.props} layout={layout} />
+          switch (section.type) {
+            case "hero":
+              return <Hero props={section.props} layout={layout} />
+            case "services":
+              return <Services props={section.props} layout={layout} />
+            case "about":
+              return <About props={section.props} layout={layout} />
+            case "testimonials":
+              return <Testimonials props={section.props} layout={layout} />
+          }
         })
       }
       <section id="contact">

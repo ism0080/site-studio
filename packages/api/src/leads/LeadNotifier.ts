@@ -22,18 +22,18 @@ export interface NotifyTarget {
  * binding only reaches verified destination addresses, so the default layer
  * sends to a platform inbox; a provider like Resend/Postmark can swap in.
  */
-export interface LeadNotifierShape {
+export interface LeadNotifierService {
   readonly notify: (
     lead: Lead,
     site: NotifyTarget,
   ) => Effect.Effect<void, LeadNotifierError, RuntimeContext>;
 }
 
-export class LeadNotifier extends Context.Service<LeadNotifier, LeadNotifierShape>()(
+export class LeadNotifier extends Context.Service<LeadNotifier, LeadNotifierService>()(
   "@app/LeadNotifier",
 ) {}
 
-export const makeNoopNotifier = (): LeadNotifierShape => ({
+export const makeNoopNotifier = (): LeadNotifierService => ({
   notify: () => Effect.void,
 });
 
@@ -77,7 +77,7 @@ export const makeCloudflareNotifier = () =>
             ),
           );
       }),
-    } satisfies LeadNotifierShape;
+    } satisfies LeadNotifierService;
   });
 
 export const NoopLeadNotifier = Layer.effect(LeadNotifier, Effect.succeed(makeNoopNotifier()));

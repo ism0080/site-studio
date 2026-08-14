@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from "@effect/vitest";
 import { DatabaseSync } from "node:sqlite";
-import { makeDb, memoryD1, run } from "./helpers.ts";
+import { makeDb, d1, run } from "./helpers.ts";
 import { makeLeadRepository } from "../src/leads/LeadRepository.ts";
 import { makeSiteRepository } from "../src/site/SiteRepository.ts";
 
@@ -10,8 +10,8 @@ beforeEach(() => {
   db = makeDb();
 });
 
-const leads = () => makeLeadRepository(memoryD1(db) as never);
-const sites = () => makeSiteRepository(memoryD1(db) as never);
+const leads = () => makeLeadRepository(d1(db));
+const sites = () => makeSiteRepository(d1(db));
 
 describe("LeadRepository", () => {
   it("create -> list -> remove", async () => {

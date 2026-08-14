@@ -8,7 +8,7 @@ export function nextId(prefix) {
 export const SECTION_TYPES = {
   hero: {
     label: "Hero",
-    sub: "Intro + call to action",
+    sub: () => "Intro + call to action",
     hint: "Intro + call to action",
     create: () => ({
       id: nextId("block_hero"),
@@ -54,7 +54,7 @@ export const SECTION_TYPES = {
   },
   about: {
     label: "About",
-    sub: "Rich text content",
+    sub: () => "Rich text content",
     hint: "Rich text content",
     create: () => ({
       id: nextId("block_about"),

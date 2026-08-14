@@ -19,8 +19,9 @@
     "fmt:check": "oxfmt --check"
   },
   "devDependencies": {
+    "@oxlint/plugins": "1.78.0",
     "oxfmt": "^0.62.0",
-    "oxlint": "^1.77.0"
+    "oxlint": "1.78.0"
   },
   "overrides": {
     "@effect/platform-bun": "4.0.0-beta.103",

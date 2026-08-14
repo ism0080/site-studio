@@ -1,7 +1,12 @@
 ---
 import type { TestimonialsProps } from "../../site.ts"
 
-const { props, layout } = Astro.props as { props: TestimonialsProps; layout: string }
+interface Props {
+  props: TestimonialsProps
+  layout: string
+}
+
+const { props, layout } = Astro.props
 const mod = layout === "warm" ? " warm" : layout === "grid" ? " grid" : ""
 ---
 

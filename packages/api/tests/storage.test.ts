@@ -16,23 +16,26 @@ const makeFakeBucket = () => {
   };
 };
 
+// SAFETY: The in-memory fake implements the put/get surface SiteStorage uses; the cast narrows the R2 client type for tests.
+const storage = () => makeR2SiteStorage(makeFakeBucket() as never);
+
 describe("SiteStorage (R2 layer)", () => {
   it("put/getSiteDocument round-trips", async () => {
-    const storage = makeR2SiteStorage(makeFakeBucket() as never);
-    await run(storage.putSiteDocument("site_1", '{"id":"site_1"}'));
-    expect(await run(storage.getSiteDocument("site_1"))).toBe('{"id":"site_1"}');
+    const s = storage();
+    await run(s.putSiteDocument("site_1", '{"id":"site_1"}'));
+    expect(await run(s.getSiteDocument("site_1"))).toBe('{"id":"site_1"}');
   });
 
   it("getSiteDocument returns null when missing", async () => {
-    const storage = makeR2SiteStorage(makeFakeBucket() as never);
-    expect(await run(storage.getSiteDocument("missing"))).toBeNull();
+    const s = storage();
+    expect(await run(s.getSiteDocument("missing"))).toBeNull();
   });
 
   it("each site's document is keyed independently", async () => {
-    const storage = makeR2SiteStorage(makeFakeBucket() as never);
-    await run(storage.putSiteDocument("a", "A"));
-    await run(storage.putSiteDocument("b", "B"));
-    expect(await run(storage.getSiteDocument("a"))).toBe("A");
-    expect(await run(storage.getSiteDocument("b"))).toBe("B");
+    const s = storage();
+    await run(s.putSiteDocument("a", "A"));
+    await run(s.putSiteDocument("b", "B"));
+    expect(await run(s.getSiteDocument("a"))).toBe("A");
+    expect(await run(s.getSiteDocument("b"))).toBe("B");
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from "@effect/vitest";
 import { DatabaseSync } from "node:sqlite";
-import { makeDb, memoryD1, run } from "./helpers.ts";
+import { makeDb, d1, run } from "./helpers.ts";
 import { makeSiteRepository } from "../src/site/SiteRepository.ts";
 
 let db: DatabaseSync;
@@ -9,7 +9,7 @@ beforeEach(() => {
   db = makeDb();
 });
 
-const repo = () => makeSiteRepository(memoryD1(db) as never);
+const repo = () => makeSiteRepository(d1(db));
 
 describe("SiteRepository", () => {
   it("create -> get -> list -> update -> remove", async () => {
@@ -57,7 +57,7 @@ describe("SiteRepository", () => {
   });
 
   it("setDomain -> verify (TXT ok) -> remove", async () => {
-    const r = makeSiteRepository(memoryD1(db) as never, {
+    const r = makeSiteRepository(d1(db), {
       verifyTxt: () => Promise.resolve(true),
     });
     const created = await run(r.create({ name: "A", templateId: "t" }, "owner-1"));
@@ -76,7 +76,7 @@ describe("SiteRepository", () => {
   });
 
   it("verify fails when the TXT record is missing", async () => {
-    const r = makeSiteRepository(memoryD1(db) as never, {
+    const r = makeSiteRepository(d1(db), {
       verifyTxt: () => Promise.resolve(false),
     });
     const created = await run(r.create({ name: "A", templateId: "t" }, "owner-1"));

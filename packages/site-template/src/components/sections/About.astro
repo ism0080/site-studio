@@ -1,7 +1,12 @@
 ---
 import type { AboutProps } from "../../site.ts"
 
-const { props, layout } = Astro.props as { props: AboutProps; layout: string }
+interface Props {
+  props: AboutProps
+  layout: string
+}
+
+const { props, layout } = Astro.props
 const mod = layout === "warm" ? " warm" : layout === "grid" ? " grid" : ""
 ---
 

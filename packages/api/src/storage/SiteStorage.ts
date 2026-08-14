@@ -16,7 +16,7 @@ export class SiteStorageError extends Data.TaggedError("SiteStorageError")<{
  * Where a site's buildable document (site.json) and static output live.
  * R2 today; the interface is the seam for Cloudflare Artifacts when it GA's.
  */
-export interface SiteStorageShape {
+export interface SiteStorageService {
   readonly putSiteDocument: (
     siteId: string,
     document: string,
@@ -26,7 +26,7 @@ export interface SiteStorageShape {
   ) => Effect.Effect<string | null, SiteStorageError, RuntimeContext>;
 }
 
-export class SiteStorage extends Context.Service<SiteStorage, SiteStorageShape>()(
+export class SiteStorage extends Context.Service<SiteStorage, SiteStorageService>()(
   "@app/SiteStorage",
 ) {}
 
@@ -38,7 +38,7 @@ const toStorageError = (cause: unknown) =>
     cause,
   });
 
-export const makeR2SiteStorage = (bucket: Bucket): SiteStorageShape => ({
+export const makeR2SiteStorage = (bucket: Bucket): SiteStorageService => ({
   putSiteDocument: Effect.fn("SiteStorage.putSiteDocument")(function* (
     siteId: string,
     document: string,

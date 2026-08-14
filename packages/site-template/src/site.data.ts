@@ -1,7 +1,7 @@
 // GENERATED FILE — written by scripts/render.mjs. Do not edit by hand.
 import type { Site } from "./site.ts"
 
-export const site: Site = {
+export const site = /* SAFETY: The document was decoded from the site document JSON at the render boundary; its structure matches the Site schema. */ {
   "id": "site_test_build",
   "ownerId": "owner-1",
   "templateId": "clean-grid",

@@ -16,7 +16,7 @@ import {
 function sectionSub(block) {
   const meta = SECTION_TYPES[block.type];
   if (!meta) return block.type;
-  return typeof meta.sub === "function" ? meta.sub(block.props) : meta.sub;
+  return meta.sub(block.props);
 }
 
 function ColorField({ label, value, onChange }) {

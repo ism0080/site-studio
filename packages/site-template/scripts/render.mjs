@@ -35,7 +35,7 @@ export async function render(site, outDir) {
   const generated = `// GENERATED FILE — written by scripts/render.mjs. Do not edit by hand.
 import type { Site } from "./site.ts"
 
-export const site: Site = ${serialized} as Site
+export const site = /* SAFETY: The document was decoded from the site document JSON at the render boundary; its structure matches the Site schema. */ ${serialized} as Site
 `;
   mkdirSync(dirname(dataModule), { recursive: true });
   rmSync(dataModule, { force: true });

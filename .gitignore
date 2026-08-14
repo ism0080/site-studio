@@ -14,6 +14,10 @@ out/
 .env.*
 !.env.example
 
+# Installed skills (managed by skills-lock.json)
+.agents/
+skills-lock.json
+
 # Logs / OS
 *.log
 .DS_Store
