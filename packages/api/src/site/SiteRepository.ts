@@ -1,5 +1,6 @@
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as Context from "effect/Context";
+import * as Crypto from "effect/Crypto";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import type { RuntimeContext } from "alchemy";
@@ -12,20 +13,22 @@ import {
   DomainSetup,
   Site,
   SiteNotFound,
-  decodeSite,
+  decodeSiteJson,
+  encodeSiteJson,
 } from "./site.ts";
 import { normalizeDomain } from "./keys.ts";
 import { newVerificationToken, verifyTxtRecord } from "./dns.ts";
+import { nowIso } from "../platform/Time.ts";
 
 type Db = Cloudflare.D1.QueryDatabaseClient;
 
-export interface SiteRepositoryShape {
+export interface SiteRepositoryService {
   readonly list: (ownerId: string) => Effect.Effect<ReadonlyArray<Site>, never, RuntimeContext>;
   readonly get: (id: string, ownerId: string) => Effect.Effect<Site, SiteNotFound, RuntimeContext>;
   readonly create: (
     payload: CreateSite,
     ownerId: string,
-  ) => Effect.Effect<Site, never, RuntimeContext>;
+  ) => Effect.Effect<Site, never, RuntimeContext | Crypto.Crypto>;
   readonly update: (
     id: string,
     site: Site,
@@ -44,7 +47,7 @@ export interface SiteRepositoryShape {
     id: string,
     ownerId: string,
     domain: string,
-  ) => Effect.Effect<DomainSetup, SiteNotFound | DomainInUse, RuntimeContext>;
+  ) => Effect.Effect<DomainSetup, SiteNotFound | DomainInUse, RuntimeContext | Crypto.Crypto>;
   readonly verifyDomain: (
     id: string,
     ownerId: string,
@@ -55,15 +58,15 @@ export interface SiteRepositoryShape {
   ) => Effect.Effect<Site, SiteNotFound, RuntimeContext>;
 }
 
-const parse = (document: string) => decodeSite(JSON.parse(document)).pipe(Effect.orDie);
+const parse = (document: string) => decodeSiteJson(document).pipe(Effect.orDie);
 
 // The `document` column is TEXT; encode the schema then serialize to JSON.
-const serialize = (site: Site) => JSON.stringify(site);
+const serialize = (site: Site) => encodeSiteJson(site);
 
 export const makeSiteRepository = (
   db: Db,
   deps: { verifyTxt?: typeof verifyTxtRecord } = {},
-): SiteRepositoryShape => {
+): SiteRepositoryService => {
   const checkTxt = deps.verifyTxt ?? verifyTxtRecord;
   return {
     list: Effect.fn("SiteRepository.list")(function* (ownerId: string) {
@@ -85,9 +88,10 @@ export const makeSiteRepository = (
       return yield* parse(row.document);
     }),
     create: Effect.fn("SiteRepository.create")(function* (payload: CreateSite, ownerId: string) {
-      const now = new Date().toISOString();
-      const site: Site = {
-        id: SiteId.make(crypto.randomUUID()),
+      const now = yield* nowIso;
+      const crypto = yield* Crypto.Crypto;
+      const site = new Site({
+        id: SiteId.make(yield* crypto.randomUUIDv4.pipe(Effect.orDie)),
         ownerId: OwnerId.make(ownerId),
         templateId: payload.templateId,
         status: "draft",
@@ -103,11 +107,10 @@ export const makeSiteRepository = (
           accent: "#e56645",
           font: "Manrope",
           showDirectory: true,
-          analytics: undefined,
         },
         pages: [
           {
-            id: crypto.randomUUID(),
+            id: yield* crypto.randomUUIDv4.pipe(Effect.orDie),
             slug: "/",
             title: "Homepage",
             sections: [],
@@ -115,8 +118,7 @@ export const makeSiteRepository = (
         ],
         createdAt: now,
         updatedAt: now,
-        publishedAt: undefined,
-      };
+      });
       return yield* db
         .prepare(
           "INSERT INTO sites (id, owner_id, template_id, status, document, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -139,12 +141,12 @@ export const makeSiteRepository = (
         .bind(id, ownerId)
         .first<{ id: string }>();
       if (existing === null) return yield* new SiteNotFound({ id });
-      const updated = {
+      const updated = new Site({
         ...site,
         id: SiteId.make(id),
         ownerId: OwnerId.make(ownerId),
-        updatedAt: new Date().toISOString(),
-      };
+        updatedAt: yield* nowIso,
+      });
       yield* db
         .prepare(
           "UPDATE sites SET template_id = ?, status = ?, document = ?, updated_at = ? WHERE id = ? AND owner_id = ?",
@@ -178,12 +180,12 @@ export const makeSiteRepository = (
         .first<{ document: string }>();
       if (row === null) return yield* new SiteNotFound({ id });
       const current = yield* parse(row.document);
-      const updated = {
+      const updated = new Site({
         ...current,
-        status: "published" as const,
+        status: "published",
         publishedAt,
         updatedAt: publishedAt,
-      };
+      });
       yield* db
         .prepare(
           "UPDATE sites SET status = ?, document = ?, updated_at = ?, published_at = ? WHERE id = ? AND owner_id = ?",
@@ -220,8 +222,8 @@ export const makeSiteRepository = (
         .first<{ site_id: string }>();
       if (existing !== null) return yield* new DomainInUse({ domain });
 
-      const token = newVerificationToken();
-      const now = new Date().toISOString();
+      const token = yield* newVerificationToken;
+      const now = yield* nowIso;
       yield* db
         .prepare(
           "INSERT OR IGNORE INTO site_domains (domain, site_id, verification_token, verified, created_at) VALUES (?, ?, ?, 0, ?)",
@@ -260,7 +262,7 @@ export const makeSiteRepository = (
         return yield* new DomainNotVerified({ domain: pending.domain });
       }
 
-      const now = new Date().toISOString();
+      const now = yield* nowIso;
       const twin = pending.domain.startsWith("www.")
         ? pending.domain.slice(4)
         : "www." + pending.domain;
@@ -272,7 +274,7 @@ export const makeSiteRepository = (
         .bind(twin, id, pending.verification_token, now)
         .run();
 
-      const updated = { ...current, customDomain: pending.domain, updatedAt: now };
+      const updated = new Site({ ...current, customDomain: pending.domain, updatedAt: now });
       yield* db
         .prepare(
           "UPDATE sites SET document = ?, custom_domain = ?, updated_at = ? WHERE id = ? AND owner_id = ?",
@@ -289,9 +291,9 @@ export const makeSiteRepository = (
       if (site === null) return yield* new SiteNotFound({ id });
       const current = yield* parse(site.document);
 
-      const now = new Date().toISOString();
+      const now = yield* nowIso;
       yield* db.prepare("DELETE FROM site_domains WHERE site_id = ?").bind(id).run();
-      const updated = { ...current, customDomain: undefined, updatedAt: now };
+      const updated = new Site({ ...current, customDomain: undefined, updatedAt: now });
       yield* db
         .prepare(
           "UPDATE sites SET document = ?, custom_domain = NULL, updated_at = ? WHERE id = ? AND owner_id = ?",
@@ -302,7 +304,7 @@ export const makeSiteRepository = (
     }),
   };
 };
-export class SiteRepository extends Context.Service<SiteRepository, SiteRepositoryShape>()(
+export class SiteRepository extends Context.Service<SiteRepository, SiteRepositoryService>()(
   "@app/SiteRepository",
 ) {}
 

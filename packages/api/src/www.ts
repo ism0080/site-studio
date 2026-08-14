@@ -18,16 +18,24 @@ const notFound = (): HttpServerResponse.HttpServerResponse =>
 // `WWW_DOMAIN` (e.g. `sites.site-studio.dev`) attaches a custom domain to the
 // www worker — DNS record and edge certificate are managed automatically.
 // The Cloudflare zone must already exist in the account. Read at plan time
-// from the deploy process env; workerd has no `process`, so guard it.
-const wwwDomain = typeof process === "undefined" ? undefined : process.env?.WWW_DOMAIN;
+// from the deploy process env; workerd has no `process`, so fall back to
+// undefined via an optional property read.
+// SAFETY: The optional `process` surface exists only on Node-based runtimes (deploy-time planning); on workerd the property read is undefined.
+const wwwDomain = (
+  globalThis as { process?: { env?: Record<string, string | undefined> } }
+).process?.env?.WWW_DOMAIN;
+
+const wwwProps: Cloudflare.WorkerProps = {
+  main: import.meta.url,
+  dev: { port: 8788 },
+};
+if (wwwDomain) {
+  wwwProps.domain = wwwDomain;
+}
 
 export default Cloudflare.Worker(
   "www",
-  {
-    main: import.meta.url,
-    ...(wwwDomain ? { domain: wwwDomain } : {}),
-    dev: { port: 8788 },
-  },
+  wwwProps,
   Effect.gen(function* () {
     const bucket = yield* Cloudflare.R2.ReadBucket(SitesBucket);
     const db = yield* Cloudflare.D1.QueryDatabase(Database);
@@ -62,11 +70,11 @@ export default Cloudflare.Worker(
         const object = yield* bucket.get(key);
         if (object === null) return notFound();
 
-        const headers: Record<string, string> = {
+        const headers = {
           "Content-Type": contentTypeFor(key),
           "Cache-Control": cacheControl,
           ETag: object.httpEtag,
-        };
+        } satisfies Record<string, string>;
 
         const ifNoneMatch = request.headers["if-none-match"];
         if (ifNoneMatch === object.httpEtag) {

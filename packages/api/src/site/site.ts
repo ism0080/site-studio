@@ -180,3 +180,9 @@ export const DomainError = Schema.Union([SiteNotFound, DomainNotVerified, Domain
 
 export const decodeSite = Schema.decodeUnknownEffect(Site);
 export const encodeSite = Schema.encodeUnknownSync(Site);
+
+export const SiteJson = Schema.fromJsonString(Site);
+export const SiteDocument = Schema.fromJsonString(Site, { space: 2 });
+export const encodeSiteJson = Schema.encodeUnknownSync(SiteJson);
+export const encodeSiteDocument = Schema.encodeUnknownSync(SiteDocument);
+export const decodeSiteJson = Schema.decodeUnknownEffect(SiteJson);

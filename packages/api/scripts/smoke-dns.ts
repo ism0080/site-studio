@@ -1,4 +1,6 @@
+import * as Effect from "effect/Effect";
 import { newVerificationToken, verifyTxtRecord } from "../src/site/dns.ts";
+import { WebCrypto } from "../src/platform/WebCrypto.ts";
 
 const makeFetch =
   (answers: Array<{ data?: string }>, opts?: { ok?: boolean; throws?: boolean }) => async () => {
@@ -45,7 +47,7 @@ check(
   false,
 );
 
-const t = newVerificationToken();
+const t = Effect.runSync(Effect.provide(newVerificationToken, WebCrypto));
 check("token format", t.startsWith("site-studio-verify="), true);
 check("token has entropy", t.length > "site-studio-verify=".length + 8, true);
 

@@ -1,5 +1,5 @@
 import * as Schema from "effect/Schema";
-import { Site, encodeSite } from "../src/site/site.ts";
+import { Site, SiteJson } from "../src/site/site.ts";
 
 const site = Schema.decodeUnknownSync(Site)({
   id: "site_test",
@@ -54,8 +54,7 @@ const site = Schema.decodeUnknownSync(Site)({
   publishedAt: "2026-01-01T00:00:00.000Z",
 });
 
-const encoded = encodeSite(site);
-const decoded = Schema.decodeUnknownSync(Site)(JSON.parse(JSON.stringify(encoded)));
+const decoded = Schema.decodeUnknownSync(SiteJson)(Schema.encodeSync(SiteJson)(site));
 console.log(
   "round-trip ok:",
   decoded.id === site.id &&

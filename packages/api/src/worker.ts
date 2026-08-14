@@ -12,11 +12,14 @@ import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 import { SitesBucket } from "./site/bucket.ts";
 import { Database } from "./site/database.ts";
 import { SiteApi } from "./site/siteApi.ts";
+import { encodeSiteDocument } from "./site/site.ts";
 import { makeSiteRepository, SiteRepository } from "./site/SiteRepository.ts";
 import { makeLeadRepository, LeadRepository } from "./leads/LeadRepository.ts";
 import { LeadInput, TooManyRequests } from "./leads/leads.ts";
 import { LeadNotifier, makeCloudflareNotifier, makeNoopNotifier } from "./leads/LeadNotifier.ts";
 import { SiteStorage, makeR2SiteStorage } from "./storage/SiteStorage.ts";
+import { WebCrypto } from "./platform/WebCrypto.ts";
+import { nowIso } from "./platform/Time.ts";
 import { AUTH_PATH, CurrentUser, createAuth } from "./auth/auth.ts";
 
 const HttpPlatformStub = Layer.succeed(Http.HttpPlatform.HttpPlatform, {
@@ -39,6 +42,7 @@ export default Cloudflare.Worker(
     // Native D1 binding for Better Auth (alchemy's QueryDatabase client is a
     // wrapper; Better Auth wants the raw D1Database). Binding name matches the
     // resource's logical id ("Database").
+    // SAFETY: The Worker's D1 binding is registered under the resource's logical id, so reading "Database" off the raw env yields the native D1Database.
     const rawDb = yield* Effect.sync(() => (env as Record<string, D1Database>)["Database"]!);
 
     // Rate-limit public lead submissions per IP (5/min).
@@ -93,12 +97,12 @@ export default Cloudflare.Worker(
       const repo = yield* SiteRepository;
       const storage = yield* SiteStorage;
       const site = yield* repo.get(siteId, user.id);
-      const publishedAt = new Date().toISOString();
+      const publishedAt = yield* nowIso;
       // Store the site document as the buildable artifact. Static HTML is
       // generated from it by the Astro template pipeline
       // (packages/site-template) and uploaded to R2 under the same key.
       const path = `sites/${site.id}/site.json`;
-      yield* storage.putSiteDocument(site.id, JSON.stringify(site, null, 2)).pipe(Effect.orDie);
+      yield* storage.putSiteDocument(site.id, encodeSiteDocument(site)).pipe(Effect.orDie);
       yield* repo.markPublished(siteId, user.id, publishedAt);
       return { siteId: site.id, path, publishedAt };
     });
@@ -119,7 +123,9 @@ export default Cloudflare.Worker(
       const site = yield* leads.siteContact(lead.siteId);
       if (site) {
         const notifier = yield* LeadNotifier;
-        yield* notifier.notify(lead, site).pipe(Effect.catch(() => Effect.void));
+        yield* notifier.notify(lead, site).pipe(
+          Effect.catch((cause) => Effect.logError("lead notification failed", cause)),
+        );
       }
 
       return lead;
@@ -216,7 +222,8 @@ export default Cloudflare.Worker(
       // The fetch is the HttpEffect value the worker invokes per request.
       fetch: Effect.gen(function* () {
         const request = yield* HttpServerRequest;
-        const nativeRequest = request.source as unknown as Request;
+        // SAFETY: The web adapter stores the incoming platform Request on HttpServerRequest.source.
+        const nativeRequest = request.source as Request;
 
         // Better Auth handles everything under /api/auth (sign-in, callbacks,
         // session) with its own native fetch handler.
@@ -247,5 +254,6 @@ export default Cloudflare.Worker(
     Effect.provide(Cloudflare.R2.ReadWriteBucketBinding),
     Effect.provide(Cloudflare.Workers.RateLimitBinding),
     Effect.provide(Cloudflare.Email.SendBinding),
+    Effect.provide(WebCrypto),
   ),
 );

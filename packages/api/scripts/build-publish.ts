@@ -14,7 +14,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import * as Effect from "effect/Effect";
 import { BuildRunner } from "../src/publish/BuildRunner.ts";
-import { decodeSite } from "../src/site/site.ts";
+import { decodeSiteJson } from "../src/site/site.ts";
 import { DaytonaBuildRunner } from "./build-runner/daytona.ts";
 import { LocalBuildRunner } from "./build-runner/local.ts";
 
@@ -28,7 +28,7 @@ const kind = process.env.BUILD_RUNNER ?? "daytona";
 const runnerLayer = kind === "local" ? LocalBuildRunner : DaytonaBuildRunner;
 
 const site = Effect.runSync(
-  decodeSite(JSON.parse(readFileSync(resolve(sitePath), "utf8"))).pipe(
+  decodeSiteJson(readFileSync(resolve(sitePath), "utf8")).pipe(
     Effect.mapError((issue) => new Error(`Invalid site document: ${issue}`)),
   ),
 );

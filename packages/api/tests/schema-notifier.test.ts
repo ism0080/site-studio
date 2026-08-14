@@ -2,7 +2,7 @@ import { describe, expect, it } from "@effect/vitest";
 import * as Schema from "effect/Schema";
 import { makeNoopNotifier } from "../src/leads/LeadNotifier.ts";
 import { Lead } from "../src/leads/leads.ts";
-import { Site, encodeSite } from "../src/site/site.ts";
+import { Site, SiteJson } from "../src/site/site.ts";
 import { run } from "./helpers.ts";
 
 const sample = Schema.decodeUnknownSync(Site)({
@@ -46,8 +46,7 @@ const sample = Schema.decodeUnknownSync(Site)({
 
 describe("schema", () => {
   it("Site round-trips through encode/decode", () => {
-    const encoded = encodeSite(sample);
-    const decoded = Schema.decodeUnknownSync(Site)(JSON.parse(JSON.stringify(encoded)));
+    const decoded = Schema.decodeUnknownSync(SiteJson)(Schema.encodeSync(SiteJson)(sample));
     expect(decoded.id).toBe(sample.id);
     expect(decoded.status).toBe("published");
     expect(decoded.pages[0]!.sections[0]!.type).toBe("hero");

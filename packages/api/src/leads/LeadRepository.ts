@@ -1,10 +1,12 @@
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as Context from "effect/Context";
+import * as Crypto from "effect/Crypto";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import type { RuntimeContext } from "alchemy";
 import { Lead, LeadInput, LeadId, LeadNotFound } from "./leads.ts";
-import { SiteId, SiteNotFound, decodeSite } from "../site/site.ts";
+import { SiteId, SiteNotFound, decodeSiteJson } from "../site/site.ts";
+import { nowIso } from "../platform/Time.ts";
 
 type Db = Cloudflare.D1.QueryDatabaseClient;
 
@@ -26,8 +28,10 @@ const parse = (row: LeadRow): Lead => ({
   createdAt: row.created_at,
 });
 
-export interface LeadRepositoryShape {
-  readonly create: (input: LeadInput) => Effect.Effect<Lead, SiteNotFound, RuntimeContext>;
+export interface LeadRepositoryService {
+  readonly create: (
+    input: LeadInput,
+  ) => Effect.Effect<Lead, SiteNotFound, RuntimeContext | Crypto.Crypto>;
   readonly listForSite: (
     siteId: string,
     ownerId: string,
@@ -50,17 +54,18 @@ const siteExists = (db: Db, siteId: string, ownerId?: string) =>
         .first<{ id: string }>()
     : db.prepare("SELECT id FROM sites WHERE id = ?").bind(siteId).first<{ id: string }>();
 
-export const makeLeadRepository = (db: Db): LeadRepositoryShape => ({
+export const makeLeadRepository = (db: Db): LeadRepositoryService => ({
   create: Effect.fn("LeadRepository.create")(function* (input: LeadInput) {
     const site = yield* siteExists(db, input.siteId);
     if (site === null) return yield* new SiteNotFound({ id: input.siteId });
+    const crypto = yield* Crypto.Crypto;
     const lead: Lead = {
-      id: LeadId.make(crypto.randomUUID()),
+      id: LeadId.make(yield* crypto.randomUUIDv4.pipe(Effect.orDie)),
       siteId: input.siteId,
       name: input.name,
       email: input.email,
       message: input.message,
-      createdAt: new Date().toISOString(),
+      createdAt: yield* nowIso,
     };
     yield* db
       .prepare(
@@ -98,7 +103,7 @@ export const makeLeadRepository = (db: Db): LeadRepositoryShape => ({
       .bind(siteId)
       .first<{ document: string }>();
     if (row === null) return null;
-    const site = yield* decodeSite(JSON.parse(row.document)).pipe(
+    const site = yield* decodeSiteJson(row.document).pipe(
       Effect.catch(() => Effect.succeed(null)),
     );
     if (site === null) return null;
@@ -106,7 +111,7 @@ export const makeLeadRepository = (db: Db): LeadRepositoryShape => ({
   }),
 });
 
-export class LeadRepository extends Context.Service<LeadRepository, LeadRepositoryShape>()(
+export class LeadRepository extends Context.Service<LeadRepository, LeadRepositoryService>()(
   "@app/LeadRepository",
 ) {}
 

@@ -6,10 +6,11 @@ import {
 } from "../src/site/keys.ts";
 
 let failed = 0;
-const check = (label: string, got: unknown, expected: unknown) => {
+type ExpectedKey = string | null;
+const check = (label: string, got: ExpectedKey, expected: ExpectedKey) => {
   const ok = got === expected;
   if (!ok) failed++;
-  console.log(`${ok ? "ok  " : "FAIL"} ${label} -> ${JSON.stringify(got)}`);
+  console.log(`${ok ? "ok  " : "FAIL"} ${label} -> ${String(got)}`);
 };
 
 // Path-based routing (www.<host>/<siteId>/...)

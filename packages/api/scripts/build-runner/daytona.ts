@@ -18,6 +18,7 @@ import * as Redacted from "effect/Redacted";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import type { Site } from "../../src/site/site.ts";
+import { encodeSiteDocument } from "../../src/site/site.ts";
 import { BuildError, BuildRunner, type BuildResult } from "../../src/publish/BuildRunner.ts";
 
 const config = Effect.all({
@@ -43,15 +44,16 @@ export const DaytonaBuildRunner = Layer.effect(
   BuildRunner,
   Effect.gen(function* () {
     const env = yield* config;
-    const client = new Daytona({
-      apiKey: Redacted.value(env.apiKey),
-      ...(env.apiUrl._tag === "Some" ? { apiUrl: env.apiUrl.value } : {}),
-    });
+    const client = new Daytona(
+      env.apiUrl._tag === "Some"
+        ? { apiKey: Redacted.value(env.apiKey), apiUrl: env.apiUrl.value }
+        : { apiKey: Redacted.value(env.apiKey) },
+    );
 
     return {
       publish: (site: Site) =>
-        Effect.tryPromise(async (): Promise<BuildResult> => {
-          const sandbox = await client.create({
+        Effect.tryPromise(() =>
+          client.create({
             ...(env.snapshot._tag === "Some"
               ? { snapshot: env.snapshot.value }
               : env.image._tag === "Some"
@@ -67,34 +69,37 @@ export const DaytonaBuildRunner = Layer.effect(
             resources: { cpu: env.cpu, memory: env.memory },
             autoDeleteInterval: 30,
             labels: { app: "site-studio", site: site.id },
-          });
-
-          try {
-            await sandbox.fs.uploadFile(
-              Buffer.from(JSON.stringify(site, null, 2), "utf8"),
-              `${env.repoDir}/site.json`,
-            );
-            const result = await sandbox.process.executeCommand(
-              "bun run publish site.json --upload",
-              env.repoDir,
-              {
-                R2_ENDPOINT: env.r2Endpoint,
-                R2_BUCKET: env.r2Bucket,
-                R2_ACCESS_KEY_ID: env.r2AccessKeyId,
-                R2_SECRET_ACCESS_KEY: Redacted.value(env.r2SecretAccessKey),
-                PUBLIC_API_URL: env.publicApiUrl._tag === "Some" ? env.publicApiUrl.value : "",
-              },
-              600,
-            );
-            return {
-              buildId: sandbox.id,
-              exitCode: result.exitCode,
-              output: result.result,
-            };
-          } finally {
-            await client.delete(sandbox).catch(() => {});
-          }
-        }).pipe(
+          }),
+        ).pipe(
+          Effect.flatMap((sandbox) =>
+            Effect.tryPromise(async (): Promise<BuildResult> => {
+              await sandbox.fs.uploadFile(
+                Buffer.from(encodeSiteDocument(site), "utf8"),
+                `${env.repoDir}/site.json`,
+              );
+              const result = await sandbox.process.executeCommand(
+                "bun run publish site.json --upload",
+                env.repoDir,
+                {
+                  R2_ENDPOINT: env.r2Endpoint,
+                  R2_BUCKET: env.r2Bucket,
+                  R2_ACCESS_KEY_ID: env.r2AccessKeyId,
+                  R2_SECRET_ACCESS_KEY: Redacted.value(env.r2SecretAccessKey),
+                  PUBLIC_API_URL: env.publicApiUrl._tag === "Some" ? env.publicApiUrl.value : "",
+                },
+                600,
+              );
+              return {
+                buildId: sandbox.id,
+                exitCode: result.exitCode,
+                output: result.result,
+              };
+            }).pipe(
+              Effect.ensuring(
+                Effect.promise(() => client.delete(sandbox).catch(() => {})),
+              ),
+            ),
+          ),
           Effect.mapError(
             (cause) =>
               new BuildError({

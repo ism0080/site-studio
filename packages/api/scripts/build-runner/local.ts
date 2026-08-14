@@ -19,6 +19,7 @@ import * as Redacted from "effect/Redacted";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import type { Site } from "../../src/site/site.ts";
+import { encodeSiteDocument } from "../../src/site/site.ts";
 import { BuildError, BuildRunner, type BuildResult } from "../../src/publish/BuildRunner.ts";
 
 const execFileP = promisify(execFile);
@@ -43,30 +44,35 @@ export const LocalBuildRunner = Layer.effect(
 
     return {
       publish: (site: Site) =>
-        Effect.tryPromise(async (): Promise<BuildResult> => {
+        Effect.tryPromise(async (): Promise<string> => {
           const siteJson = join(tmpdir(), `${site.id}.json`);
-          writeFileSync(siteJson, JSON.stringify(site, null, 2), "utf8");
-          try {
-            const { stdout } = await execFileP("bun", ["run", "publish", siteJson, "--upload"], {
-              cwd: env.templateDir,
-              env: {
-                ...process.env,
-                R2_ENDPOINT: env.r2Endpoint,
-                R2_BUCKET: env.r2Bucket,
-                R2_ACCESS_KEY_ID: env.r2AccessKeyId,
-                R2_SECRET_ACCESS_KEY: Redacted.value(env.r2SecretAccessKey),
-                PUBLIC_API_URL: env.publicApiUrl._tag === "Some" ? env.publicApiUrl.value : "",
-              },
-            });
-            return {
-              buildId: `local-${site.id}`,
-              exitCode: 0,
-              output: stdout,
-            };
-          } finally {
-            unlinkSync(siteJson);
-          }
+          writeFileSync(siteJson, encodeSiteDocument(site), "utf8");
+          return siteJson;
         }).pipe(
+          Effect.flatMap((siteJson) =>
+            Effect.tryPromise(async (): Promise<BuildResult> => {
+              const { stdout } = await execFileP("bun", ["run", "publish", siteJson, "--upload"], {
+                cwd: env.templateDir,
+                env: {
+                  ...process.env,
+                  R2_ENDPOINT: env.r2Endpoint,
+                  R2_BUCKET: env.r2Bucket,
+                  R2_ACCESS_KEY_ID: env.r2AccessKeyId,
+                  R2_SECRET_ACCESS_KEY: Redacted.value(env.r2SecretAccessKey),
+                  PUBLIC_API_URL: env.publicApiUrl._tag === "Some" ? env.publicApiUrl.value : "",
+                },
+              });
+              return {
+                buildId: `local-${site.id}`,
+                exitCode: 0,
+                output: stdout,
+              };
+            }).pipe(
+              Effect.ensuring(
+                Effect.try(() => unlinkSync(siteJson)).pipe(Effect.ignore),
+              ),
+            ),
+          ),
           Effect.mapError(
             (cause) =>
               new BuildError({

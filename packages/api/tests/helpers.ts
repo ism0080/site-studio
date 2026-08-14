@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as Effect from "effect/Effect";
 import { RuntimeContext } from "alchemy";
+import { WebCrypto } from "../src/platform/WebCrypto.ts";
 
 const migrationsDir = fileURLToPath(new URL("../migrations", import.meta.url));
 
@@ -24,33 +25,40 @@ export const makeDb = (): DatabaseSync => {
  */
 export const memoryD1 = (db: DatabaseSync) => ({
   prepare: (sql: string) => ({
-    bind: (...params: unknown[]) => {
+    bind: (...params: Array<string | number | null>) => {
       const stmt = db.prepare(sql);
+      // SAFETY: node:sqlite results match the D1 row types the repositories request; the D1 surface is the test boundary.
       return {
         all: <T>() =>
           Effect.sync(() => ({
-            results: stmt.all(...(params as Array<string | number | null>)) as unknown as T[],
+            results: stmt.all(...params) as T[],
           })),
         first: <T>() =>
-          Effect.sync(
-            () => (stmt.get(...(params as Array<string | number | null>)) ?? null) as T | null,
-          ),
+          Effect.sync(() => (stmt.get(...params) ?? null) as T | null),
         run: () =>
-          Effect.sync(
-            () =>
-              ({
-                meta: { changes: stmt.run(...(params as Array<string | number | null>)).changes },
-              }) as never,
-          ),
+          Effect.sync(() => ({
+            meta: { changes: stmt.run(...params).changes },
+          })),
       };
     },
   }),
 });
+
+// SAFETY: The shim intentionally implements a narrower surface than the real D1 client; the cast bridges the type for tests.
+const d1 = (db: DatabaseSync) => memoryD1(db) as never;
+export { d1 };
 
 /**
  * Runs a repository/storage Effect. The real D1/R2 clients type these effects
  * as requiring alchemy's RuntimeContext; our shims don't need it, so a dummy
  * service is provided to satisfy the type.
  */
-export const run = <A, E>(effect: Effect.Effect<A, E, any>) =>
-  Effect.runPromise(effect.pipe(Effect.provideService(RuntimeContext, {} as never)));
+// SAFETY: The D1/R2 shims never read the RuntimeContext service, so a stub value satisfies the type.
+const run = <A, E>(effect: Effect.Effect<A, E, any>) =>
+  Effect.runPromise(
+    effect.pipe(
+      Effect.provideService(RuntimeContext, {} as never),
+      Effect.provide(WebCrypto),
+    ),
+  );
+export { run };
