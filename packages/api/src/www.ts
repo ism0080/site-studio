@@ -9,7 +9,7 @@ import { contentTypeFor, normalizeDomain, resolveRequestKey } from "./site/keys.
 
 const SWR_DAYS = 86400;
 
-const notFound = (): HttpServerResponse.HttpServerResponse =>
+const _notFound = (): HttpServerResponse.HttpServerResponse =>
   HttpServerResponse.raw(
     "<!doctype html><html><body><h1>404</h1><p>Site not found.</p></body></html>",
     { status: 404, contentType: "text/html" },
@@ -64,10 +64,10 @@ export default Cloudflare.Worker(
 
         // 2) Fall back to path-based routing: /<siteId>/<path> on the www URL.
         const key = resolveRequestKey(url.pathname, byDomain?.site_id ?? null);
-        if (key === null) return notFound();
+        if (key === null) return _notFound();
 
         const object = yield* bucket.get(key);
-        if (object === null) return notFound();
+        if (object === null) return _notFound();
 
         const headers = {
           "Content-Type": contentTypeFor(key),

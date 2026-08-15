@@ -10,24 +10,6 @@ import { nowIso } from "../platform/Time.ts";
 
 type Db = Cloudflare.D1.QueryDatabaseClient;
 
-interface LeadRow {
-  id: string;
-  site_id: string;
-  name: string;
-  email: string;
-  message: string | null;
-  created_at: string;
-}
-
-const parse = (row: LeadRow): Lead => ({
-  id: LeadId.make(row.id),
-  siteId: SiteId.make(row.site_id),
-  name: row.name,
-  email: row.email,
-  message: row.message ?? undefined,
-  createdAt: row.created_at,
-});
-
 export interface LeadRepositoryService {
   readonly create: (
     input: LeadInput,
@@ -46,7 +28,7 @@ export interface LeadRepositoryService {
   ) => Effect.Effect<{ name: string; email: string } | null, never, RuntimeContext>;
 }
 
-const siteExists = (db: Db, siteId: string, ownerId?: string) =>
+const _siteExists = (db: Db, siteId: string, ownerId?: string) =>
   ownerId
     ? db
         .prepare("SELECT id FROM sites WHERE id = ? AND owner_id = ?")
@@ -56,7 +38,7 @@ const siteExists = (db: Db, siteId: string, ownerId?: string) =>
 
 export const makeLeadRepository = (db: Db): LeadRepositoryService => ({
   create: Effect.fn("LeadRepository.create")(function* (input: LeadInput) {
-    const site = yield* siteExists(db, input.siteId);
+    const site = yield* _siteExists(db, input.siteId);
     if (site === null) return yield* new SiteNotFound({ id: input.siteId });
     const crypto = yield* Crypto.Crypto;
     const lead: Lead = {
@@ -76,20 +58,34 @@ export const makeLeadRepository = (db: Db): LeadRepositoryService => ({
     return lead;
   }),
   listForSite: Effect.fn("LeadRepository.listForSite")(function* (siteId: string, ownerId: string) {
-    const site = yield* siteExists(db, siteId, ownerId);
+    const site = yield* _siteExists(db, siteId, ownerId);
     if (site === null) return yield* new SiteNotFound({ id: siteId });
     const rows = yield* db
       .prepare("SELECT * FROM leads WHERE site_id = ? ORDER BY created_at DESC")
       .bind(siteId)
-      .all<LeadRow>();
-    return rows.results.map(parse);
+      .all<{
+        id: string;
+        site_id: string;
+        name: string;
+        email: string;
+        message: string | null;
+        created_at: string;
+      }>();
+    return rows.results.map((row) => ({
+      id: LeadId.make(row.id),
+      siteId: SiteId.make(row.site_id),
+      name: row.name,
+      email: row.email,
+      message: row.message ?? undefined,
+      createdAt: row.created_at,
+    }));
   }),
   remove: Effect.fn("LeadRepository.remove")(function* (
     siteId: string,
     leadId: string,
     ownerId: string,
   ) {
-    const site = yield* siteExists(db, siteId, ownerId);
+    const site = yield* _siteExists(db, siteId, ownerId);
     if (site === null) return yield* new SiteNotFound({ id: siteId });
     const result = yield* db
       .prepare("DELETE FROM leads WHERE id = ? AND site_id = ?")

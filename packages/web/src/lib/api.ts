@@ -58,7 +58,7 @@ export const fromApiSite = (site: Site): Site => ({
   lastSaved: timeAgo(site.updatedAt),
 });
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function _request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -86,26 +86,26 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
-  listSites: (): Promise<Site[]> => request<Site[]>("/sites"),
-  getSite: (id: string): Promise<Site> => request<Site>(`/sites/${id}`),
+  listSites: (): Promise<Site[]> => _request<Site[]>("/sites"),
+  getSite: (id: string): Promise<Site> => _request<Site>(`/sites/${id}`),
   createSite: (payload: CreateSitePayload): Promise<Site> =>
-    request<Site>("/sites", { method: "POST", body: JSON.stringify(payload) }),
+    _request<Site>("/sites", { method: "POST", body: JSON.stringify(payload) }),
   updateSite: (id: string, site: Site): Promise<Site> =>
-    request<Site>(`/sites/${id}`, { method: "PUT", body: JSON.stringify(site) }),
+    _request<Site>(`/sites/${id}`, { method: "PUT", body: JSON.stringify(site) }),
   publishSite: (id: string): Promise<PublishResult> =>
-    request<PublishResult>(`/sites/${id}/publish`, { method: "POST" }),
+    _request<PublishResult>(`/sites/${id}/publish`, { method: "POST" }),
   setDomain: (id: string, domain: string): Promise<DomainSetup> =>
-    request<DomainSetup>(`/sites/${id}/domain`, {
+    _request<DomainSetup>(`/sites/${id}/domain`, {
       method: "POST",
       body: JSON.stringify({ domain }),
     }),
   verifyDomain: (id: string): Promise<Site> =>
-    request<Site>(`/sites/${id}/domain/verify`, { method: "POST" }),
+    _request<Site>(`/sites/${id}/domain/verify`, { method: "POST" }),
   removeDomain: (id: string): Promise<Site> =>
-    request<Site>(`/sites/${id}/domain`, { method: "DELETE" }),
-  listLeads: (siteId: string): Promise<Lead[]> => request<Lead[]>(`/sites/${siteId}/leads`),
+    _request<Site>(`/sites/${id}/domain`, { method: "DELETE" }),
+  listLeads: (siteId: string): Promise<Lead[]> => _request<Lead[]>(`/sites/${siteId}/leads`),
   deleteLead: (siteId: string, leadId: string): Promise<null> =>
-    request<null>(`/sites/${siteId}/leads/${leadId}`, { method: "DELETE" }),
+    _request<null>(`/sites/${siteId}/leads/${leadId}`, { method: "DELETE" }),
 };
 
 // Public URL for a published site: the custom domain when verified, otherwise

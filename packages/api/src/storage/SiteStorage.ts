@@ -30,9 +30,9 @@ export class SiteStorage extends Context.Service<SiteStorage, SiteStorageService
   "@app/SiteStorage",
 ) {}
 
-const siteKey = (siteId: string) => `sites/${siteId}/site.json`;
+const _siteKey = (siteId: string) => `sites/${siteId}/site.json`;
 
-const toStorageError = (cause: unknown) =>
+const _toStorageError = (cause: unknown) =>
   new SiteStorageError({
     message: cause instanceof Error ? cause.message : String(cause),
     cause,
@@ -44,13 +44,13 @@ export const makeR2SiteStorage = (bucket: Bucket): SiteStorageService => ({
     document: string,
   ) {
     return yield* bucket
-      .put(siteKey(siteId), document)
-      .pipe(Effect.as(undefined), Effect.mapError(toStorageError));
+      .put(_siteKey(siteId), document)
+      .pipe(Effect.as(undefined), Effect.mapError(_toStorageError));
   }),
   getSiteDocument: Effect.fn("SiteStorage.getSiteDocument")(function* (siteId: string) {
-    const object = yield* bucket.get(siteKey(siteId)).pipe(Effect.mapError(toStorageError));
+    const object = yield* bucket.get(_siteKey(siteId)).pipe(Effect.mapError(_toStorageError));
     if (object === null) return null;
-    return yield* object.text().pipe(Effect.mapError(toStorageError));
+    return yield* object.text().pipe(Effect.mapError(_toStorageError));
   }),
 });
 

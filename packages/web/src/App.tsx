@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { User } from "better-auth";
-import type { Device, DomainSetup, SaveState, Site, Template, View } from "./types.ts";
+import { useMachine } from "@xstate/react";
+import { useQueryClient } from "@tanstack/react-query";
+import type { Device, DomainSetup, SaveState, Site } from "./types.ts";
 import Sidebar from "./components/Sidebar.tsx";
 import Header from "./components/Header.tsx";
 import Overview from "./components/Overview.tsx";
@@ -9,8 +8,8 @@ import Templates from "./components/Templates.tsx";
 import Leads from "./components/Leads.tsx";
 import EditorPanel from "./components/EditorPanel.tsx";
 import Preview from "./components/Preview.tsx";
-import { initialSite } from "./data/site.ts";
-import { errorMessage, fromApiSite, liveUrlFor, toApiSite } from "./lib/api.ts";
+import { appMachine } from "./lib/appMachine.ts";
+import { api, liveUrlFor } from "./lib/api.ts";
 import { authClient } from "./lib/auth.ts";
 import {
   siteQueries,
@@ -21,11 +20,6 @@ import {
   useUpdateSite,
   useVerifyDomain,
 } from "./lib/queries.ts";
-
-interface Banner {
-  kind: "error" | "success";
-  message: string;
-}
 
 function SignInScreen({ onSignIn }: { onSignIn: () => void }) {
   return (
@@ -51,20 +45,33 @@ function Editor({
   site,
   online,
   saveState,
+  device,
+  onDevice,
   onUpdate,
-  onSetDomain,
-  onVerifyDomain,
-  onRemoveDomain,
+  domain,
+  setup,
+  domainError,
+  domainBusy,
+  onDomainInput,
+  onDomainConnect,
+  onDomainVerify,
+  onDomainRemove,
 }: {
   site: Site;
   online: boolean | null;
   saveState: SaveState;
+  device: Device;
+  onDevice: (device: Device) => void;
   onUpdate: (site: Site) => void;
-  onSetDomain: (domain: string) => Promise<DomainSetup>;
-  onVerifyDomain: () => Promise<Site>;
-  onRemoveDomain: () => Promise<Site>;
+  domain: string;
+  setup: DomainSetup | null;
+  domainError: string | null;
+  domainBusy: boolean;
+  onDomainInput: (domain: string) => void;
+  onDomainConnect: () => void;
+  onDomainVerify: () => void;
+  onDomainRemove: () => void;
 }) {
-  const [device, setDevice] = useState<Device>("desktop");
   return (
     <div className="editor-layout">
       <EditorPanel
@@ -72,9 +79,14 @@ function Editor({
         online={online}
         saveState={saveState}
         onUpdate={onUpdate}
-        onSetDomain={onSetDomain}
-        onVerifyDomain={onVerifyDomain}
-        onRemoveDomain={onRemoveDomain}
+        domain={domain}
+        setup={setup}
+        domainError={domainError}
+        domainBusy={domainBusy}
+        onDomainInput={onDomainInput}
+        onDomainConnect={onDomainConnect}
+        onDomainVerify={onDomainVerify}
+        onDomainRemove={onDomainRemove}
       />
       <div className="preview-area">
         <div className="preview-toolbar">
@@ -85,13 +97,13 @@ function Editor({
           <div className="device-toggle">
             <button
               className={device === "desktop" ? "active" : ""}
-              onClick={() => setDevice("desktop")}
+              onClick={() => onDevice("desktop")}
             >
               Desktop
             </button>
             <button
               className={device === "mobile" ? "active" : ""}
-              onClick={() => setDevice("mobile")}
+              onClick={() => onDevice("mobile")}
             >
               Mobile
             </button>
@@ -104,24 +116,7 @@ function Editor({
 }
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [active, setActive] = useState<View>("overview");
-  const [site, setSite] = useState<Site>(initialSite);
-  const [persisted, setPersisted] = useState(false);
-  const [online, setOnline] = useState<boolean | null>(null);
-  const [saveState, setSaveState] = useState<SaveState>("idle");
-  const [publishing, setPublishing] = useState(false);
-  const [banner, setBanner] = useState<Banner | null>(null);
-
-  const siteRef = useRef(site);
-  const persistedRef = useRef(persisted);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
   const queryClient = useQueryClient();
-  const sitesQuery = useQuery({ ...siteQueries.list(), enabled: !!user });
-  const sites = sitesQuery.data ?? [];
-
   const createSite = useCreateSite();
   const updateSiteMutation = useUpdateSite();
   const publishSite = usePublishSite();
@@ -129,189 +124,52 @@ export default function App() {
   const verifyDomain = useVerifyDomain();
   const removeDomain = useRemoveDomain();
 
-  useEffect(() => {
-    authClient
-      .getSession()
-      .then(({ data }) => {
-        setUser(data?.user ?? null);
-      })
-      .catch(() => {})
-      .finally(() => setAuthLoading(false));
-  }, []);
-
-  const handleSignIn = () => {
-    authClient.signIn.social({ provider: "google" });
-  };
-
-  const handleSignOut = async () => {
-    await authClient.signOut();
-    setUser(null);
-    window.location.reload();
-  };
-
-  const updateSite = useCallback((next: Site) => {
-    siteRef.current = next;
-    setSite(next);
-  }, []);
-
-  const setPersistedFlag = useCallback((value: boolean) => {
-    persistedRef.current = value;
-    setPersisted(value);
-  }, []);
-
-  // Drive the online/offline banner and select the first persisted site from
-  // the sites list once it arrives.
-  useEffect(() => {
-    if (sitesQuery.isError) {
-      setOnline(false);
-      setBanner({
-        kind: "error",
-        message: "API unreachable — showing local demo data. Start the API and reload to go live.",
-      });
-      return;
-    }
-    if (!sitesQuery.isSuccess) return;
-    setOnline(true);
-    if (sitesQuery.data.length > 0 && !persistedRef.current) {
-      updateSite(fromApiSite(sitesQuery.data[0]));
-      setPersistedFlag(true);
-    }
-  }, [sitesQuery.isError, sitesQuery.isSuccess, sitesQuery.data, updateSite, setPersistedFlag]);
-
-  // Persist the current site to the API (create on first save, then update).
-  const commit = useCallback(
-    async (next: Site) => {
-      setSaveState("saving");
-      try {
-        if (persistedRef.current) {
-          await updateSiteMutation.mutateAsync(toApiSite(next));
-        } else {
-          const created = await createSite.mutateAsync({
-            name: next.business.name,
-            templateId: next.templateId,
-          });
-          updateSite(fromApiSite(created));
-          setPersistedFlag(true);
-        }
-        setSaveState("saved");
-      } catch (e) {
-        setSaveState("error");
-        setBanner({ kind: "error", message: `Save failed: ${errorMessage(e)}` });
-      }
+  const [snapshot, send] = useMachine(appMachine, {
+    input: {
+      getSession: () => authClient.getSession().then(({ data }) => data ?? { user: null }),
+      signIn: () => authClient.signIn.social({ provider: "google" }),
+      signOut: async () => {
+        await authClient.signOut();
+        window.location.reload();
+      },
+      listSites: () => api.listSites(),
+      createSite: (payload) => createSite.mutateAsync(payload),
+      updateSite: (site) => updateSiteMutation.mutateAsync(site),
+      publishSite: (id) => publishSite.mutateAsync(id),
+      fetchSite: (id) => queryClient.fetchQuery(siteQueries.detail(id)),
+      setDomain: (id, domain) => setDomain.mutateAsync({ id, domain }),
+      verifyDomain: (id) => verifyDomain.mutateAsync(id),
+      removeDomain: (id) => removeDomain.mutateAsync(id),
     },
-    [updateSiteMutation, createSite, updateSite, setPersistedFlag],
-  );
+  });
 
-  const handleUpdate = useCallback(
-    (next: Site) => {
-      updateSite(next);
-      if (online !== true) return;
-      clearTimeout(saveTimer.current);
-      saveTimer.current = setTimeout(() => commit(next), 800);
-    },
-    [updateSite, online, commit],
-  );
-
-  // Returns a persisted site id, creating the site if the demo site was never saved.
-  const ensurePersisted = useCallback(async (): Promise<string> => {
-    if (persistedRef.current) return siteRef.current.id;
-    const created = await createSite.mutateAsync({
-      name: siteRef.current.business.name,
-      templateId: siteRef.current.templateId,
-    });
-    updateSite(fromApiSite(created));
-    setPersistedFlag(true);
-    return created.id;
-  }, [createSite, updateSite, setPersistedFlag]);
-
-  const handlePublish = useCallback(async () => {
-    setPublishing(true);
-    setBanner(null);
-    try {
-      const id = await ensurePersisted();
-      await publishSite.mutateAsync(id);
-      const updated = await queryClient.fetchQuery(siteQueries.detail(id));
-      updateSite(fromApiSite(updated));
-      setBanner({
-        kind: "success",
-        message:
-          "Published. Static HTML is generated by the Astro build step (run `bun run publish` in packages/site-template).",
-      });
-    } catch (e) {
-      setBanner({ kind: "error", message: `Publish failed: ${errorMessage(e)}` });
-    } finally {
-      setPublishing(false);
-    }
-  }, [ensurePersisted, publishSite, queryClient, updateSite]);
-
-  const handleSetDomain = useCallback(
-    async (domain: string): Promise<DomainSetup> => {
-      const id = await ensurePersisted();
-      return setDomain.mutateAsync({ id, domain });
-    },
-    [ensurePersisted, setDomain],
-  );
-
-  const handleVerifyDomain = useCallback(async (): Promise<Site> => {
-    const id = await ensurePersisted();
-    const updated = await verifyDomain.mutateAsync(id);
-    updateSite(fromApiSite(updated));
-    return updated;
-  }, [ensurePersisted, verifyDomain, updateSite]);
-
-  const handleRemoveDomain = useCallback(async (): Promise<Site> => {
-    const id = await ensurePersisted();
-    const updated = await removeDomain.mutateAsync(id);
-    updateSite(fromApiSite(updated));
-    return updated;
-  }, [ensurePersisted, removeDomain, updateSite]);
-
-  const handleSelectSite = useCallback(
-    (id: string) => {
-      const next = sitesQuery.data?.find((s) => s.id === id);
-      if (!next) return;
-      updateSite(fromApiSite(next));
-      setPersistedFlag(true);
-    },
-    [sitesQuery.data, updateSite, setPersistedFlag],
-  );
-
-  // Applying a template switches the site's templateId and seeds its palette
-  // (accent + font); the renderer keys the whole look off templateId.
-  const handleSelectTemplate = useCallback(
-    (template: Template) => {
-      const next: Site = {
-        ...siteRef.current,
-        templateId: template.id,
-        settings: {
-          ...siteRef.current.settings,
-          accent: template.palette[1],
-          font: template.font,
-        },
-      };
-      handleUpdate(next);
-      setActive("editor");
-    },
-    [handleUpdate],
-  );
-
-  const goEditor = () => setActive("editor");
+  const { user, authLoading, active, site, online, saveState, publishing, banner, device, sites } =
+    snapshot.context;
+  const domainBusy =
+    snapshot.matches({ ready: { domain: "connecting" } }) ||
+    snapshot.matches({ ready: { domain: "verifying" } }) ||
+    snapshot.matches({ ready: { domain: "removing" } });
 
   if (authLoading) {
     return <div className="auth-screen">Loading…</div>;
   }
   if (!user) {
-    return <SignInScreen onSignIn={handleSignIn} />;
+    return <SignInScreen onSignIn={() => send({ type: "SIGN_IN" })} />;
   }
 
   return (
     <div className="app-shell">
-      <Sidebar active={active} onChange={setActive} user={user} onSignOut={handleSignOut} />
+      <Sidebar
+        active={active}
+        onChange={(view) => send({ type: "SET_VIEW", view })}
+        user={user}
+        onSignOut={() => send({ type: "SIGN_OUT" })}
+      />
       <main className="main-content">
         {banner && (
           <div className={`conn-banner ${banner.kind}`}>
             <span>{banner.message}</span>
-            <button className="banner-close" onClick={() => setBanner(null)}>
+            <button className="banner-close" onClick={() => send({ type: "DISMISS_BANNER" })}>
               ×
             </button>
           </div>
@@ -324,21 +182,42 @@ export default function App() {
           sites={sites}
           user={user}
           liveUrl={liveUrlFor(site)}
-          onPublish={handlePublish}
-          onSelectSite={handleSelectSite}
+          onPublish={() => send({ type: "PUBLISH" })}
+          onSelectSite={(id) => send({ type: "SELECT_SITE", id })}
         />
-        {active === "overview" && <Overview onEdit={goEditor} site={site} sites={sites} />}
-        {active === "templates" && <Templates onSelect={handleSelectTemplate} />}
-        {active === "leads" && <Leads site={site} online={online} onEdit={goEditor} />}
+        {active === "overview" && (
+          <Overview
+            onEdit={() => send({ type: "SET_VIEW", view: "editor" })}
+            site={site}
+            sites={sites}
+          />
+        )}
+        {active === "templates" && (
+          <Templates onSelect={(template) => send({ type: "SELECT_TEMPLATE", template })} />
+        )}
+        {active === "leads" && (
+          <Leads
+            site={site}
+            online={online}
+            onEdit={() => send({ type: "SET_VIEW", view: "editor" })}
+          />
+        )}
         {active === "editor" && (
           <Editor
             site={site}
             online={online}
             saveState={saveState}
-            onUpdate={handleUpdate}
-            onSetDomain={handleSetDomain}
-            onVerifyDomain={handleVerifyDomain}
-            onRemoveDomain={handleRemoveDomain}
+            device={device}
+            onDevice={(d) => send({ type: "SET_DEVICE", device: d })}
+            onUpdate={(next) => send({ type: "UPDATE", site: next })}
+            domain={snapshot.context.domain}
+            setup={snapshot.context.setup}
+            domainError={snapshot.context.domainError}
+            domainBusy={domainBusy}
+            onDomainInput={(d) => send({ type: "DOMAIN_INPUT", domain: d })}
+            onDomainConnect={() => send({ type: "DOMAIN_CONNECT" })}
+            onDomainVerify={() => send({ type: "DOMAIN_VERIFY" })}
+            onDomainRemove={() => send({ type: "DOMAIN_REMOVE" })}
           />
         )}
       </main>

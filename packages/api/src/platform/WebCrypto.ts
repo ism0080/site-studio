@@ -3,19 +3,6 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as PlatformError from "effect/PlatformError";
 
-const digest: Crypto.Crypto["digest"] = (algorithm, data) =>
-  Effect.tryPromise({
-    try: () => crypto.subtle.digest(algorithm, data).then((buffer) => new Uint8Array(buffer)),
-    catch: (cause) =>
-      PlatformError.systemError({
-        module: "Crypto",
-        method: "digest",
-        _tag: "Unknown",
-        description: "Could not compute digest",
-        cause,
-      }),
-  });
-
 export const WebCrypto = Layer.succeed(
   Crypto.Crypto,
   Crypto.make({
@@ -24,6 +11,17 @@ export const WebCrypto = Layer.succeed(
       crypto.getRandomValues(bytes);
       return bytes;
     },
-    digest,
+    digest: (algorithm, data) =>
+      Effect.tryPromise({
+        try: () => crypto.subtle.digest(algorithm, data).then((buffer) => new Uint8Array(buffer)),
+        catch: (cause) =>
+          PlatformError.systemError({
+            module: "Crypto",
+            method: "digest",
+            _tag: "Unknown",
+            description: "Could not compute digest",
+            cause,
+          }),
+      }),
   }),
 );

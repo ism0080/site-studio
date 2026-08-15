@@ -58,10 +58,10 @@ export interface SiteRepositoryService {
   ) => Effect.Effect<Site, SiteNotFound, RuntimeContext>;
 }
 
-const parse = (document: string) => decodeSiteJson(document).pipe(Effect.orDie);
+const _parse = (document: string) => decodeSiteJson(document).pipe(Effect.orDie);
 
 // The `document` column is TEXT; encode the schema then serialize to JSON.
-const serialize = (site: Site) => encodeSiteJson(site);
+const _serialize = (site: Site) => encodeSiteJson(site);
 
 export const makeSiteRepository = (
   db: Db,
@@ -76,7 +76,7 @@ export const makeSiteRepository = (
         .all<{ document: string }>()
         .pipe(
           Effect.map((result) => result.results.map((row) => row.document)),
-          Effect.flatMap((documents) => Effect.all(documents.map(parse))),
+          Effect.flatMap((documents) => Effect.all(documents.map(_parse))),
         );
     }),
     get: Effect.fn("SiteRepository.get")(function* (id: string, ownerId: string) {
@@ -85,7 +85,7 @@ export const makeSiteRepository = (
         .bind(id, ownerId)
         .first<{ document: string }>();
       if (row === null) return yield* new SiteNotFound({ id });
-      return yield* parse(row.document);
+      return yield* _parse(row.document);
     }),
     create: Effect.fn("SiteRepository.create")(function* (payload: CreateSite, ownerId: string) {
       const now = yield* nowIso;
@@ -128,7 +128,7 @@ export const makeSiteRepository = (
           site.ownerId,
           site.templateId,
           site.status,
-          serialize(site),
+          _serialize(site),
           site.createdAt,
           site.updatedAt,
         )
@@ -154,7 +154,7 @@ export const makeSiteRepository = (
         .bind(
           updated.templateId,
           updated.status,
-          serialize(updated),
+          _serialize(updated),
           updated.updatedAt,
           id,
           ownerId,
@@ -179,7 +179,7 @@ export const makeSiteRepository = (
         .bind(id, ownerId)
         .first<{ document: string }>();
       if (row === null) return yield* new SiteNotFound({ id });
-      const current = yield* parse(row.document);
+      const current = yield* _parse(row.document);
       const updated = new Site({
         ...current,
         status: "published",
@@ -192,7 +192,7 @@ export const makeSiteRepository = (
         )
         .bind(
           updated.status,
-          serialize(updated),
+          _serialize(updated),
           updated.updatedAt,
           updated.publishedAt,
           id,
@@ -211,7 +211,7 @@ export const makeSiteRepository = (
         .bind(id, ownerId)
         .first<{ document: string }>();
       if (site === null) return yield* new SiteNotFound({ id });
-      const current = yield* parse(site.document);
+      const current = yield* _parse(site.document);
 
       const domain = normalizeDomain(inputDomain);
       if (!domain) return yield* new SiteNotFound({ id });
@@ -245,7 +245,7 @@ export const makeSiteRepository = (
         .bind(id, ownerId)
         .first<{ document: string }>();
       if (site === null) return yield* new SiteNotFound({ id });
-      const current = yield* parse(site.document);
+      const current = yield* _parse(site.document);
 
       const pending = yield* db
         .prepare(
@@ -279,7 +279,7 @@ export const makeSiteRepository = (
         .prepare(
           "UPDATE sites SET document = ?, custom_domain = ?, updated_at = ? WHERE id = ? AND owner_id = ?",
         )
-        .bind(serialize(updated), pending.domain, now, id, ownerId)
+        .bind(_serialize(updated), pending.domain, now, id, ownerId)
         .run();
       return updated;
     }),
@@ -289,7 +289,7 @@ export const makeSiteRepository = (
         .bind(id, ownerId)
         .first<{ document: string }>();
       if (site === null) return yield* new SiteNotFound({ id });
-      const current = yield* parse(site.document);
+      const current = yield* _parse(site.document);
 
       const now = yield* nowIso;
       yield* db.prepare("DELETE FROM site_domains WHERE site_id = ?").bind(id).run();
@@ -298,7 +298,7 @@ export const makeSiteRepository = (
         .prepare(
           "UPDATE sites SET document = ?, custom_domain = NULL, updated_at = ? WHERE id = ? AND owner_id = ?",
         )
-        .bind(serialize(updated), now, id, ownerId)
+        .bind(_serialize(updated), now, id, ownerId)
         .run();
       return updated;
     }),

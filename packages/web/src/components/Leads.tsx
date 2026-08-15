@@ -30,10 +30,6 @@ export default function Leads({
       ? errorMessageFrom(error)
       : null;
 
-  const remove = (leadId: string) => {
-    deleteLead.mutate({ siteId: site.id, leadId });
-  };
-
   if (!site.id || !online) {
     return (
       <div className="empty-page">
@@ -92,7 +88,7 @@ export default function Leads({
               </div>
               <button
                 className="section-btn remove"
-                onClick={() => remove(lead.id)}
+                onClick={() => deleteLead.mutate({ siteId: site.id, leadId: lead.id })}
                 aria-label="Delete lead"
               >
                 ×

@@ -2,7 +2,7 @@ import * as Effect from "effect/Effect";
 import { newVerificationToken, verifyTxtRecord } from "../src/site/dns.ts";
 import { WebCrypto } from "../src/platform/WebCrypto.ts";
 
-const makeFetch =
+const _makeFetch =
   (answers: Array<{ data?: string }>, opts?: { ok?: boolean; throws?: boolean }) => async () => {
     if (opts?.throws) throw new Error("network down");
     return {
@@ -12,7 +12,7 @@ const makeFetch =
   };
 
 let failed = 0;
-const check = (label: string, got: boolean, expected: boolean) => {
+const _check = (label: string, got: boolean, expected: boolean) => {
   const ok = got === expected;
   if (!ok) failed++;
   console.log(`${ok ? "ok  " : "FAIL"} ${label} -> ${got}`);
@@ -20,36 +20,36 @@ const check = (label: string, got: boolean, expected: boolean) => {
 
 const token = "site-studio-verify=abc123";
 
-check(
+_check(
   "matching record",
-  await verifyTxtRecord("aurora.co", token, makeFetch([{ data: token }])),
+  await verifyTxtRecord("aurora.co", token, _makeFetch([{ data: token }])),
   true,
 );
-check(
+_check(
   "quoted record still matches",
-  await verifyTxtRecord("aurora.co", token, makeFetch([{ data: `"${token}"` }])),
+  await verifyTxtRecord("aurora.co", token, _makeFetch([{ data: `"${token}"` }])),
   true,
 );
-check(
+_check(
   "different record",
-  await verifyTxtRecord("aurora.co", token, makeFetch([{ data: "other=xyz" }])),
+  await verifyTxtRecord("aurora.co", token, _makeFetch([{ data: "other=xyz" }])),
   false,
 );
-check("no answers", await verifyTxtRecord("aurora.co", token, makeFetch([])), false);
-check(
+_check("no answers", await verifyTxtRecord("aurora.co", token, _makeFetch([])), false);
+_check(
   "dns error response",
-  await verifyTxtRecord("aurora.co", token, makeFetch([], { ok: false })),
+  await verifyTxtRecord("aurora.co", token, _makeFetch([], { ok: false })),
   false,
 );
-check(
+_check(
   "network failure",
-  await verifyTxtRecord("aurora.co", token, makeFetch([], { throws: true })),
+  await verifyTxtRecord("aurora.co", token, _makeFetch([], { throws: true })),
   false,
 );
 
 const t = Effect.runSync(Effect.provide(newVerificationToken, WebCrypto));
-check("token format", t.startsWith("site-studio-verify="), true);
-check("token has entropy", t.length > "site-studio-verify=".length + 8, true);
+_check("token format", t.startsWith("site-studio-verify="), true);
+_check("token has entropy", t.length > "site-studio-verify=".length + 8, true);
 
 if (failed > 0) process.exit(1);
 console.log("dns verification tests passed");

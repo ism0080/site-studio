@@ -9,11 +9,11 @@ beforeEach(() => {
   db = makeDb();
 });
 
-const repo = () => makeSiteRepository(d1(db));
+const _repo = () => makeSiteRepository(d1(db));
 
 describe("SiteRepository", () => {
   it("create -> get -> list -> update -> remove", async () => {
-    const r = repo();
+    const r = _repo();
     const created = await run(
       r.create({ name: "Aurora Studio", templateId: "editorial-studio" }, "owner-1"),
     );
@@ -41,7 +41,7 @@ describe("SiteRepository", () => {
   });
 
   it("owner scoping — other owners cannot read a site", async () => {
-    const r = repo();
+    const r = _repo();
     const created = await run(r.create({ name: "A", templateId: "t" }, "owner-1"));
     await expect(run(r.get(created.id, "owner-2"))).rejects.toMatchObject({
       _tag: "SiteNotFound",
@@ -49,7 +49,7 @@ describe("SiteRepository", () => {
   });
 
   it("markPublished sets status and publishedAt", async () => {
-    const r = repo();
+    const r = _repo();
     const created = await run(r.create({ name: "A", templateId: "t" }, "owner-1"));
     const published = await run(r.markPublished(created.id, "owner-1", "2026-08-09T00:00:00.000Z"));
     expect(published.status).toBe("published");
@@ -87,7 +87,7 @@ describe("SiteRepository", () => {
   });
 
   it("a domain already claimed by another site is rejected", async () => {
-    const r = repo();
+    const r = _repo();
     const a = await run(r.create({ name: "A", templateId: "t" }, "owner-1"));
     const b = await run(r.create({ name: "B", templateId: "t" }, "owner-1"));
     await run(r.setDomain(a.id, "owner-1", "example.com"));

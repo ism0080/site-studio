@@ -13,6 +13,18 @@
     {
       "name": "xstate",
       "specifier": "./tools/oxlint/xstate/index.ts"
+    },
+    {
+      "name": "react-ui",
+      "specifier": "./tools/oxlint/react/index.ts"
+    },
+    {
+      "name": "architecture",
+      "specifier": "./tools/oxlint/architecture/index.ts"
+    },
+    {
+      "name": "core",
+      "specifier": "./tools/oxlint/core/index.ts"
     }
   ],
   "categories": {
@@ -81,7 +93,24 @@
         "xstate/no-multiple-xstate-hooks": "error",
         "xstate/no-single-use-xstate-actions": "error",
         "xstate/no-single-use-xstate-guards": "error",
-        "xstate/require-xstate-event-satisfies": "error"
+        "xstate/require-xstate-event-satisfies": "error",
+        "react-ui/no-react-component-inner-functions": "error",
+        "react-ui/no-react-non-component-function-exports": "error",
+        "react-ui/no-react-state-hooks": "error"
+      }
+    },
+    {
+      "files": ["packages/api/**"],
+      "rules": {
+        "architecture/no-api-repository-imports": "error",
+        "architecture/no-api-backend-imports": "error"
+      }
+    },
+    {
+      "files": ["packages/api/**", "packages/web/**"],
+      "rules": {
+        "core/no-single-use-private-functions": "error",
+        "core/private-function-prefix": "error"
       }
     }
   ],

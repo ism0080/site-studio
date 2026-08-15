@@ -10,15 +10,15 @@ beforeEach(() => {
   db = makeDb();
 });
 
-const leads = () => makeLeadRepository(d1(db));
-const sites = () => makeSiteRepository(d1(db));
+const _leads = () => makeLeadRepository(d1(db));
+const _sites = () => makeSiteRepository(d1(db));
 
 describe("LeadRepository", () => {
   it("create -> list -> remove", async () => {
     const site = await run(
-      sites().create({ name: "Aurora", templateId: "editorial-studio" }, "owner-1"),
+      _sites().create({ name: "Aurora", templateId: "editorial-studio" }, "owner-1"),
     );
-    const l = leads();
+    const l = _leads();
 
     const lead = await run(
       l.create({ siteId: site.id, name: "Jane", email: "jane@x.com", message: "hi" }),
@@ -37,7 +37,7 @@ describe("LeadRepository", () => {
   it("create rejects unknown sites", async () => {
     await expect(
       run(
-        leads().create({
+        _leads().create({
           siteId: "no-such-site",
           name: "Jane",
           email: "j@x.com",
@@ -48,20 +48,20 @@ describe("LeadRepository", () => {
   });
 
   it("list is owner-scoped", async () => {
-    const site = await run(sites().create({ name: "A", templateId: "t" }, "owner-1"));
-    await run(leads().create({ siteId: site.id, name: "Jane", email: "j@x.com" }));
-    await expect(run(leads().listForSite(site.id, "owner-2"))).rejects.toMatchObject({
+    const site = await run(_sites().create({ name: "A", templateId: "t" }, "owner-1"));
+    await run(_leads().create({ siteId: site.id, name: "Jane", email: "j@x.com" }));
+    await expect(run(_leads().listForSite(site.id, "owner-2"))).rejects.toMatchObject({
       _tag: "SiteNotFound",
     });
   });
 
   it("siteContact returns business info", async () => {
-    const site = await run(sites().create({ name: "Aurora", templateId: "t" }, "owner-1"));
-    const contact = await run(leads().siteContact(site.id));
+    const site = await run(_sites().create({ name: "Aurora", templateId: "t" }, "owner-1"));
+    const contact = await run(_leads().siteContact(site.id));
     expect(contact).toEqual({
       name: "Aurora",
       email: "",
     });
-    expect(await run(leads().siteContact("missing"))).toBeNull();
+    expect(await run(_leads().siteContact("missing"))).toBeNull();
   });
 });

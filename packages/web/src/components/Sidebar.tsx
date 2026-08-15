@@ -2,14 +2,6 @@ import type { User } from "better-auth";
 import type { View } from "../types.ts";
 import Icon, { type IconName } from "./Icon.tsx";
 
-const initials = (name = ""): string =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-
 export default function Sidebar({
   active,
   onChange,
@@ -55,7 +47,14 @@ export default function Sidebar({
           <span>Settings</span>
         </button>
         <div className="profile">
-          <div className="avatar">{initials(user?.name)}</div>
+          <div className="avatar">
+            {(user?.name ?? "")
+              .split(/\s+/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((part) => part[0]?.toUpperCase())
+              .join("")}
+          </div>
           <div>
             <strong>{user?.name}</strong>
             <small>{user?.email}</small>

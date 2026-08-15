@@ -1,8 +1,6 @@
-import { useMachine } from "@xstate/react";
-import type { DomainSetup, SaveState, Section, Site, StringSettingKey } from "../types.ts";
+import type { DomainSetup, SaveState, Site, StringSettingKey } from "../types.ts";
 import { SECTION_ORDER, SECTION_TYPES } from "../data/sections.ts";
 import { FONTS, templates } from "../data/site.ts";
-import { domainMachine } from "../lib/domainMachine.ts";
 import {
   findPage,
   findSection,
@@ -17,10 +15,14 @@ import {
 
 type ColorKey = Exclude<StringSettingKey, "font">;
 
-function sectionSub(block: Section): string {
-  const meta = SECTION_TYPES[block.type];
-  return meta.sub(block.props);
-}
+const _colorValue = (
+  settings: Site["settings"],
+  key: ColorKey,
+  fallback: Record<ColorKey, string>,
+): string => settings[key] ?? fallback[key];
+
+const _colorChange = (site: Site, key: ColorKey, onUpdate: (site: Site) => void) => (v: string) =>
+  onUpdate(updateSetting(site, key, v));
 
 function ColorField({
   label,
@@ -50,8 +52,6 @@ function ThemeSettings({ site, onUpdate }: { site: Site; onUpdate: (site: Site) 
     ink: template.palette[2],
     surface: template.surface,
   };
-  const value = (key: ColorKey): string => site.settings[key] ?? fallback[key];
-  const set = (key: ColorKey) => (v: string) => onUpdate(updateSetting(site, key, v));
 
   return (
     <div className="theme-settings">
@@ -68,12 +68,28 @@ function ThemeSettings({ site, onUpdate }: { site: Site; onUpdate: (site: Site) 
         </select>
       </div>
       <div className="field-row">
-        <ColorField label="Accent" value={value("accent")} onChange={set("accent")} />
-        <ColorField label="Background" value={value("bg")} onChange={set("bg")} />
+        <ColorField
+          label="Accent"
+          value={_colorValue(site.settings, "accent", fallback)}
+          onChange={_colorChange(site, "accent", onUpdate)}
+        />
+        <ColorField
+          label="Background"
+          value={_colorValue(site.settings, "bg", fallback)}
+          onChange={_colorChange(site, "bg", onUpdate)}
+        />
       </div>
       <div className="field-row">
-        <ColorField label="Text" value={value("ink")} onChange={set("ink")} />
-        <ColorField label="Cards" value={value("surface")} onChange={set("surface")} />
+        <ColorField
+          label="Text"
+          value={_colorValue(site.settings, "ink", fallback)}
+          onChange={_colorChange(site, "ink", onUpdate)}
+        />
+        <ColorField
+          label="Cards"
+          value={_colorValue(site.settings, "surface", fallback)}
+          onChange={_colorChange(site, "surface", onUpdate)}
+        />
       </div>
       <p className="theme-hint">
         Custom colours override the {template.name} palette. The font and accent already do.
@@ -85,24 +101,26 @@ function ThemeSettings({ site, onUpdate }: { site: Site; onUpdate: (site: Site) 
 function DomainSettings({
   site,
   online,
-  onSetDomain,
-  onVerifyDomain,
-  onRemoveDomain,
+  domain,
+  setup,
+  error,
+  busy,
+  onDomainInput,
+  onConnect,
+  onVerify,
+  onRemove,
 }: {
   site: Site;
   online: boolean | null;
-  onSetDomain: (domain: string) => Promise<DomainSetup>;
-  onVerifyDomain: () => Promise<Site>;
-  onRemoveDomain: () => Promise<Site>;
+  domain: string;
+  setup: DomainSetup | null;
+  error: string | null;
+  busy: boolean;
+  onDomainInput: (domain: string) => void;
+  onConnect: () => void;
+  onVerify: () => void;
+  onRemove: () => void;
 }) {
-  const [snapshot, send] = useMachine(domainMachine, {
-    input: {
-      setDomain: onSetDomain,
-      verifyDomain: onVerifyDomain,
-      removeDomain: onRemoveDomain,
-    },
-  });
-
   if (online !== true) {
     return (
       <div className="field-group">
@@ -113,11 +131,6 @@ function DomainSettings({
   }
 
   const active = site.customDomain;
-  const domain = snapshot.context.domain;
-  const setup = snapshot.context.setup;
-  const error = snapshot.context.error;
-  const busy =
-    snapshot.matches("connecting") || snapshot.matches("verifying") || snapshot.matches("removing");
 
   return (
     <div className="field-group">
@@ -129,7 +142,7 @@ function DomainSettings({
           </span>
           <button
             className="section-btn remove"
-            onClick={() => send({ type: "REMOVE" })}
+            onClick={onRemove}
             disabled={busy}
             aria-label="Remove domain"
           >
@@ -142,9 +155,9 @@ function DomainSettings({
           <input
             placeholder="example.com"
             value={domain}
-            onChange={(e) => send({ type: "INPUT", domain: e.target.value })}
+            onChange={(e) => onDomainInput(e.target.value)}
           />
-          <button className="dark-button" onClick={() => send({ type: "CONNECT" })} disabled={busy}>
+          <button className="dark-button" onClick={onConnect} disabled={busy}>
             Connect
           </button>
         </div>
@@ -156,7 +169,7 @@ function DomainSettings({
             <code>{setup.txtName}</code>
             <code>{setup.txtValue}</code>
           </div>
-          <button className="dark-button" onClick={() => send({ type: "VERIFY" })} disabled={busy}>
+          <button className="dark-button" onClick={onVerify} disabled={busy}>
             Verify ownership
           </button>
         </div>
@@ -171,27 +184,31 @@ export default function EditorPanel({
   online,
   saveState,
   onUpdate,
-  onSetDomain,
-  onVerifyDomain,
-  onRemoveDomain,
+  domain,
+  setup,
+  domainError,
+  domainBusy,
+  onDomainInput,
+  onDomainConnect,
+  onDomainVerify,
+  onDomainRemove,
 }: {
   site: Site;
   online: boolean | null;
   saveState: SaveState;
   onUpdate: (site: Site) => void;
-  onSetDomain: (domain: string) => Promise<DomainSetup>;
-  onVerifyDomain: () => Promise<Site>;
-  onRemoveDomain: () => Promise<Site>;
+  domain: string;
+  setup: DomainSetup | null;
+  domainError: string | null;
+  domainBusy: boolean;
+  onDomainInput: (domain: string) => void;
+  onDomainConnect: () => void;
+  onDomainVerify: () => void;
+  onDomainRemove: () => void;
 }) {
   const page = findPage(site);
   const hero = findSection(page, "hero");
   const services = findSection(page, "services");
-
-  const handleAddSection = (type: Section["type"]) =>
-    onUpdate(addSection(site, page.id, SECTION_TYPES[type].create()));
-  const handleRemoveSection = (blockId: string) => onUpdate(removeSection(site, page.id, blockId));
-  const handleMoveSection = (blockId: string, direction: number) =>
-    onUpdate(moveSection(site, page.id, blockId, direction));
 
   const addable = SECTION_ORDER.filter((type) => !findSection(page, type)).map(
     (type) => [type, SECTION_TYPES[type]] as const,
@@ -318,7 +335,7 @@ export default function EditorPanel({
               </div>
               <div className="section-card-body">
                 <strong>{meta ? meta.label : block.type}</strong>
-                <small>{sectionSub(block)}</small>
+                <small>{SECTION_TYPES[block.type].sub(block.props)}</small>
               </div>
               <div className="section-actions">
                 <button
@@ -326,7 +343,7 @@ export default function EditorPanel({
                   className="section-btn"
                   aria-label="Move section up"
                   disabled={i === 0}
-                  onClick={() => handleMoveSection(block.id, -1)}
+                  onClick={() => onUpdate(moveSection(site, page.id, block.id, -1))}
                 >
                   ↑
                 </button>
@@ -335,7 +352,7 @@ export default function EditorPanel({
                   className="section-btn"
                   aria-label="Move section down"
                   disabled={i === page.sections.length - 1}
-                  onClick={() => handleMoveSection(block.id, 1)}
+                  onClick={() => onUpdate(moveSection(site, page.id, block.id, 1))}
                 >
                   ↓
                 </button>
@@ -343,7 +360,7 @@ export default function EditorPanel({
                   type="button"
                   className="section-btn remove"
                   aria-label="Remove section"
-                  onClick={() => handleRemoveSection(block.id)}
+                  onClick={() => onUpdate(removeSection(site, page.id, block.id))}
                 >
                   ×
                 </button>
@@ -361,7 +378,11 @@ export default function EditorPanel({
               <strong>{meta.label}</strong>
               <small>{meta.hint}</small>
             </div>
-            <button type="button" className="add-small" onClick={() => handleAddSection(type)}>
+            <button
+              type="button"
+              className="add-small"
+              onClick={() => onUpdate(addSection(site, page.id, SECTION_TYPES[type].create()))}
+            >
               Add
             </button>
           </div>
@@ -372,9 +393,14 @@ export default function EditorPanel({
         <DomainSettings
           site={site}
           online={online}
-          onSetDomain={onSetDomain}
-          onVerifyDomain={onVerifyDomain}
-          onRemoveDomain={onRemoveDomain}
+          domain={domain}
+          setup={setup}
+          error={domainError}
+          busy={domainBusy}
+          onDomainInput={onDomainInput}
+          onConnect={onDomainConnect}
+          onVerify={onDomainVerify}
+          onRemove={onDomainRemove}
         />
       </div>
     </aside>

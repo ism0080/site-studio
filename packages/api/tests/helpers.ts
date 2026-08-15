@@ -44,8 +44,9 @@ export const memoryD1 = (db: DatabaseSync) => ({
 });
 
 // SAFETY: The shim intentionally implements a narrower surface than the real D1 client; the cast bridges the type for tests.
-const d1 = (db: DatabaseSync) => memoryD1(db) as never;
-export { d1 };
+export const d1 = (db: DatabaseSync) =>
+  // SAFETY: The shim intentionally implements a narrower surface than the real D1 client; the cast bridges the type for tests.
+  memoryD1(db) as never;
 
 /**
  * Runs a repository/storage Effect. The real D1/R2 clients type these effects
@@ -53,8 +54,11 @@ export { d1 };
  * service is provided to satisfy the type.
  */
 // SAFETY: The D1/R2 shims never read the RuntimeContext service, so a stub value satisfies the type.
-const run = <A, E>(effect: Effect.Effect<A, E, any>) =>
+export const run = <A, E>(effect: Effect.Effect<A, E, any>) =>
   Effect.runPromise(
-    effect.pipe(Effect.provideService(RuntimeContext, {} as never), Effect.provide(WebCrypto)),
+    effect.pipe(
+      // SAFETY: The D1/R2 shims never read the RuntimeContext service, so a stub value satisfies the type.
+      Effect.provideService(RuntimeContext, {} as never),
+      Effect.provide(WebCrypto),
+    ),
   );
-export { run };

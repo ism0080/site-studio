@@ -4,7 +4,6 @@ import type {
   AboutSection,
   Device,
   HeroSection,
-  Section,
   ServicesSection,
   Site,
   TestimonialsSection,
@@ -92,19 +91,6 @@ function Testimonials({ block, index }: { block: TestimonialsSection; index: num
   );
 }
 
-function renderSection(block: Section, index: number) {
-  switch (block.type) {
-    case "hero":
-      return <Hero block={block} />;
-    case "services":
-      return <Services block={block} index={index} />;
-    case "about":
-      return <About block={block} />;
-    case "testimonials":
-      return <Testimonials block={block} index={index} />;
-  }
-}
-
 export default function Preview({ site, device }: { site: Site; device: Device }) {
   const page = findPage(site);
   // SAFETY: The site template's CSS reads `--accent` as a custom property,
@@ -129,9 +115,34 @@ export default function Preview({ site, device }: { site: Site; device: Device }
           </button>
         </header>
         <main>
-          {page.sections.map((block, index) => (
-            <Fragment key={block.id}>{renderSection(block, index)}</Fragment>
-          ))}
+          {page.sections.map((block, index) => {
+            switch (block.type) {
+              case "hero":
+                return (
+                  <Fragment key={block.id}>
+                    <Hero block={block} />
+                  </Fragment>
+                );
+              case "services":
+                return (
+                  <Fragment key={block.id}>
+                    <Services block={block} index={index} />
+                  </Fragment>
+                );
+              case "about":
+                return (
+                  <Fragment key={block.id}>
+                    <About block={block} />
+                  </Fragment>
+                );
+              case "testimonials":
+                return (
+                  <Fragment key={block.id}>
+                    <Testimonials block={block} index={index} />
+                  </Fragment>
+                );
+            }
+          })}
         </main>
         <footer className="site-footer">
           <span>{site.business.name}</span>

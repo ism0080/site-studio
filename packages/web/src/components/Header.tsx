@@ -9,17 +9,6 @@ const HEADINGS = {
   leads: ["Leads", "Keep track of new opportunities."],
 } satisfies Record<View, [string, string]>;
 
-const statusLabel = (status: Site["status"]): string =>
-  status === "published" ? "Published" : "Draft";
-
-const initials = (name = ""): string =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-
 export default function Header({
   active,
   site,
@@ -80,11 +69,18 @@ export default function Header({
             disabled={publishing || online === false}
           >
             <Icon name="external" size={15} />
-            {publishing ? "Publishing…" : `Publish · ${statusLabel(site.status)}`}
+            {publishing
+              ? "Publishing…"
+              : `Publish · ${site.status === "published" ? "Published" : "Draft"}`}
           </button>
         )}
         <button className="user-avatar" title={user?.email}>
-          {initials(user?.name)}
+          {(user?.name ?? "")
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((part) => part[0]?.toUpperCase())
+            .join("")}
         </button>
       </div>
     </header>
