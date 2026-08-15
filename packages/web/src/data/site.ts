@@ -4,6 +4,7 @@ export const initialSite: Site = {
   id: "site_aurora_01",
   templateId: "editorial-studio",
   status: "published",
+  buildStatus: "built",
   lastSaved: "2 min ago",
   business: {
     name: "Aurora Studio",

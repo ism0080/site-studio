@@ -5,8 +5,10 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { SitesBucket } from "./src/site/bucket.ts";
 import { Database } from "./src/site/database.ts";
+import { BuildQueue } from "./src/publish/BuildQueue.ts";
 import ApiWorker from "./src/worker.ts";
 import WwwWorker from "./src/www.ts";
+import BuildWorker from "./src/buildWorker.ts";
 
 const Providers = Layer.mergeAll(Cloudflare.providers(), Command.providers());
 
@@ -19,8 +21,10 @@ export default Alchemy.Stack(
   Effect.gen(function* () {
     const database = yield* Database;
     const bucket = yield* SitesBucket;
+    const buildQueue = yield* BuildQueue;
     const api = yield* ApiWorker;
     const www = yield* WwwWorker;
+    const build = yield* BuildWorker;
     // Run the Vite frontend alongside the Workers during `alchemy dev`. The
     // dev server proxies /api to the api worker (port 8787) and reads
     // VITE_WWW_URL (default localhost:8788) for "view live site" links.
@@ -32,6 +36,8 @@ export default Alchemy.Stack(
       apiUrl: api.url,
       wwwUrl: www.url,
       webUrl: web.url,
+      buildQueue: buildQueue.queueName,
+      buildWorker: build.workerName,
       database: database.databaseId,
       bucket: bucket.bucketName,
     };

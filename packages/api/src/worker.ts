@@ -19,6 +19,8 @@ import { LeadNotifier, makeCloudflareNotifier, makeNoopNotifier } from "./leads/
 import { LeadRateLimiter, submitLead } from "./leads/submitLead.ts";
 import { SiteStorage, makeR2SiteStorage } from "./storage/SiteStorage.ts";
 import { WebCrypto } from "./platform/WebCrypto.ts";
+import { BuildQueue, encodeBuildJob } from "./publish/BuildQueue.ts";
+import { BuildJobSink } from "./publish/BuildJobSink.ts";
 import { AUTH_PATH, CurrentUser, createAuth } from "./auth/auth.ts";
 
 const HttpPlatformStub = Layer.succeed(Http.HttpPlatform.HttpPlatform, {
@@ -98,6 +100,13 @@ export default Cloudflare.Worker(
           Effect.catchTag("RateLimitError", () => Effect.succeed({ success: true })),
           Effect.map((result) => result.success),
         ),
+    };
+
+    // Published sites are handed to the build queue; the `build` worker runs
+    // the static build and reports the outcome back onto the site.
+    const buildQueue = yield* Cloudflare.Queues.WriteQueue(BuildQueue);
+    const buildJobSink: BuildJobSink["Service"] = {
+      send: (job) => buildQueue.send(encodeBuildJob(job)),
     };
 
     const sitesGroup = HttpApi.HttpApiBuilder.group(SiteApi, "Sites", (handlers) =>
@@ -191,6 +200,7 @@ export default Cloudflare.Worker(
         Effect.provideService(SiteStorage, siteStorage),
         Effect.provideService(LeadNotifier, leadNotifier),
         Effect.provideService(LeadRateLimiter, rateLimiter),
+        Effect.provideService(BuildJobSink, buildJobSink),
       );
 
     return {
@@ -229,6 +239,7 @@ export default Cloudflare.Worker(
     Effect.provide(Cloudflare.R2.ReadWriteBucketBinding),
     Effect.provide(Cloudflare.Workers.RateLimitBinding),
     Effect.provide(Cloudflare.Email.SendBinding),
+    Effect.provide(Cloudflare.Queues.WriteQueueBinding),
     Effect.provide(WebCrypto),
   ),
 );

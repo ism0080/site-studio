@@ -20,6 +20,21 @@ export const timeAgo = (iso: string | undefined): string => {
 export const errorMessage = (cause: unknown): string =>
   cause instanceof Error ? cause.message : String(cause);
 
+/** Human label for a site's publish/build state (used by pills and buttons). */
+export const buildStatusLabel = (site: Pick<Site, "status" | "buildStatus">): string => {
+  if (site.status !== "published") return "Draft";
+  switch (site.buildStatus) {
+    case "building":
+      return "Building…";
+    case "built":
+      return "Live";
+    case "failed":
+      return "Build failed";
+    default:
+      return "Published";
+  }
+};
+
 interface ApiErrorDetail {
   _tag?: string;
   error?: string;
@@ -43,6 +58,7 @@ export const toApiSite = (site: Site): Site => ({
   ownerId: site.ownerId ?? OWNER_ID,
   templateId: site.templateId,
   status: site.status?.toLowerCase() === "published" ? "published" : "draft",
+  buildStatus: site.buildStatus ?? "idle",
   business: site.business,
   settings: site.settings,
   pages: site.pages,
@@ -50,11 +66,14 @@ export const toApiSite = (site: Site): Site => ({
   updatedAt: new Date().toISOString(),
   publishedAt: site.publishedAt,
   customDomain: site.customDomain,
+  lastBuiltAt: site.lastBuiltAt,
+  buildError: site.buildError,
 });
 
 // API Site document -> frontend editor model (adds display-only fields).
 export const fromApiSite = (site: Site): Site => ({
   ...site,
+  buildStatus: site.buildStatus ?? "idle",
   lastSaved: timeAgo(site.updatedAt),
 });
 

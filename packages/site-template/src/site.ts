@@ -64,6 +64,8 @@ export interface Settings {
 
 export type SiteStatus = "draft" | "published";
 
+export type BuildStatus = "idle" | "building" | "built" | "failed";
+
 export interface Site {
   id: string;
   ownerId: string;
@@ -76,4 +78,7 @@ export interface Site {
   updatedAt: string;
   publishedAt?: string;
   customDomain?: string;
+  buildStatus?: BuildStatus;
+  lastBuiltAt?: string;
+  buildError?: string;
 }

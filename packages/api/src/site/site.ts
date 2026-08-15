@@ -111,6 +111,15 @@ export class Settings extends Schema.Class<Settings>("Settings")({
 export const SiteStatus = Schema.Literals(["draft", "published"]);
 export type SiteStatus = (typeof SiteStatus)["Type"];
 
+/**
+ * Where the published site's static build stands. `building` is set when a
+ * site is published (a build job is enqueued); the background build worker
+ * moves it to `built` (with `lastBuiltAt`) or `failed` (with `buildError`).
+ * Older documents without the field decode as `idle` (never built).
+ */
+export const BuildStatus = Schema.Literals(["idle", "building", "built", "failed"]);
+export type BuildStatus = (typeof BuildStatus)["Type"];
+
 export const SiteId = Schema.String.pipe(Schema.brand("SiteId"));
 export type SiteId = (typeof SiteId)["Type"];
 
@@ -129,6 +138,9 @@ export class Site extends Schema.Class<Site>("Site")({
   updatedAt: Schema.String,
   publishedAt: Schema.optional(Schema.String),
   customDomain: Schema.optional(Schema.String),
+  buildStatus: Schema.optional(BuildStatus),
+  lastBuiltAt: Schema.optional(Schema.String),
+  buildError: Schema.optional(Schema.String),
 }) {}
 
 export const CreateSite = Schema.Struct({
@@ -143,6 +155,16 @@ export const PublishResult = Schema.Struct({
   publishedAt: Schema.String,
 });
 export type PublishResult = (typeof PublishResult)["Type"];
+
+/**
+ * The build job could not be handed to the build queue. The site is already
+ * marked published; retrying the publish re-enqueues the build.
+ */
+export class PublishError extends Schema.TaggedErrorClass<PublishError>()(
+  "PublishError",
+  { message: Schema.String },
+  { httpApiStatus: 500 },
+) {}
 
 export class SiteNotFound extends Schema.TaggedErrorClass<SiteNotFound>()(
   "SiteNotFound",

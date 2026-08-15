@@ -6,6 +6,7 @@ import {
   DomainInUse,
   DomainNotVerified,
   DomainSetup,
+  PublishError,
   PublishResult,
   Site,
   SiteNotFound,
@@ -46,7 +47,7 @@ const deleteSite = HttpApi.HttpApiEndpoint.delete("remove", "/:id", {
 const publishSite = HttpApi.HttpApiEndpoint.post("publish", "/:id/publish", {
   params: SiteParams,
   success: PublishResult,
-  error: SiteNotFound,
+  error: Schema.Union([SiteNotFound, PublishError]),
 });
 
 const DomainInput = Schema.Struct({

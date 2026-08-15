@@ -1,5 +1,6 @@
 import type { Site } from "../types.ts";
 import Icon from "./Icon.tsx";
+import { buildStatusLabel } from "../lib/api.ts";
 import { findPage, findSection } from "../lib/siteUpdates.ts";
 
 export default function Overview({
@@ -64,7 +65,7 @@ export default function Overview({
               <p>{site.customDomain || "no custom domain yet"}</p>
             </div>
             <span className="status-pill">
-              <i /> {site.status === "published" ? "Published" : "Draft"}
+              <i /> {buildStatusLabel(site)}
             </span>
           </div>
           <div className="site-meta">

@@ -15,6 +15,7 @@ import {
   SiteNotFound,
   decodeSiteJson,
   encodeSiteJson,
+  type BuildStatus,
 } from "./site.ts";
 import { normalizeDomain } from "./keys.ts";
 import { newVerificationToken, verifyTxtRecord } from "./dns.ts";
@@ -43,6 +44,13 @@ export interface SiteRepositoryService {
     ownerId: string,
     publishedAt: string,
   ) => Effect.Effect<Site, SiteNotFound, RuntimeContext>;
+  readonly markBuildResult: (
+    id: string,
+    ownerId: string,
+    buildStatus: BuildStatus,
+    builtAt: string,
+    error?: string,
+  ) => Effect.Effect<Site, SiteNotFound, RuntimeContext>;
   readonly setDomain: (
     id: string,
     ownerId: string,
@@ -58,10 +66,16 @@ export interface SiteRepositoryService {
   ) => Effect.Effect<Site, SiteNotFound, RuntimeContext>;
 }
 
-const _parse = (document: string) => decodeSiteJson(document).pipe(Effect.orDie);
-
 // The `document` column is TEXT; encode the schema then serialize to JSON.
 const _serialize = (site: Site) => encodeSiteJson(site);
+
+// Normalizes documents that predate `buildStatus` (or lack it) to a concrete
+// value so the domain never sees an undefined build state.
+const _parse = (document: string) =>
+  decodeSiteJson(document).pipe(
+    Effect.map((site) => new Site({ ...site, buildStatus: site.buildStatus ?? "idle" })),
+    Effect.orDie,
+  );
 
 export const makeSiteRepository = (
   db: Db,
@@ -108,6 +122,7 @@ export const makeSiteRepository = (
           font: "Manrope",
           showDirectory: true,
         },
+        buildStatus: "idle",
         pages: [
           {
             id: yield* crypto.randomUUIDv4.pipe(Effect.orDie),
@@ -184,6 +199,7 @@ export const makeSiteRepository = (
         ...current,
         status: "published",
         publishedAt,
+        buildStatus: "building",
         updatedAt: publishedAt,
       });
       yield* db
@@ -198,6 +214,32 @@ export const makeSiteRepository = (
           id,
           ownerId,
         )
+        .run();
+      return updated;
+    }),
+    markBuildResult: Effect.fn("SiteRepository.markBuildResult")(function* (
+      id: string,
+      ownerId: string,
+      buildStatus: BuildStatus,
+      builtAt: string,
+      error?: string,
+    ) {
+      const row = yield* db
+        .prepare("SELECT document FROM sites WHERE id = ? AND owner_id = ?")
+        .bind(id, ownerId)
+        .first<{ document: string }>();
+      if (row === null) return yield* new SiteNotFound({ id });
+      const current = yield* _parse(row.document);
+      const updated = new Site({
+        ...current,
+        buildStatus,
+        updatedAt: builtAt,
+        lastBuiltAt: buildStatus === "built" ? builtAt : undefined,
+        buildError: buildStatus === "failed" ? error : undefined,
+      });
+      yield* db
+        .prepare("UPDATE sites SET document = ?, updated_at = ? WHERE id = ? AND owner_id = ?")
+        .bind(_serialize(updated), builtAt, id, ownerId)
         .run();
       return updated;
     }),

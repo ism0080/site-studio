@@ -96,17 +96,26 @@ export interface SiteSettings {
   bg?: string;
   ink?: string;
   surface?: string;
+  analytics?: Analytics;
 }
+
+export type Analytics = {
+  provider: "onedollarstats";
+  siteId: string;
+};
 
 export type SiteStatus = "draft" | "published";
 
-export type StringSettingKey = Exclude<keyof SiteSettings, "showDirectory">;
+export type BuildStatus = "idle" | "building" | "built" | "failed";
+
+export type StringSettingKey = Exclude<keyof SiteSettings, "showDirectory" | "analytics">;
 
 export interface Site {
   id: string;
   ownerId?: string;
   templateId: string;
   status: SiteStatus;
+  buildStatus: BuildStatus;
   business: Business;
   settings: SiteSettings;
   pages: Page[];
@@ -115,6 +124,8 @@ export interface Site {
   updatedAt?: string;
   publishedAt?: string;
   customDomain?: string;
+  lastBuiltAt?: string;
+  buildError?: string;
 }
 
 export interface Template {

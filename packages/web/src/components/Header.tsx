@@ -1,6 +1,7 @@
 import type { User } from "better-auth";
 import type { Site, View } from "../types.ts";
 import Icon from "./Icon.tsx";
+import { buildStatusLabel } from "../lib/api.ts";
 
 const HEADINGS = {
   overview: ["Good morning, Jordan", "Here’s what’s happening with your sites."],
@@ -69,9 +70,7 @@ export default function Header({
             disabled={publishing || online === false}
           >
             <Icon name="external" size={15} />
-            {publishing
-              ? "Publishing…"
-              : `Publish · ${site.status === "published" ? "Published" : "Draft"}`}
+            {publishing ? "Publishing…" : `Publish · ${buildStatusLabel(site)}`}
           </button>
         )}
         <button className="user-avatar" title={user?.email}>

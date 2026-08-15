@@ -48,12 +48,40 @@ describe("SiteRepository", () => {
     });
   });
 
-  it("markPublished sets status and publishedAt", async () => {
+  it("markPublished sets status, publishedAt and buildStatus building", async () => {
     const r = _repo();
     const created = await run(r.create({ name: "A", templateId: "t" }, "owner-1"));
     const published = await run(r.markPublished(created.id, "owner-1", "2026-08-09T00:00:00.000Z"));
     expect(published.status).toBe("published");
     expect(published.publishedAt).toBe("2026-08-09T00:00:00.000Z");
+    expect(published.buildStatus).toBe("building");
+  });
+
+  it("markBuildResult records built/failed outcomes", async () => {
+    const r = _repo();
+    const created = await run(r.create({ name: "A", templateId: "t" }, "owner-1"));
+
+    const built = await run(
+      r.markBuildResult(created.id, "owner-1", "built", "2026-08-09T01:00:00.000Z"),
+    );
+    expect(built.buildStatus).toBe("built");
+    expect(built.lastBuiltAt).toBe("2026-08-09T01:00:00.000Z");
+    expect(built.buildError).toBeUndefined();
+
+    const failed = await run(
+      r.markBuildResult(created.id, "owner-1", "failed", "2026-08-09T02:00:00.000Z", "boom"),
+    );
+    expect(failed.buildStatus).toBe("failed");
+    expect(failed.buildError).toBe("boom");
+    expect(failed.lastBuiltAt).toBeUndefined();
+  });
+
+  it("new sites are idle, and documents without buildStatus decode as idle", async () => {
+    const r = _repo();
+    const created = await run(r.create({ name: "A", templateId: "t" }, "owner-1"));
+    expect(created.buildStatus).toBe("idle");
+    const got = await run(r.get(created.id, "owner-1"));
+    expect(got.buildStatus).toBe("idle");
   });
 
   it("setDomain -> verify (TXT ok) -> remove", async () => {
