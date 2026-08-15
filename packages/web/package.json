@@ -12,10 +12,12 @@
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",
     "@vitejs/plugin-react": "latest",
+    "@xstate/react": "^6.1.0",
     "better-auth": "^1.6.26",
     "react": "latest",
     "react-dom": "latest",
-    "vite": "latest"
+    "vite": "latest",
+    "xstate": "^5.32.5"
   },
   "devDependencies": {
     "@types/react": "^19.1.0",

@@ -9,6 +9,10 @@
     {
       "name": "effect",
       "specifier": "./tools/oxlint/effect/index.ts"
+    },
+    {
+      "name": "xstate",
+      "specifier": "./tools/oxlint/xstate/index.ts"
     }
   ],
   "categories": {
@@ -67,6 +71,17 @@
       "files": ["packages/api/src/platform/**"],
       "rules": {
         "effect/no-ambient-nondeterminism": "off"
+      }
+    },
+    {
+      "files": ["packages/web/**"],
+      "rules": {
+        "xstate/no-direct-xstate-create-machine": "error",
+        "xstate/no-direct-xstate-use-selector": "error",
+        "xstate/no-multiple-xstate-hooks": "error",
+        "xstate/no-single-use-xstate-actions": "error",
+        "xstate/no-single-use-xstate-guards": "error",
+        "xstate/require-xstate-event-satisfies": "error"
       }
     }
   ],

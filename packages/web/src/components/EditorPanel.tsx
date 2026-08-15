@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useMachine } from "@xstate/react";
 import type { DomainSetup, SaveState, Section, Site, StringSettingKey } from "../types.ts";
 import { SECTION_ORDER, SECTION_TYPES } from "../data/sections.ts";
 import { FONTS, templates } from "../data/site.ts";
-import { errorMessage } from "../lib/api.ts";
+import { domainMachine } from "../lib/domainMachine.ts";
 import {
   findPage,
   findSection,
@@ -95,10 +95,13 @@ function DomainSettings({
   onVerifyDomain: () => Promise<Site>;
   onRemoveDomain: () => Promise<Site>;
 }) {
-  const [domainInput, setDomainInput] = useState("");
-  const [setup, setSetup] = useState<DomainSetup | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [snapshot, send] = useMachine(domainMachine, {
+    input: {
+      setDomain: onSetDomain,
+      verifyDomain: onVerifyDomain,
+      removeDomain: onRemoveDomain,
+    },
+  });
 
   if (online !== true) {
     return (
@@ -110,50 +113,11 @@ function DomainSettings({
   }
 
   const active = site.customDomain;
-
-  const connect = async () => {
-    const domain = domainInput.trim();
-    if (!domain) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const result = await onSetDomain(domain);
-      setSetup(result);
-    } catch (e) {
-      setError(errorMessage(e));
-      setSetup(null);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const verify = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      await onVerifyDomain();
-      setSetup(null);
-      setDomainInput("");
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const remove = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      await onRemoveDomain();
-      setSetup(null);
-      setDomainInput("");
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
-  };
+  const domain = snapshot.context.domain;
+  const setup = snapshot.context.setup;
+  const error = snapshot.context.error;
+  const busy =
+    snapshot.matches("connecting") || snapshot.matches("verifying") || snapshot.matches("removing");
 
   return (
     <div className="field-group">
@@ -165,7 +129,7 @@ function DomainSettings({
           </span>
           <button
             className="section-btn remove"
-            onClick={remove}
+            onClick={() => send({ type: "REMOVE" })}
             disabled={busy}
             aria-label="Remove domain"
           >
@@ -177,10 +141,10 @@ function DomainSettings({
         <div className="domain-row">
           <input
             placeholder="example.com"
-            value={domainInput}
-            onChange={(e) => setDomainInput(e.target.value)}
+            value={domain}
+            onChange={(e) => send({ type: "INPUT", domain: e.target.value })}
           />
-          <button className="dark-button" onClick={connect} disabled={busy}>
+          <button className="dark-button" onClick={() => send({ type: "CONNECT" })} disabled={busy}>
             Connect
           </button>
         </div>
@@ -192,7 +156,7 @@ function DomainSettings({
             <code>{setup.txtName}</code>
             <code>{setup.txtValue}</code>
           </div>
-          <button className="dark-button" onClick={verify} disabled={busy}>
+          <button className="dark-button" onClick={() => send({ type: "VERIFY" })} disabled={busy}>
             Verify ownership
           </button>
         </div>
