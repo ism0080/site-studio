@@ -51,7 +51,7 @@ export function useUpdateSite() {
     mutationFn: (site: Site) => api.updateSite(site.id, site),
     onSuccess: (updated) => {
       queryClient.setQueryData(siteQueries.detail(updated.id).queryKey, updated);
-      queryClient.setQueryData<Site[]>(siteQueries.lists(), (old) =>
+      queryClient.setQueryData<readonly Site[]>(siteQueries.lists(), (old) =>
         (old ?? []).map((s) => (s.id === updated.id ? updated : s)),
       );
     },
@@ -74,7 +74,7 @@ export function useSetDomain() {
     mutationFn: ({ id, domain }: { id: string; domain: string }) => api.setDomain(id, domain),
     onSuccess: (setup: DomainSetup) => {
       queryClient.setQueryData(siteQueries.detail(setup.site.id).queryKey, setup.site);
-      queryClient.setQueryData<Site[]>(siteQueries.lists(), (old) =>
+      queryClient.setQueryData<readonly Site[]>(siteQueries.lists(), (old) =>
         (old ?? []).map((s) => (s.id === setup.site.id ? setup.site : s)),
       );
     },
@@ -87,7 +87,7 @@ export function useVerifyDomain() {
     mutationFn: (id: string) => api.verifyDomain(id),
     onSuccess: (updated) => {
       queryClient.setQueryData(siteQueries.detail(updated.id).queryKey, updated);
-      queryClient.setQueryData<Site[]>(siteQueries.lists(), (old) =>
+      queryClient.setQueryData<readonly Site[]>(siteQueries.lists(), (old) =>
         (old ?? []).map((s) => (s.id === updated.id ? updated : s)),
       );
     },
@@ -100,7 +100,7 @@ export function useRemoveDomain() {
     mutationFn: (id: string) => api.removeDomain(id),
     onSuccess: (updated) => {
       queryClient.setQueryData(siteQueries.detail(updated.id).queryKey, updated);
-      queryClient.setQueryData<Site[]>(siteQueries.lists(), (old) =>
+      queryClient.setQueryData<readonly Site[]>(siteQueries.lists(), (old) =>
         (old ?? []).map((s) => (s.id === updated.id ? updated : s)),
       );
     },

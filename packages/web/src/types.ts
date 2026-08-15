@@ -1,131 +1,48 @@
-export interface Business {
-  name: string;
-  category: string;
-  location: string;
-  email: string;
-  phone: string;
-  logo: string;
-}
+import type {
+  AboutSection,
+  Analytics,
+  BuildStatus,
+  Business,
+  CreateSite,
+  DomainSetup,
+  HeroSection,
+  Lead,
+  Page,
+  PublishResult,
+  Section,
+  ServicesSection,
+  Settings,
+  Site as ApiSite,
+  SiteStatus,
+  TestimonialsSection,
+} from "@site-studio/api/contract";
 
-export interface HeroProps {
-  eyebrow: string;
-  headline: string;
-  description: string;
-  primaryCta: string;
-  secondaryCta: string;
-  image: string;
-}
+export type { Analytics, Business, DomainSetup, Lead, Page, PublishResult, SiteStatus };
 
-export interface ServiceItem {
-  id: string;
-  title: string;
-  description: string;
-}
+export type { AboutSection, HeroSection, ServicesSection, TestimonialsSection };
 
-export interface ServicesProps {
-  title: string;
-  items: ServiceItem[];
-}
+export type { Section };
 
-export interface AboutProps {
-  eyebrow: string;
-  title: string;
-  body: string;
-}
-
-export interface TestimonialItem {
-  id: string;
-  quote: string;
-  author: string;
-  role: string;
-}
-
-export interface TestimonialsProps {
-  title: string;
-  items: TestimonialItem[];
-}
-
-export type SectionProps = HeroProps | ServicesProps | AboutProps | TestimonialsProps;
-
-export interface HeroSection {
-  id: string;
-  type: "hero";
-  props: HeroProps;
-}
-
-export interface ServicesSection {
-  id: string;
-  type: "services";
-  props: ServicesProps;
-}
-
-export interface AboutSection {
-  id: string;
-  type: "about";
-  props: AboutProps;
-}
-
-export interface TestimonialsSection {
-  id: string;
-  type: "testimonials";
-  props: TestimonialsProps;
-}
-
-export type Section = HeroSection | ServicesSection | AboutSection | TestimonialsSection;
-
+export type SectionProps = Section["props"];
 export type SectionType = Section["type"];
+
+type SectionOf<T extends SectionType> = Extract<Section, { type: T }>;
+
+export type ServiceItem = SectionOf<"services">["props"]["items"][number];
+export type TestimonialItem = SectionOf<"testimonials">["props"]["items"][number];
+
+export type SiteSettings = Settings;
+
+/** Frontend editor model: the API Site schema plus a display-only `lastSaved`. */
+export type Site = ApiSite & { lastSaved?: string };
+
+export type CreateSitePayload = CreateSite;
 
 export interface SectionMeta {
   label: string;
   hint: string;
   sub: (props: SectionProps) => string;
   create: () => Section;
-}
-
-export interface Page {
-  id: string;
-  slug: string;
-  title: string;
-  sections: Section[];
-}
-
-export interface SiteSettings {
-  accent: string;
-  font: string;
-  showDirectory: boolean;
-  bg?: string;
-  ink?: string;
-  surface?: string;
-  analytics?: Analytics;
-}
-
-export type Analytics = {
-  provider: "onedollarstats";
-  siteId: string;
-};
-
-export type SiteStatus = "draft" | "published";
-
-export type BuildStatus = "idle" | "building" | "built" | "failed";
-
-export type StringSettingKey = Exclude<keyof SiteSettings, "showDirectory" | "analytics">;
-
-export interface Site {
-  id: string;
-  ownerId?: string;
-  templateId: string;
-  status: SiteStatus;
-  buildStatus: BuildStatus;
-  business: Business;
-  settings: SiteSettings;
-  pages: Page[];
-  lastSaved?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  publishedAt?: string;
-  customDomain?: string;
-  lastBuiltAt?: string;
-  buildError?: string;
 }
 
 export interface Template {
@@ -139,36 +56,12 @@ export interface Template {
   title: string[];
 }
 
-export interface CreateSitePayload {
-  name: string;
-  templateId: string;
-}
-
-export interface PublishResult {
-  siteId: string;
-  path: string;
-  publishedAt: string;
-}
-
-export interface DomainSetup {
-  domain: string;
-  status: "pending";
-  txtName: string;
-  txtValue: string;
-  site: Site;
-}
-
-export interface Lead {
-  id: string;
-  siteId: string;
-  name: string;
-  email: string;
-  message?: string;
-  createdAt: string;
-}
-
 export type View = "overview" | "editor" | "templates" | "leads";
 
 export type Device = "desktop" | "mobile";
 
 export type SaveState = "idle" | "saving" | "saved" | "error";
+
+export type StringSettingKey = Exclude<keyof SiteSettings, "showDirectory" | "analytics">;
+
+export type { BuildStatus };

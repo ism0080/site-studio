@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./contract": "./src/contract.ts"
+  },
   "scripts": {
     "dev": "bun alchemy dev",
     "plan": "bun alchemy plan",

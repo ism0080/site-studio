@@ -19,7 +19,7 @@ export interface AppApi {
   getSession: () => Promise<{ user: User | null }>;
   signIn: () => void;
   signOut: () => Promise<void>;
-  listSites: () => Promise<Site[]>;
+  listSites: () => Promise<readonly Site[]>;
   createSite: (payload: CreateSitePayload) => Promise<Site>;
   updateSite: (site: Site) => Promise<Site>;
   publishSite: (id: string) => Promise<PublishResult>;
@@ -43,7 +43,7 @@ export type AppMachineContext = {
   publishing: boolean;
   banner: Banner | null;
   device: Device;
-  sites: Site[];
+  sites: readonly Site[];
   domain: string;
   setup: DomainSetup | null;
   domainError: string | null;
@@ -68,7 +68,9 @@ const _sessionActor = fromPromise<{ user: User | null }, { api: AppApi }>(({ inp
   input.api.getSession(),
 );
 
-const _sitesActor = fromPromise<Site[], { api: AppApi }>(({ input }) => input.api.listSites());
+const _sitesActor = fromPromise<readonly Site[], { api: AppApi }>(({ input }) =>
+  input.api.listSites(),
+);
 
 const _ensurePersisted = async (api: AppApi, site: Site, persisted: boolean) => {
   if (persisted) {

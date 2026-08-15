@@ -10,10 +10,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@site-studio/api": "workspace:*",
     "@tanstack/react-query": "^5.101.4",
     "@vitejs/plugin-react": "latest",
     "@xstate/react": "^6.1.0",
     "better-auth": "^1.6.26",
+    "effect": "4.0.0-beta.103",
     "react": "latest",
     "react-dom": "latest",
     "vite": "latest",

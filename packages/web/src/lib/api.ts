@@ -1,12 +1,6 @@
 import type { CreateSitePayload, DomainSetup, Lead, PublishResult, Site } from "../types.ts";
-
-// Thin client for the Site Studio API (packages/api).
-// All routes live under /api (auth: /api/auth, sites: /api/sites). In dev the
-// Vite server proxies /api to the API worker, keeping the frontend and API
-// same-origin so Better Auth session cookies are sent automatically.
-
-const API_BASE: string = (import.meta.env.VITE_API_URL ?? "/api").replace(/\/+$/, "");
-const OWNER_ID: string = import.meta.env.VITE_OWNER_ID ?? "dev-owner";
+import type { Site as ApiSite } from "@site-studio/api/contract";
+import { sdk } from "./sdk.ts";
 
 export const timeAgo = (iso: string | undefined): string => {
   if (!iso) return "just now";
@@ -17,8 +11,11 @@ export const timeAgo = (iso: string | undefined): string => {
   return `${Math.floor(seconds / 86400)} d ago`;
 };
 
+// The client surfaces HttpApi errors as tagged schema errors (Error subclasses
+// whose `String()` renders the tag) and network failures as Errors, so an Error
+// message with a readable fallback covers both.
 export const errorMessage = (cause: unknown): string =>
-  cause instanceof Error ? cause.message : String(cause);
+  cause instanceof Error && cause.message ? cause.message : String(cause);
 
 /** Human label for a site's publish/build state (used by pills and buttons). */
 export const buildStatusLabel = (site: Pick<Site, "status" | "buildStatus">): string => {
@@ -35,96 +32,28 @@ export const buildStatusLabel = (site: Pick<Site, "status" | "buildStatus">): st
   }
 };
 
-interface ApiErrorDetail {
-  _tag?: string;
-  error?: string;
-}
-
-class ApiError extends Error {
-  status: number;
-  detail: ApiErrorDetail | null;
-
-  constructor(message: string, status: number, detail: ApiErrorDetail | null) {
-    super(message);
-    this.status = status;
-    this.detail = detail;
-  }
-}
-
-// Frontend editor model -> API Site document (drops display fields, fills
-// required metadata, normalizes status to lowercase).
-export const toApiSite = (site: Site): Site => ({
-  id: site.id,
-  ownerId: site.ownerId ?? OWNER_ID,
-  templateId: site.templateId,
-  status: site.status?.toLowerCase() === "published" ? "published" : "draft",
-  buildStatus: site.buildStatus ?? "idle",
-  business: site.business,
-  settings: site.settings,
-  pages: site.pages,
-  createdAt: site.createdAt ?? new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-  publishedAt: site.publishedAt,
-  customDomain: site.customDomain,
-  lastBuiltAt: site.lastBuiltAt,
-  buildError: site.buildError,
-});
+// Frontend editor model -> API Site document. The editor model is the API
+// schema plus a display-only `lastSaved`, so this drops that field.
+export const toApiSite = ({ lastSaved: _lastSaved, ...site }: Site): ApiSite => site;
 
 // API Site document -> frontend editor model (adds display-only fields).
-export const fromApiSite = (site: Site): Site => ({
+export const fromApiSite = (site: ApiSite): Site => ({
   ...site,
   buildStatus: site.buildStatus ?? "idle",
   lastSaved: timeAgo(site.updatedAt),
 });
 
-async function _request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    ...options,
-  });
-  if (!res.ok) {
-    let detail: ApiErrorDetail | null = null;
-    try {
-      // SAFETY: The API's error responses are Effect HttpApi errors, which
-      // carry `_tag` (the error name) and optionally `error`; the message
-      // extraction below only reads those two optional fields.
-      detail = (await res.json()) as ApiErrorDetail | null;
-    } catch {
-      /* no body */
-    }
-    throw new ApiError(
-      detail?._tag ?? detail?.error ?? `Request failed (${res.status})`,
-      res.status,
-      detail,
-    );
-  }
-  // SAFETY: A 204 No Content response confirms a mutation without a body; the
-  // caller's type expects the empty result for those endpoints.
-  return res.status === 204 ? (null as T) : res.json();
-}
-
 export const api = {
-  listSites: (): Promise<Site[]> => _request<Site[]>("/sites"),
-  getSite: (id: string): Promise<Site> => _request<Site>(`/sites/${id}`),
-  createSite: (payload: CreateSitePayload): Promise<Site> =>
-    _request<Site>("/sites", { method: "POST", body: JSON.stringify(payload) }),
-  updateSite: (id: string, site: Site): Promise<Site> =>
-    _request<Site>(`/sites/${id}`, { method: "PUT", body: JSON.stringify(site) }),
-  publishSite: (id: string): Promise<PublishResult> =>
-    _request<PublishResult>(`/sites/${id}/publish`, { method: "POST" }),
-  setDomain: (id: string, domain: string): Promise<DomainSetup> =>
-    _request<DomainSetup>(`/sites/${id}/domain`, {
-      method: "POST",
-      body: JSON.stringify({ domain }),
-    }),
-  verifyDomain: (id: string): Promise<Site> =>
-    _request<Site>(`/sites/${id}/domain/verify`, { method: "POST" }),
-  removeDomain: (id: string): Promise<Site> =>
-    _request<Site>(`/sites/${id}/domain`, { method: "DELETE" }),
-  listLeads: (siteId: string): Promise<Lead[]> => _request<Lead[]>(`/sites/${siteId}/leads`),
-  deleteLead: (siteId: string, leadId: string): Promise<null> =>
-    _request<null>(`/sites/${siteId}/leads/${leadId}`, { method: "DELETE" }),
+  listSites: (): Promise<readonly Site[]> => sdk.listSites(),
+  getSite: (id: string): Promise<Site> => sdk.getSite(id),
+  createSite: (payload: CreateSitePayload): Promise<Site> => sdk.createSite(payload),
+  updateSite: (id: string, site: Site): Promise<Site> => sdk.updateSite(id, toApiSite(site)),
+  publishSite: (id: string): Promise<PublishResult> => sdk.publishSite(id),
+  setDomain: (id: string, domain: string): Promise<DomainSetup> => sdk.setDomain(id, domain),
+  verifyDomain: (id: string): Promise<Site> => sdk.verifyDomain(id),
+  removeDomain: (id: string): Promise<Site> => sdk.removeDomain(id),
+  listLeads: (siteId: string): Promise<readonly Lead[]> => sdk.listLeads(siteId),
+  deleteLead: (siteId: string, leadId: string): Promise<void> => sdk.deleteLead(siteId, leadId),
 };
 
 // Public URL for a published site: the custom domain when verified, otherwise

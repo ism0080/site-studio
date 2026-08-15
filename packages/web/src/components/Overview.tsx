@@ -10,7 +10,7 @@ export default function Overview({
 }: {
   onEdit: () => void;
   site: Site;
-  sites: Site[];
+  sites: readonly Site[];
 }) {
   const hero = findSection(findPage(site), "hero");
   const publishedCount = sites.filter((s) => s.status === "published").length;

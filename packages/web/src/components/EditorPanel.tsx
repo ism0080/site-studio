@@ -16,7 +16,7 @@ import {
   updateAnalytics,
 } from "../lib/siteUpdates.ts";
 
-type ColorKey = Exclude<StringSettingKey, "font">;
+type ColorKey = Exclude<StringSettingKey, "font" | "border" | "muted">;
 
 const _colorValue = (
   settings: Site["settings"],

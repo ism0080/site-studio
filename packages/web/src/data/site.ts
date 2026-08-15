@@ -1,11 +1,15 @@
+import { OwnerId, SiteId } from "@site-studio/api/contract";
 import type { Site, Template } from "../types.ts";
 
 export const initialSite: Site = {
-  id: "site_aurora_01",
+  id: SiteId.make("site_aurora_01"),
+  ownerId: OwnerId.make("dev-owner"),
   templateId: "editorial-studio",
   status: "published",
   buildStatus: "built",
   lastSaved: "2 min ago",
+  createdAt: "2026-01-01T00:00:00.000Z",
+  updatedAt: "2026-01-01T00:00:00.000Z",
   business: {
     name: "Aurora Studio",
     category: "Independent creative studio",

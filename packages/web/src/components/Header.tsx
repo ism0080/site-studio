@@ -25,7 +25,7 @@ export default function Header({
   site: Site;
   online: boolean | null;
   publishing: boolean;
-  sites: Site[];
+  sites: readonly Site[];
   user: User;
   liveUrl: string | null;
   onPublish: () => void;
