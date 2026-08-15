@@ -33,8 +33,7 @@ export const memoryD1 = (db: DatabaseSync) => ({
           Effect.sync(() => ({
             results: stmt.all(...params) as T[],
           })),
-        first: <T>() =>
-          Effect.sync(() => (stmt.get(...params) ?? null) as T | null),
+        first: <T>() => Effect.sync(() => (stmt.get(...params) ?? null) as T | null),
         run: () =>
           Effect.sync(() => ({
             meta: { changes: stmt.run(...params).changes },
@@ -56,9 +55,6 @@ export { d1 };
 // SAFETY: The D1/R2 shims never read the RuntimeContext service, so a stub value satisfies the type.
 const run = <A, E>(effect: Effect.Effect<A, E, any>) =>
   Effect.runPromise(
-    effect.pipe(
-      Effect.provideService(RuntimeContext, {} as never),
-      Effect.provide(WebCrypto),
-    ),
+    effect.pipe(Effect.provideService(RuntimeContext, {} as never), Effect.provide(WebCrypto)),
   );
 export { run };

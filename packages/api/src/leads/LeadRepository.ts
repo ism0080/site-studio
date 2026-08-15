@@ -103,9 +103,7 @@ export const makeLeadRepository = (db: Db): LeadRepositoryService => ({
       .bind(siteId)
       .first<{ document: string }>();
     if (row === null) return null;
-    const site = yield* decodeSiteJson(row.document).pipe(
-      Effect.catch(() => Effect.succeed(null)),
-    );
+    const site = yield* decodeSiteJson(row.document).pipe(Effect.catch(() => Effect.succeed(null)));
     if (site === null) return null;
     return { name: site.business.name, email: site.business.email };
   }),

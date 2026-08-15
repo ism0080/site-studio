@@ -8,8 +8,7 @@ const rule: Rule = {
   meta: {
     type: "problem" as const,
     docs: {
-      description:
-        "Limit pipe calls to 20 arguments; split longer pipelines into named steps.",
+      description: "Limit pipe calls to 20 arguments; split longer pipelines into named steps.",
     },
   },
   create(context) {
@@ -23,8 +22,7 @@ const rule: Rule = {
         ) {
           context.report({
             node,
-            message:
-              "This pipe has too many arguments. Split it into smaller named steps.",
+            message: "This pipe has too many arguments. Split it into smaller named steps.",
           });
         }
       },

@@ -2,9 +2,7 @@ import type { RuleTester } from "oxlint/plugins-dev";
 
 type Rule = Parameters<RuleTester["run"]>[1];
 type VisitorObject = ReturnType<NonNullable<Rule["create"]>>;
-type ClassDeclarationNode = Parameters<
-  NonNullable<VisitorObject["ClassDeclaration"]>
->[0];
+type ClassDeclarationNode = Parameters<NonNullable<VisitorObject["ClassDeclaration"]>>[0];
 
 interface Options {
   readonly ignoredBasenames?: ReadonlyArray<string>;
@@ -23,8 +21,7 @@ const _isNode = (value: unknown): value is Node =>
   Object.hasOwn(value, "type") &&
   typeof Reflect.get(value, "type") === "string";
 
-const _nodeField = ({ field, node }: { field: string; node: Node }) =>
-  node[field];
+const _nodeField = ({ field, node }: { field: string; node: Node }) => node[field];
 
 const _identifierName = ({ node }: { node: unknown }) =>
   _isNode(node) &&
@@ -98,15 +95,11 @@ const rule: Rule = {
   },
   create(context) {
     const options = (context.options[0] ?? {}) as Options;
-    const ignoredBasenames = new Set(
-      options.ignoredBasenames ?? ["index.ts", "main.ts"]
-    );
+    const ignoredBasenames = new Set(options.ignoredBasenames ?? ["index.ts", "main.ts"]);
     const ignoredDirectoryNames = new Set(
-      options.ignoredDirectoryNames ?? ["test", "tests", "__tests__"]
+      options.ignoredDirectoryNames ?? ["test", "tests", "__tests__"],
     );
-    const serviceDirectoryNames = new Set(
-      options.serviceDirectoryNames ?? ["service", "services"]
-    );
+    const serviceDirectoryNames = new Set(options.serviceDirectoryNames ?? ["service", "services"]);
     const filename = (context.filename ?? "").replaceAll("\\", "/");
     const basename = filename.slice(filename.lastIndexOf("/") + 1);
     const segments = filename.split("/");
@@ -144,8 +137,7 @@ const rule: Rule = {
 
         context.report({
           node,
-          message:
-            "Files inside services folders must define a class extending Context.Service.",
+          message: "Files inside services folders must define a class extending Context.Service.",
         });
       },
     };

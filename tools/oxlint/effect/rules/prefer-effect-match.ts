@@ -56,8 +56,7 @@ const rule: Rule = {
   meta: {
     type: "problem" as const,
     docs: {
-      description:
-        "Use Match from effect for chained literal ternaries over the same value.",
+      description: "Use Match from effect for chained literal ternaries over the same value.",
     },
   },
   create(context) {
@@ -99,8 +98,7 @@ const rule: Rule = {
         if (literalChecks > 1) {
           context.report({
             node,
-            message:
-              "Use Match from effect instead of a chained literal ternary.",
+            message: "Use Match from effect instead of a chained literal ternary.",
           });
         }
       },

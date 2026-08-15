@@ -8,25 +8,20 @@ type Node = {
 };
 
 const isNode = (value: unknown): value is Node =>
-  typeof value === "object" &&
-  value !== null &&
-  "type" in value &&
-  typeof value.type === "string";
+  typeof value === "object" && value !== null && "type" in value && typeof value.type === "string";
 
 const rule: Rule = {
   meta: {
     type: "problem" as const,
     docs: {
-      description:
-        "Keep Effect Schema validation enabled; fix the data or schema instead.",
+      description: "Keep Effect Schema validation enabled; fix the data or schema instead.",
     },
   },
   create(context) {
     return {
       Property(node) {
         const keyName = isNode(node.key)
-          ? node.key.type === "Identifier" ||
-            node.key.type === "PrivateIdentifier"
+          ? node.key.type === "Identifier" || node.key.type === "PrivateIdentifier"
             ? node.key.name
             : node.key.type === "Literal"
               ? node.key.value

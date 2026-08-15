@@ -5,8 +5,7 @@ import * as PlatformError from "effect/PlatformError";
 
 const digest: Crypto.Crypto["digest"] = (algorithm, data) =>
   Effect.tryPromise({
-    try: () =>
-      crypto.subtle.digest(algorithm, data).then((buffer) => new Uint8Array(buffer)),
+    try: () => crypto.subtle.digest(algorithm, data).then((buffer) => new Uint8Array(buffer)),
     catch: (cause) =>
       PlatformError.systemError({
         module: "Crypto",

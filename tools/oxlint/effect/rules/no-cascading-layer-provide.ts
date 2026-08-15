@@ -2,13 +2,8 @@ import type { RuleTester } from "oxlint/plugins-dev";
 
 type Rule = Parameters<RuleTester["run"]>[1];
 type VisitorObject = ReturnType<NonNullable<Rule["create"]>>;
-type CallExpressionNode = Parameters<
-  NonNullable<VisitorObject["CallExpression"]>
->[0];
-type IdentifierNode = Extract<
-  CallExpressionNode["callee"],
-  { type: "Identifier" }
->;
+type CallExpressionNode = Parameters<NonNullable<VisitorObject["CallExpression"]>>[0];
+type IdentifierNode = Extract<CallExpressionNode["callee"], { type: "Identifier" }>;
 
 const provisioningMethods = new Set(["provide", "provideMerge"]);
 
@@ -32,7 +27,7 @@ const rule: Rule = {
           return variable.defs.find(
             (definition) =>
               definition.type === "ImportBinding" &&
-              definition.parent?.type === "ImportDeclaration"
+              definition.parent?.type === "ImportDeclaration",
           );
         }
 
@@ -55,11 +50,7 @@ const rule: Rule = {
       );
     };
 
-    const isLayerProvision = ({
-      node,
-    }: {
-      node: CallExpressionNode["arguments"][number];
-    }) => {
+    const isLayerProvision = ({ node }: { node: CallExpressionNode["arguments"][number] }) => {
       if (
         node.type !== "CallExpression" ||
         node.callee.type !== "MemberExpression" ||
@@ -91,7 +82,7 @@ const rule: Rule = {
         }
 
         const provisioningStages = node.arguments.filter((argument) =>
-          isLayerProvision({ node: argument })
+          isLayerProvision({ node: argument }),
         );
 
         if (provisioningStages.length < 2) {

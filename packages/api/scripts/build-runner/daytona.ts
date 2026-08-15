@@ -94,11 +94,7 @@ export const DaytonaBuildRunner = Layer.effect(
                 exitCode: result.exitCode,
                 output: result.result,
               };
-            }).pipe(
-              Effect.ensuring(
-                Effect.promise(() => client.delete(sandbox).catch(() => {})),
-              ),
-            ),
+            }).pipe(Effect.ensuring(Effect.promise(() => client.delete(sandbox).catch(() => {})))),
           ),
           Effect.mapError(
             (cause) =>

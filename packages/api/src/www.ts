@@ -21,9 +21,8 @@ const notFound = (): HttpServerResponse.HttpServerResponse =>
 // from the deploy process env; workerd has no `process`, so fall back to
 // undefined via an optional property read.
 // SAFETY: The optional `process` surface exists only on Node-based runtimes (deploy-time planning); on workerd the property read is undefined.
-const wwwDomain = (
-  globalThis as { process?: { env?: Record<string, string | undefined> } }
-).process?.env?.WWW_DOMAIN;
+const wwwDomain = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process
+  ?.env?.WWW_DOMAIN;
 
 const wwwProps: Cloudflare.WorkerProps = {
   main: import.meta.url,

@@ -38,18 +38,16 @@ export const verifyTxtRecord = async (
   fetchFn: DnsFetch = fetch,
 ): Promise<boolean> => {
   const name = `${TXT_PREFIX}.${domain}`;
-  return fetchFn(
-    `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=TXT`,
-    { headers: { accept: "application/dns-json" } },
-  )
+  return fetchFn(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=TXT`, {
+    headers: { accept: "application/dns-json" },
+  })
     .then((res) => {
       if (!res.ok) return false;
-      return res.json().then(
-        (json) =>
-          (json.Answer ?? []).some(
-            (answer) => answer.data?.replace(/^"|"$/g, "") === token,
-          ),
-      );
+      return res
+        .json()
+        .then((json) =>
+          (json.Answer ?? []).some((answer) => answer.data?.replace(/^"|"$/g, "") === token),
+        );
     })
     .catch(() => false);
 };

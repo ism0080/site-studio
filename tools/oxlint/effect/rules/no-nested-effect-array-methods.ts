@@ -10,10 +10,7 @@ type Node = {
 const ignoredKeys = new Set(["parent"]);
 
 const isNode = (value: unknown): value is Node =>
-  typeof value === "object" &&
-  value !== null &&
-  "type" in value &&
-  typeof value.type === "string";
+  typeof value === "object" && value !== null && "type" in value && typeof value.type === "string";
 
 const nodeName = ({ value }: { value: unknown }) =>
   isNode(value) && typeof value.name === "string" ? value.name : undefined;
@@ -95,7 +92,7 @@ const rule: Rule = {
               (specifier) =>
                 specifier.type === "ImportSpecifier" &&
                 nodeName({ value: specifier.imported }) === "Array" &&
-                nodeName({ value: specifier.local }) === "Array"
+                nodeName({ value: specifier.local }) === "Array",
             )
         ) {
           arrayImportedFromEffect = true;
@@ -111,13 +108,12 @@ const rule: Rule = {
             containsEffectArrayCall({
               node: argument,
               seen: new WeakSet<object>(),
-            })
+            }),
           )
         ) {
           context.report({
             node,
-            message:
-              "Do not nest Effect Array method calls. Use pipe to preserve inference.",
+            message: "Do not nest Effect Array method calls. Use pipe to preserve inference.",
           });
         }
       },

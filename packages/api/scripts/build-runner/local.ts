@@ -67,11 +67,7 @@ export const LocalBuildRunner = Layer.effect(
                 exitCode: 0,
                 output: stdout,
               };
-            }).pipe(
-              Effect.ensuring(
-                Effect.try(() => unlinkSync(siteJson)).pipe(Effect.ignore),
-              ),
-            ),
+            }).pipe(Effect.ensuring(Effect.try(() => unlinkSync(siteJson)).pipe(Effect.ignore))),
           ),
           Effect.mapError(
             (cause) =>

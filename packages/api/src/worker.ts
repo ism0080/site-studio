@@ -12,14 +12,13 @@ import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 import { SitesBucket } from "./site/bucket.ts";
 import { Database } from "./site/database.ts";
 import { SiteApi } from "./site/siteApi.ts";
-import { encodeSiteDocument } from "./site/site.ts";
+import { publishSite } from "./site/publish.ts";
 import { makeSiteRepository, SiteRepository } from "./site/SiteRepository.ts";
 import { makeLeadRepository, LeadRepository } from "./leads/LeadRepository.ts";
-import { LeadInput, TooManyRequests } from "./leads/leads.ts";
 import { LeadNotifier, makeCloudflareNotifier, makeNoopNotifier } from "./leads/LeadNotifier.ts";
+import { LeadRateLimiter, submitLead } from "./leads/submitLead.ts";
 import { SiteStorage, makeR2SiteStorage } from "./storage/SiteStorage.ts";
 import { WebCrypto } from "./platform/WebCrypto.ts";
-import { nowIso } from "./platform/Time.ts";
 import { AUTH_PATH, CurrentUser, createAuth } from "./auth/auth.ts";
 
 const HttpPlatformStub = Layer.succeed(Http.HttpPlatform.HttpPlatform, {
@@ -92,44 +91,14 @@ export default Cloudflare.Worker(
       googleClientSecret: Redacted.value(config.googleClientSecret),
     });
 
-    const publishSite = Effect.fn("api.publishSite")(function* (siteId: string) {
-      const user = yield* CurrentUser;
-      const repo = yield* SiteRepository;
-      const storage = yield* SiteStorage;
-      const site = yield* repo.get(siteId, user.id);
-      const publishedAt = yield* nowIso;
-      // Store the site document as the buildable artifact. Static HTML is
-      // generated from it by the Astro template pipeline
-      // (packages/site-template) and uploaded to R2 under the same key.
-      const path = `sites/${site.id}/site.json`;
-      yield* storage.putSiteDocument(site.id, encodeSiteDocument(site)).pipe(Effect.orDie);
-      yield* repo.markPublished(siteId, user.id, publishedAt);
-      return { siteId: site.id, path, publishedAt };
-    });
-
-    const submitLead = Effect.fn("api.submitLead")(function* (payload: LeadInput) {
-      const request = yield* HttpServerRequest;
-      const ip = request.headers["cf-connecting-ip"] ?? "unknown";
-      const { success } = yield* throttle.limit({ key: ip }).pipe(
-        // Fail open: allow the request if the limiter itself errors.
-        Effect.catchTag("RateLimitError", () => Effect.succeed({ success: true })),
-      );
-      if (!success) return yield* new TooManyRequests({});
-
-      const leads = yield* LeadRepository;
-      const lead = yield* leads.create(payload);
-
-      // Best-effort notification — a failed email must not fail the submission.
-      const site = yield* leads.siteContact(lead.siteId);
-      if (site) {
-        const notifier = yield* LeadNotifier;
-        yield* notifier.notify(lead, site).pipe(
-          Effect.catch((cause) => Effect.logError("lead notification failed", cause)),
-        );
-      }
-
-      return lead;
-    });
+    const rateLimiter = {
+      limit: (key: string) =>
+        throttle.limit({ key }).pipe(
+          // Fail open: allow the request if the limiter itself errors.
+          Effect.catchTag("RateLimitError", () => Effect.succeed({ success: true })),
+          Effect.map((result) => result.success),
+        ),
+    };
 
     const sitesGroup = HttpApi.HttpApiBuilder.group(SiteApi, "Sites", (handlers) =>
       handlers
@@ -184,7 +153,12 @@ export default Cloudflare.Worker(
 
     // Public — visitor contact-form submissions (no session).
     const leadsPublicGroup = HttpApi.HttpApiBuilder.group(SiteApi, "LeadsPublic", (handlers) =>
-      handlers.handle("submit", ({ payload }) => submitLead(payload)),
+      handlers.handle("submit", ({ payload }) =>
+        Effect.gen(function* () {
+          const request = yield* HttpServerRequest;
+          return yield* submitLead(payload, request.headers["cf-connecting-ip"] ?? "unknown");
+        }),
+      ),
     );
 
     const httpEffect = yield* Http.HttpRouter.toHttpEffect(
@@ -216,6 +190,7 @@ export default Cloudflare.Worker(
         Effect.provideService(LeadRepository, leadRepo),
         Effect.provideService(SiteStorage, siteStorage),
         Effect.provideService(LeadNotifier, leadNotifier),
+        Effect.provideService(LeadRateLimiter, rateLimiter),
       );
 
     return {

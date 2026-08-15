@@ -8,21 +8,12 @@ type Node = {
 };
 
 const isNode = (value: unknown): value is Node =>
-  typeof value === "object" &&
-  value !== null &&
-  "type" in value &&
-  typeof value.type === "string";
+  typeof value === "object" && value !== null && "type" in value && typeof value.type === "string";
 
 const isNullLiteral = (node: unknown) =>
   isNode(node) && node.type === "Literal" && node.value === null;
 
-const isOptionMemberCall = ({
-  name,
-  node,
-}: {
-  name: string;
-  node: unknown;
-}) => {
+const isOptionMemberCall = ({ name, node }: { name: string; node: unknown }) => {
   if (!isNode(node) || node.type !== "CallExpression") {
     return false;
   }

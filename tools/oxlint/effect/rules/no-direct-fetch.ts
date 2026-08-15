@@ -31,8 +31,7 @@ const rule: Rule = {
           callee.property.type === "Identifier" &&
           callee.property.name === "fetch" &&
           callee.object.type === "Identifier" &&
-          (callee.object.name === "window" ||
-            callee.object.name === "globalThis")
+          (callee.object.name === "window" || callee.object.name === "globalThis")
         ) {
           context.report({
             node,

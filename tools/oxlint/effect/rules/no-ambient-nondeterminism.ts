@@ -2,9 +2,7 @@ import type { RuleTester } from "oxlint/plugins-dev";
 
 type Rule = Parameters<RuleTester["run"]>[1];
 type VisitorObject = ReturnType<NonNullable<Rule["create"]>>;
-type MemberExpressionNode = Parameters<
-  NonNullable<VisitorObject["MemberExpression"]>
->[0];
+type MemberExpressionNode = Parameters<NonNullable<VisitorObject["MemberExpression"]>>[0];
 type IdentifierNode = Parameters<NonNullable<VisitorObject["Identifier"]>>[0];
 
 interface Options {
@@ -15,8 +13,7 @@ interface Options {
 const _memberPropertyName = ({ node }: { node: MemberExpressionNode }) =>
   node.property.type === "Identifier"
     ? node.property.name
-    : node.property.type === "Literal" &&
-        typeof node.property.value === "string"
+    : node.property.type === "Literal" && typeof node.property.value === "string"
       ? node.property.value
       : undefined;
 
@@ -24,8 +21,7 @@ const rule: Rule = {
   meta: {
     type: "problem" as const,
     docs: {
-      description:
-        "Disallow ambient randomness and time in favor of Effect capabilities.",
+      description: "Disallow ambient randomness and time in favor of Effect capabilities.",
     },
     schema: [
       {
@@ -54,13 +50,7 @@ const rule: Rule = {
       allowedDateExtensions.some((extension) => filename.endsWith(extension)) ||
       allowedDateBasenames.has(basename);
 
-    const isGlobalIdentifier = ({
-      name,
-      node,
-    }: {
-      name: string;
-      node: IdentifierNode;
-    }) => {
+    const isGlobalIdentifier = ({ name, node }: { name: string; node: IdentifierNode }) => {
       if (node.name !== name) {
         return false;
       }
@@ -81,13 +71,7 @@ const rule: Rule = {
       return true;
     };
 
-    const isGlobalThisMember = ({
-      name,
-      node,
-    }: {
-      name: string;
-      node: MemberExpressionNode;
-    }) =>
+    const isGlobalThisMember = ({ name, node }: { name: string; node: MemberExpressionNode }) =>
       node.object.type === "Identifier" &&
       isGlobalIdentifier({ name: "globalThis", node: node.object }) &&
       _memberPropertyName({ node }) === name;
@@ -142,8 +126,7 @@ const rule: Rule = {
 
         context.report({
           node,
-          message:
-            "Do not use ambient crypto. Use Effect's Crypto capability instead.",
+          message: "Do not use ambient crypto. Use Effect's Crypto capability instead.",
         });
       },
       MemberExpression(node) {
@@ -152,20 +135,15 @@ const rule: Rule = {
         if (isGlobalThisMember({ name: "crypto", node })) {
           context.report({
             node,
-            message:
-              "Do not use ambient crypto. Use Effect's Crypto capability instead.",
+            message: "Do not use ambient crypto. Use Effect's Crypto capability instead.",
           });
           return;
         }
 
-        if (
-          propertyName === "random" &&
-          isGlobalObject({ name: "Math", node: node.object })
-        ) {
+        if (propertyName === "random" && isGlobalObject({ name: "Math", node: node.object })) {
           context.report({
             node,
-            message:
-              "Do not use ambient Math.random. Use Effect's Random capability instead.",
+            message: "Do not use ambient Math.random. Use Effect's Random capability instead.",
           });
           return;
         }

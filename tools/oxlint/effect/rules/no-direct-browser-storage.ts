@@ -7,17 +7,10 @@ type Node = {
   type: string;
 };
 
-const bannedBrowserStorageNames = new Set([
-  "indexedDB",
-  "localStorage",
-  "sessionStorage",
-]);
+const bannedBrowserStorageNames = new Set(["indexedDB", "localStorage", "sessionStorage"]);
 
 const isNode = (value: unknown): value is Node =>
-  typeof value === "object" &&
-  value !== null &&
-  "type" in value &&
-  typeof value.type === "string";
+  typeof value === "object" && value !== null && "type" in value && typeof value.type === "string";
 
 const getStorageIdentifierName = (node: unknown) =>
   isNode(node) &&
@@ -34,8 +27,7 @@ const rule: Rule = {
   meta: {
     type: "problem" as const,
     docs: {
-      description:
-        "Disallow direct browser storage APIs in favor of Effect storage modules.",
+      description: "Disallow direct browser storage APIs in favor of Effect storage modules.",
     },
   },
   create(context) {
@@ -52,8 +44,7 @@ const rule: Rule = {
         if (
           (parent?.type === "Property" &&
             parent.key === node &&
-            (!isNode(parent.parent) ||
-              parent.parent.type !== "ObjectPattern") &&
+            (!isNode(parent.parent) || parent.parent.type !== "ObjectPattern") &&
             parent.value !== node) ||
           (parent?.type === "MemberExpression" &&
             parent.property === node &&
@@ -73,9 +64,7 @@ const rule: Rule = {
       },
       MemberExpression(node) {
         const storageName =
-          node.object.type === "Identifier"
-            ? getStorageIdentifierName(node.object)
-            : undefined;
+          node.object.type === "Identifier" ? getStorageIdentifierName(node.object) : undefined;
 
         if (storageName !== undefined) {
           context.report({
@@ -92,8 +81,7 @@ const rule: Rule = {
           const propertyName =
             node.property.type === "Identifier"
               ? node.property.name
-              : node.property.type === "Literal" &&
-                  typeof node.property.value === "string"
+              : node.property.type === "Literal" && typeof node.property.value === "string"
                 ? node.property.value
                 : undefined;
 

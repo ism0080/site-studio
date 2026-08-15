@@ -8,10 +8,7 @@ type Node = {
 };
 
 const isNode = (value: unknown): value is Node =>
-  typeof value === "object" &&
-  value !== null &&
-  "type" in value &&
-  typeof value.type === "string";
+  typeof value === "object" && value !== null && "type" in value && typeof value.type === "string";
 
 const isLayerProvide = (node: unknown) =>
   isNode(node) &&
