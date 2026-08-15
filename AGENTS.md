@@ -16,22 +16,22 @@ deep modules, type-driven invariants, boundary isolation, and evidence-driven co
 ```ts
 // DO
 async function update(version: Version) {
-  await server.stop()
-  await cli.install(version)
-  await cli.requireVersion(version)
-  await server.start()
+  await server.stop();
+  await cli.install(version);
+  await cli.requireVersion(version);
+  await server.start();
 }
 
 // DON'T
 async function update(input: string) {
-  if (!input) throw new Error("missing version")
-  const child = spawn("wsl", ["bash", "-lc", buildScript(input)])
-  const result = await collectOutput(child)
-  if (result.code !== 0) throw new Error(result.stderr)
-  const installed = parseVersion(await runVersionCommand())
-  if (installed !== input) throw new Error("wrong version")
-  await killExistingProcess()
-  await startProcess()
+  if (!input) throw new Error("missing version");
+  const child = spawn("wsl", ["bash", "-lc", buildScript(input)]);
+  const result = await collectOutput(child);
+  if (result.code !== 0) throw new Error(result.stderr);
+  const installed = parseVersion(await runVersionCommand());
+  if (installed !== input) throw new Error("wrong version");
+  await killExistingProcess();
+  await startProcess();
 }
 ```
 
@@ -42,20 +42,20 @@ async function update(input: string) {
 
 ```ts
 // DO
-if (!config) return
-if (!config.enabled) return
-assert(server.ready)
-return run(config)
+if (!config) return;
+if (!config.enabled) return;
+assert(server.ready);
+return run(config);
 
 // DON'T
 if (config) {
   if (config.enabled) {
     if (server.ready) {
-      return run(config)
+      return run(config);
     }
   }
 }
-return undefined
+return undefined;
 ```
 
 ### Types Enforce Invariants
@@ -73,7 +73,7 @@ type ServerState =
   | { kind: "stopped" }
   | { kind: "starting" }
   | { kind: "ready"; url: ServerUrl }
-  | { kind: "failed"; error: ServerError }
+  | { kind: "failed"; error: ServerError };
 ```
 
 ### Patterns Must Pay Rent
@@ -108,12 +108,12 @@ type ServerState =
 
 ```ts
 // DO
-await cli.installExactVersion(version)
+await cli.installExactVersion(version);
 
 // DON'T
-prepareUpdate()
-doUpdate()
-finishUpdate()
+prepareUpdate();
+doUpdate();
+finishUpdate();
 ```
 
 ### Encapsulation And State Ownership
@@ -122,12 +122,12 @@ finishUpdate()
 
 ```ts
 // DO
-session.promote(message)
+session.promote(message);
 
 // DON'T
 if (session.status() === "pending") {
-  session.messages().push(message)
-  session.setStatus("active")
+  session.messages().push(message);
+  session.setStatus("active");
 }
 ```
 
@@ -138,8 +138,8 @@ if (session.status() === "pending") {
   `architecture` oxlint rules — do not work around them.
 
 ```ts
-const event = session.promote(message)
-await sessionStore.append(event)
+const event = session.promote(message);
+await sessionStore.append(event);
 ```
 
 ### Tests At Stable Boundaries
@@ -148,8 +148,8 @@ await sessionStore.append(event)
   implementation line-by-line.
 
 ```ts
-await controller.update("Debian")
-expect(events).toEqual(["stop", "install", "verify", "start"])
+await controller.update("Debian");
+expect(events).toEqual(["stop", "install", "verify", "start"]);
 ```
 
 ### Completion Standard

@@ -35,9 +35,7 @@ export class BuildRunner extends Context.Service<
  */
 export const makeNoopBuildRunner = (): BuildRunner["Service"] => ({
   publish: (site: Site) =>
-    Effect.logWarning(
-      `no build backend configured; build skipped for site ${site.id}`,
-    ).pipe(
+    Effect.logWarning(`no build backend configured; build skipped for site ${site.id}`).pipe(
       Effect.flatMap(() =>
         Effect.fail(
           new BuildError({ message: "no build backend configured (set DAYTONA_API_KEY)" }),
