@@ -1,6 +1,7 @@
-import { templates } from "../data/site.js";
+import type { Template } from "../types.ts";
+import { templates } from "../data/site.ts";
 
-function TemplateArt({ template }) {
+function TemplateArt({ template }: { template: Template }) {
   return (
     <div className="template-art" style={{ background: template.palette[0] }}>
       <div className="art-brand" style={{ color: template.palette[2] }}>
@@ -19,7 +20,7 @@ function TemplateArt({ template }) {
   );
 }
 
-export default function Templates({ onSelect }) {
+export default function Templates({ onSelect }: { onSelect: (template: Template) => void }) {
   return (
     <div className="templates-page">
       <div className="template-toolbar">

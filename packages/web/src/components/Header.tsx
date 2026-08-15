@@ -1,15 +1,18 @@
-import Icon from "./Icon.jsx";
+import type { User } from "better-auth";
+import type { Site, View } from "../types.ts";
+import Icon from "./Icon.tsx";
 
 const HEADINGS = {
   overview: ["Good morning, Jordan", "Here’s what’s happening with your sites."],
   editor: ["Edit your site", "Make updates, see them live."],
   templates: ["Templates", "A starting point for every kind of business."],
   leads: ["Leads", "Keep track of new opportunities."],
-};
+} satisfies Record<View, [string, string]>;
 
-const statusLabel = (status) => (status === "published" ? "Published" : "Draft");
+const statusLabel = (status: Site["status"]): string =>
+  status === "published" ? "Published" : "Draft";
 
-const initials = (name = "") =>
+const initials = (name = ""): string =>
   name
     .split(/\s+/)
     .filter(Boolean)
@@ -27,6 +30,16 @@ export default function Header({
   liveUrl,
   onPublish,
   onSelectSite,
+}: {
+  active: View;
+  site: Site;
+  online: boolean | null;
+  publishing: boolean;
+  sites: Site[];
+  user: User;
+  liveUrl: string | null;
+  onPublish: () => void;
+  onSelectSite: (id: string) => void;
 }) {
   const [title, subtitle] = HEADINGS[active] || HEADINGS.overview;
   const inEditor = active === "editor";

@@ -1,7 +1,9 @@
-export const initialSite = {
+import type { Site, Template } from "../types.ts";
+
+export const initialSite: Site = {
   id: "site_aurora_01",
   templateId: "editorial-studio",
-  status: "Published",
+  status: "published",
   lastSaved: "2 min ago",
   business: {
     name: "Aurora Studio",
@@ -70,7 +72,7 @@ export const initialSite = {
   ],
 };
 
-export const templates = [
+export const templates: Template[] = [
   {
     id: "editorial-studio",
     name: "Editorial Studio",
@@ -103,4 +105,4 @@ export const templates = [
   },
 ];
 
-export const FONTS = ["Manrope", "Fraunces", "Space Grotesk", "Inter", "DM Sans", "Lora"];
+export const FONTS: string[] = ["Manrope", "Fraunces", "Space Grotesk", "Inter", "DM Sans", "Lora"];

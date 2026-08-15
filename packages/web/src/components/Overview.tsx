@@ -1,7 +1,16 @@
-import Icon from "./Icon.jsx";
-import { findPage, findSection } from "../lib/siteUpdates.js";
+import type { Site } from "../types.ts";
+import Icon from "./Icon.tsx";
+import { findPage, findSection } from "../lib/siteUpdates.ts";
 
-export default function Overview({ onEdit, site, sites }) {
+export default function Overview({
+  onEdit,
+  site,
+  sites,
+}: {
+  onEdit: () => void;
+  site: Site;
+  sites: Site[];
+}) {
   const hero = findSection(findPage(site), "hero");
   const publishedCount = sites.filter((s) => s.status === "published").length;
   return (

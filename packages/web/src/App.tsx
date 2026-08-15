@@ -1,16 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import Sidebar from "./components/Sidebar.jsx";
-import Header from "./components/Header.jsx";
-import Overview from "./components/Overview.jsx";
-import Templates from "./components/Templates.jsx";
-import Leads from "./components/Leads.jsx";
-import EditorPanel from "./components/EditorPanel.jsx";
-import Preview from "./components/Preview.jsx";
-import { initialSite } from "./data/site.js";
-import { api, fromApiSite, liveUrlFor, toApiSite } from "./lib/api.js";
-import { authClient } from "./lib/auth.js";
+import type { User } from "better-auth";
+import type { Device, DomainSetup, SaveState, Site, Template, View } from "./types.ts";
+import Sidebar from "./components/Sidebar.tsx";
+import Header from "./components/Header.tsx";
+import Overview from "./components/Overview.tsx";
+import Templates from "./components/Templates.tsx";
+import Leads from "./components/Leads.tsx";
+import EditorPanel from "./components/EditorPanel.tsx";
+import Preview from "./components/Preview.tsx";
+import { initialSite } from "./data/site.ts";
+import { api, errorMessage, fromApiSite, liveUrlFor, toApiSite } from "./lib/api.ts";
+import { authClient } from "./lib/auth.ts";
 
-function SignInScreen({ onSignIn }) {
+interface Banner {
+  kind: "error" | "success";
+  message: string;
+}
+
+function SignInScreen({ onSignIn }: { onSignIn: () => void }) {
   return (
     <div className="auth-screen">
       <div className="auth-card">
@@ -38,8 +45,16 @@ function Editor({
   onSetDomain,
   onVerifyDomain,
   onRemoveDomain,
+}: {
+  site: Site;
+  online: boolean | null;
+  saveState: SaveState;
+  onUpdate: (site: Site) => void;
+  onSetDomain: (domain: string) => Promise<DomainSetup>;
+  onVerifyDomain: () => Promise<Site>;
+  onRemoveDomain: () => Promise<Site>;
 }) {
-  const [device, setDevice] = useState("desktop");
+  const [device, setDevice] = useState<Device>("desktop");
   return (
     <div className="editor-layout">
       <EditorPanel
@@ -79,20 +94,20 @@ function Editor({
 }
 
 export default function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [active, setActive] = useState("overview");
-  const [sites, setSites] = useState([]);
-  const [site, setSite] = useState(initialSite);
+  const [active, setActive] = useState<View>("overview");
+  const [sites, setSites] = useState<Site[]>([]);
+  const [site, setSite] = useState<Site>(initialSite);
   const [persisted, setPersisted] = useState(false);
-  const [online, setOnline] = useState(null);
-  const [saveState, setSaveState] = useState("idle");
+  const [online, setOnline] = useState<boolean | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>("idle");
   const [publishing, setPublishing] = useState(false);
-  const [banner, setBanner] = useState(null);
+  const [banner, setBanner] = useState<Banner | null>(null);
 
   const siteRef = useRef(site);
   const persistedRef = useRef(persisted);
-  const saveTimer = useRef(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     authClient
@@ -114,12 +129,12 @@ export default function App() {
     window.location.reload();
   };
 
-  const updateSite = useCallback((next) => {
+  const updateSite = useCallback((next: Site) => {
     siteRef.current = next;
     setSite(next);
   }, []);
 
-  const setPersistedFlag = useCallback((value) => {
+  const setPersistedFlag = useCallback((value: boolean) => {
     persistedRef.current = value;
     setPersisted(value);
   }, []);
@@ -149,7 +164,7 @@ export default function App() {
 
   // Persist the current site to the API (create on first save, then update).
   const commit = useCallback(
-    async (next) => {
+    async (next: Site) => {
       setSaveState("saving");
       try {
         if (persistedRef.current) {
@@ -165,14 +180,14 @@ export default function App() {
         setSaveState("saved");
       } catch (e) {
         setSaveState("error");
-        setBanner({ kind: "error", message: `Save failed: ${e.message}` });
+        setBanner({ kind: "error", message: `Save failed: ${errorMessage(e)}` });
       }
     },
     [updateSite, setPersistedFlag],
   );
 
   const handleUpdate = useCallback(
-    (next) => {
+    (next: Site) => {
       updateSite(next);
       if (online !== true) return;
       clearTimeout(saveTimer.current);
@@ -182,7 +197,7 @@ export default function App() {
   );
 
   // Returns a persisted site id, creating the site if the demo site was never saved.
-  const ensurePersisted = useCallback(async () => {
+  const ensurePersisted = useCallback(async (): Promise<string> => {
     if (persistedRef.current) return siteRef.current.id;
     const created = await api.createSite({
       name: siteRef.current.business.name,
@@ -208,29 +223,28 @@ export default function App() {
           "Published. Static HTML is generated by the Astro build step (run `bun run publish` in packages/site-template).",
       });
     } catch (e) {
-      setBanner({ kind: "error", message: `Publish failed: ${e.message}` });
+      setBanner({ kind: "error", message: `Publish failed: ${errorMessage(e)}` });
     } finally {
       setPublishing(false);
     }
   }, [ensurePersisted, updateSite]);
 
   const handleSetDomain = useCallback(
-    async (domain) => {
+    async (domain: string): Promise<DomainSetup> => {
       const id = await ensurePersisted();
-      const setup = await api.setDomain(id, domain);
-      return setup;
+      return api.setDomain(id, domain);
     },
     [ensurePersisted],
   );
 
-  const handleVerifyDomain = useCallback(async () => {
+  const handleVerifyDomain = useCallback(async (): Promise<Site> => {
     const id = await ensurePersisted();
     const updated = await api.verifyDomain(id);
     updateSite(fromApiSite(updated));
     return updated;
   }, [ensurePersisted, updateSite]);
 
-  const handleRemoveDomain = useCallback(async () => {
+  const handleRemoveDomain = useCallback(async (): Promise<Site> => {
     const id = await ensurePersisted();
     const updated = await api.removeDomain(id);
     updateSite(fromApiSite(updated));
@@ -238,7 +252,7 @@ export default function App() {
   }, [ensurePersisted, updateSite]);
 
   const handleSelectSite = useCallback(
-    (id) => {
+    (id: string) => {
       const next = sites.find((s) => s.id === id);
       if (!next) return;
       updateSite(fromApiSite(next));
@@ -250,8 +264,8 @@ export default function App() {
   // Applying a template switches the site's templateId and seeds its palette
   // (accent + font); the renderer keys the whole look off templateId.
   const handleSelectTemplate = useCallback(
-    (template) => {
-      const next = {
+    (template: Template) => {
+      const next: Site = {
         ...siteRef.current,
         templateId: template.id,
         settings: {
@@ -291,7 +305,6 @@ export default function App() {
           active={active}
           site={site}
           online={online}
-          saveState={saveState}
           publishing={publishing}
           sites={sites}
           user={user}
@@ -308,7 +321,6 @@ export default function App() {
             online={online}
             saveState={saveState}
             onUpdate={handleUpdate}
-            onPublish={handlePublish}
             onSetDomain={handleSetDomain}
             onVerifyDomain={handleVerifyDomain}
             onRemoveDomain={handleRemoveDomain}

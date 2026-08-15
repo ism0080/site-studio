@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { SECTION_TYPES } from "../data/sections.js";
-import { FONTS, templates } from "../data/site.js";
+import type { DomainSetup, SaveState, Section, Site, StringSettingKey } from "../types.ts";
+import { SECTION_ORDER, SECTION_TYPES } from "../data/sections.ts";
+import { FONTS, templates } from "../data/site.ts";
+import { errorMessage } from "../lib/api.ts";
 import {
   findPage,
   findSection,
@@ -11,15 +13,24 @@ import {
   addSection,
   removeSection,
   moveSection,
-} from "../lib/siteUpdates.js";
+} from "../lib/siteUpdates.ts";
 
-function sectionSub(block) {
+type ColorKey = Exclude<StringSettingKey, "font">;
+
+function sectionSub(block: Section): string {
   const meta = SECTION_TYPES[block.type];
-  if (!meta) return block.type;
   return meta.sub(block.props);
 }
 
-function ColorField({ label, value, onChange }) {
+function ColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
   return (
     <div className="field-group">
       <label>{label}</label>
@@ -31,7 +42,7 @@ function ColorField({ label, value, onChange }) {
   );
 }
 
-function ThemeSettings({ site, onUpdate }) {
+function ThemeSettings({ site, onUpdate }: { site: Site; onUpdate: (site: Site) => void }) {
   const template = templates.find((t) => t.id === site.templateId) ?? templates[0];
   const fallback = {
     accent: template.palette[1],
@@ -39,8 +50,8 @@ function ThemeSettings({ site, onUpdate }) {
     ink: template.palette[2],
     surface: template.surface,
   };
-  const value = (key) => site.settings[key] ?? fallback[key];
-  const set = (key) => (v) => onUpdate(updateSetting(site, key, v));
+  const value = (key: ColorKey): string => site.settings[key] ?? fallback[key];
+  const set = (key: ColorKey) => (v: string) => onUpdate(updateSetting(site, key, v));
 
   return (
     <div className="theme-settings">
@@ -49,7 +60,7 @@ function ThemeSettings({ site, onUpdate }) {
         <select
           className="font-select"
           value={site.settings.font}
-          onChange={(e) => set("font")(e.target.value)}
+          onChange={(e) => onUpdate(updateSetting(site, "font", e.target.value))}
         >
           {FONTS.map((font) => (
             <option key={font}>{font}</option>
@@ -71,11 +82,23 @@ function ThemeSettings({ site, onUpdate }) {
   );
 }
 
-function DomainSettings({ site, online, onSetDomain, onVerifyDomain, onRemoveDomain }) {
+function DomainSettings({
+  site,
+  online,
+  onSetDomain,
+  onVerifyDomain,
+  onRemoveDomain,
+}: {
+  site: Site;
+  online: boolean | null;
+  onSetDomain: (domain: string) => Promise<DomainSetup>;
+  onVerifyDomain: () => Promise<Site>;
+  onRemoveDomain: () => Promise<Site>;
+}) {
   const [domainInput, setDomainInput] = useState("");
-  const [setup, setSetup] = useState(null);
+  const [setup, setSetup] = useState<DomainSetup | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   if (online !== true) {
     return (
@@ -97,7 +120,7 @@ function DomainSettings({ site, online, onSetDomain, onVerifyDomain, onRemoveDom
       const result = await onSetDomain(domain);
       setSetup(result);
     } catch (e) {
-      setError(e.message);
+      setError(errorMessage(e));
       setSetup(null);
     } finally {
       setBusy(false);
@@ -112,7 +135,7 @@ function DomainSettings({ site, online, onSetDomain, onVerifyDomain, onRemoveDom
       setSetup(null);
       setDomainInput("");
     } catch (e) {
-      setError(e.message);
+      setError(errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -126,7 +149,7 @@ function DomainSettings({ site, online, onSetDomain, onVerifyDomain, onRemoveDom
       setSetup(null);
       setDomainInput("");
     } catch (e) {
-      setError(e.message);
+      setError(errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -187,18 +210,28 @@ export default function EditorPanel({
   onSetDomain,
   onVerifyDomain,
   onRemoveDomain,
+}: {
+  site: Site;
+  online: boolean | null;
+  saveState: SaveState;
+  onUpdate: (site: Site) => void;
+  onSetDomain: (domain: string) => Promise<DomainSetup>;
+  onVerifyDomain: () => Promise<Site>;
+  onRemoveDomain: () => Promise<Site>;
 }) {
   const page = findPage(site);
   const hero = findSection(page, "hero");
   const services = findSection(page, "services");
 
-  const handleAddSection = (type) =>
+  const handleAddSection = (type: Section["type"]) =>
     onUpdate(addSection(site, page.id, SECTION_TYPES[type].create()));
-  const handleRemoveSection = (blockId) => onUpdate(removeSection(site, page.id, blockId));
-  const handleMoveSection = (blockId, direction) =>
+  const handleRemoveSection = (blockId: string) => onUpdate(removeSection(site, page.id, blockId));
+  const handleMoveSection = (blockId: string, direction: number) =>
     onUpdate(moveSection(site, page.id, blockId, direction));
 
-  const addable = Object.entries(SECTION_TYPES).filter(([type]) => !findSection(page, type));
+  const addable = SECTION_ORDER.filter((type) => !findSection(page, type)).map(
+    (type) => [type, SECTION_TYPES[type]] as const,
+  );
 
   const savedLabel =
     saveState === "saving" ? "Saving…" : saveState === "error" ? "Save failed" : "Saved";
@@ -240,7 +273,7 @@ export default function EditorPanel({
                 Headline <span className="field-type">hero.headline</span>
               </label>
               <textarea
-                rows="3"
+                rows={3}
                 value={hero.props.headline}
                 onChange={(e) =>
                   onUpdate(updateSectionProp(site, page.id, hero.id, "headline", e.target.value))
@@ -253,7 +286,7 @@ export default function EditorPanel({
                 Short description <span className="field-type">hero.description</span>
               </label>
               <textarea
-                rows="3"
+                rows={3}
                 value={hero.props.description}
                 onChange={(e) =>
                   onUpdate(updateSectionProp(site, page.id, hero.id, "description", e.target.value))
@@ -288,7 +321,7 @@ export default function EditorPanel({
                 }
               />
               <textarea
-                rows="2"
+                rows={2}
                 value={item.description}
                 onChange={(e) =>
                   onUpdate(

@@ -1,6 +1,17 @@
-import { findPage } from "../lib/siteUpdates.js";
+import { Fragment } from "react";
+import type { CSSProperties } from "react";
+import type {
+  AboutSection,
+  Device,
+  HeroSection,
+  Section,
+  ServicesSection,
+  Site,
+  TestimonialsSection,
+} from "../types.ts";
+import { findPage } from "../lib/siteUpdates.ts";
 
-function Hero({ block }) {
+function Hero({ block }: { block: HeroSection }) {
   return (
     <section className="hero">
       <div className="hero-copy">
@@ -26,7 +37,7 @@ function Hero({ block }) {
   );
 }
 
-function Services({ block, index }) {
+function Services({ block, index }: { block: ServicesSection; index: number }) {
   return (
     <section className="services">
       <div className="section-intro">
@@ -49,7 +60,7 @@ function Services({ block, index }) {
   );
 }
 
-function About({ block }) {
+function About({ block }: { block: AboutSection }) {
   return (
     <section className="about">
       <p className="eyebrow">{block.props.eyebrow}</p>
@@ -59,7 +70,7 @@ function About({ block }) {
   );
 }
 
-function Testimonials({ block, index }) {
+function Testimonials({ block, index }: { block: TestimonialsSection; index: number }) {
   return (
     <section className="testimonials">
       <div className="section-intro">
@@ -81,18 +92,27 @@ function Testimonials({ block, index }) {
   );
 }
 
-const renderers = {
-  hero: Hero,
-  services: Services,
-  about: About,
-  testimonials: Testimonials,
-};
+function renderSection(block: Section, index: number) {
+  switch (block.type) {
+    case "hero":
+      return <Hero block={block} />;
+    case "services":
+      return <Services block={block} index={index} />;
+    case "about":
+      return <About block={block} />;
+    case "testimonials":
+      return <Testimonials block={block} index={index} />;
+  }
+}
 
-export default function Preview({ site, device }) {
+export default function Preview({ site, device }: { site: Site; device: Device }) {
   const page = findPage(site);
+  // SAFETY: The site template's CSS reads `--accent` as a custom property,
+  // which lives outside CSSProperties' known-property index signature.
+  const accentStyle = { "--accent": site.settings.accent } as CSSProperties;
   return (
     <div className={`preview-canvas ${device}`}>
-      <div className="public-site" style={{ "--accent": site.settings.accent }}>
+      <div className="public-site" style={accentStyle}>
         <div className="site-topbar">
           <span>{site.business.category}</span>
           <span>{site.business.location}</span>
@@ -109,10 +129,9 @@ export default function Preview({ site, device }) {
           </button>
         </header>
         <main>
-          {page.sections.map((block, index) => {
-            const Component = renderers[block.type];
-            return Component ? <Component key={block.id} block={block} index={index} /> : null;
-          })}
+          {page.sections.map((block, index) => (
+            <Fragment key={block.id}>{renderSection(block, index)}</Fragment>
+          ))}
         </main>
         <footer className="site-footer">
           <span>{site.business.name}</span>

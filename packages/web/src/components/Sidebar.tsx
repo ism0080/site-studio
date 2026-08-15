@@ -1,6 +1,8 @@
-import Icon from "./Icon.jsx";
+import type { User } from "better-auth";
+import type { View } from "../types.ts";
+import Icon, { type IconName } from "./Icon.tsx";
 
-const initials = (name = "") =>
+const initials = (name = ""): string =>
   name
     .split(/\s+/)
     .filter(Boolean)
@@ -8,8 +10,18 @@ const initials = (name = "") =>
     .map((part) => part[0]?.toUpperCase())
     .join("");
 
-export default function Sidebar({ active, onChange, user, onSignOut }) {
-  const items = [
+export default function Sidebar({
+  active,
+  onChange,
+  user,
+  onSignOut,
+}: {
+  active: View;
+  onChange: (view: View) => void;
+  user: User;
+  onSignOut: () => void;
+}) {
+  const items: Array<[View, string, IconName]> = [
     ["overview", "Overview", "grid"],
     ["editor", "Site editor", "pen"],
     ["templates", "Templates", "layers"],

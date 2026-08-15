@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 const paths = {
   grid: (
     <>
@@ -47,9 +49,11 @@ const paths = {
       <circle cx="19" cy="12" r="1" fill="currentColor" />
     </>
   ),
-};
+} satisfies Record<string, ReactNode>;
 
-export default function Icon({ name, size = 18 }) {
+export type IconName = keyof typeof paths;
+
+export default function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
   return (
     <svg
       width={size}

@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
-import Icon from "./Icon.jsx";
-import { api } from "../lib/api.js";
+import type { Lead, Site } from "../types.ts";
+import Icon from "./Icon.tsx";
+import { api, errorMessage } from "../lib/api.ts";
 
-export default function Leads({ site, online, onEdit }) {
-  const [leads, setLeads] = useState([]);
+export default function Leads({
+  site,
+  online,
+  onEdit,
+}: {
+  site: Site;
+  online: boolean | null;
+  onEdit: () => void;
+}) {
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -13,7 +22,7 @@ export default function Leads({ site, online, onEdit }) {
     try {
       setLeads(await api.listLeads(site.id));
     } catch (e) {
-      setError(e.message);
+      setError(errorMessage(e));
       setLeads([]);
     } finally {
       setLoading(false);
@@ -24,12 +33,12 @@ export default function Leads({ site, online, onEdit }) {
     if (online && site.id) load();
   }, [online, site.id, load]);
 
-  const remove = async (leadId) => {
+  const remove = async (leadId: string) => {
     try {
       await api.deleteLead(site.id, leadId);
       setLeads((list) => list.filter((lead) => lead.id !== leadId));
     } catch (e) {
-      setError(e.message);
+      setError(errorMessage(e));
     }
   };
 

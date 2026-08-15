@@ -1,6 +1,8 @@
+import type { SectionMeta, SectionType } from "../types.ts";
+
 let idCounter = 0;
 
-export function nextId(prefix) {
+export function nextId(prefix: string): string {
   idCounter += 1;
   return `${prefix}_${Date.now()}_${idCounter}`;
 }
@@ -25,7 +27,7 @@ export const SECTION_TYPES = {
   },
   services: {
     label: "Services",
-    sub: (props) => `${props.items.length} items`,
+    sub: (props) => ("items" in props ? `${props.items.length} items` : "Services"),
     hint: "A list of services",
     create: () => ({
       id: nextId("block_services"),
@@ -68,7 +70,7 @@ export const SECTION_TYPES = {
   },
   testimonials: {
     label: "Testimonials",
-    sub: (props) => `${props.items.length} items`,
+    sub: (props) => ("items" in props ? `${props.items.length} items` : "Testimonials"),
     hint: "Quotes from your clients",
     create: () => ({
       id: nextId("block_testimonials"),
@@ -92,4 +94,6 @@ export const SECTION_TYPES = {
       },
     }),
   },
-};
+} satisfies Record<SectionType, SectionMeta>;
+
+export const SECTION_ORDER: SectionType[] = ["hero", "services", "about", "testimonials"];
