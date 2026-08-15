@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { User } from "better-auth";
 import type { Device, DomainSetup, SaveState, Site, Template, View } from "./types.ts";
 import Sidebar from "./components/Sidebar.tsx";
@@ -9,8 +10,17 @@ import Leads from "./components/Leads.tsx";
 import EditorPanel from "./components/EditorPanel.tsx";
 import Preview from "./components/Preview.tsx";
 import { initialSite } from "./data/site.ts";
-import { api, errorMessage, fromApiSite, liveUrlFor, toApiSite } from "./lib/api.ts";
+import { errorMessage, fromApiSite, liveUrlFor, toApiSite } from "./lib/api.ts";
 import { authClient } from "./lib/auth.ts";
+import {
+  siteQueries,
+  useCreateSite,
+  usePublishSite,
+  useRemoveDomain,
+  useSetDomain,
+  useUpdateSite,
+  useVerifyDomain,
+} from "./lib/queries.ts";
 
 interface Banner {
   kind: "error" | "success";
@@ -97,7 +107,6 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [active, setActive] = useState<View>("overview");
-  const [sites, setSites] = useState<Site[]>([]);
   const [site, setSite] = useState<Site>(initialSite);
   const [persisted, setPersisted] = useState(false);
   const [online, setOnline] = useState<boolean | null>(null);
@@ -108,6 +117,17 @@ export default function App() {
   const siteRef = useRef(site);
   const persistedRef = useRef(persisted);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const queryClient = useQueryClient();
+  const sitesQuery = useQuery({ ...siteQueries.list(), enabled: !!user });
+  const sites = sitesQuery.data ?? [];
+
+  const createSite = useCreateSite();
+  const updateSiteMutation = useUpdateSite();
+  const publishSite = usePublishSite();
+  const setDomain = useSetDomain();
+  const verifyDomain = useVerifyDomain();
+  const removeDomain = useRemoveDomain();
 
   useEffect(() => {
     authClient
@@ -139,28 +159,24 @@ export default function App() {
     setPersisted(value);
   }, []);
 
-  const load = useCallback(async () => {
-    if (!user) return;
-    try {
-      const list = await api.listSites();
-      setSites(list);
-      setOnline(true);
-      if (list.length > 0) {
-        updateSite(fromApiSite(list[0]));
-        setPersistedFlag(true);
-      }
-    } catch {
+  // Drive the online/offline banner and select the first persisted site from
+  // the sites list once it arrives.
+  useEffect(() => {
+    if (sitesQuery.isError) {
       setOnline(false);
       setBanner({
         kind: "error",
         message: "API unreachable — showing local demo data. Start the API and reload to go live.",
       });
+      return;
     }
-  }, [user, updateSite, setPersistedFlag]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+    if (!sitesQuery.isSuccess) return;
+    setOnline(true);
+    if (sitesQuery.data.length > 0 && !persistedRef.current) {
+      updateSite(fromApiSite(sitesQuery.data[0]));
+      setPersistedFlag(true);
+    }
+  }, [sitesQuery.isError, sitesQuery.isSuccess, sitesQuery.data, updateSite, setPersistedFlag]);
 
   // Persist the current site to the API (create on first save, then update).
   const commit = useCallback(
@@ -168,9 +184,9 @@ export default function App() {
       setSaveState("saving");
       try {
         if (persistedRef.current) {
-          await api.updateSite(next.id, toApiSite(next));
+          await updateSiteMutation.mutateAsync(toApiSite(next));
         } else {
-          const created = await api.createSite({
+          const created = await createSite.mutateAsync({
             name: next.business.name,
             templateId: next.templateId,
           });
@@ -183,7 +199,7 @@ export default function App() {
         setBanner({ kind: "error", message: `Save failed: ${errorMessage(e)}` });
       }
     },
-    [updateSite, setPersistedFlag],
+    [updateSiteMutation, createSite, updateSite, setPersistedFlag],
   );
 
   const handleUpdate = useCallback(
@@ -199,23 +215,22 @@ export default function App() {
   // Returns a persisted site id, creating the site if the demo site was never saved.
   const ensurePersisted = useCallback(async (): Promise<string> => {
     if (persistedRef.current) return siteRef.current.id;
-    const created = await api.createSite({
+    const created = await createSite.mutateAsync({
       name: siteRef.current.business.name,
       templateId: siteRef.current.templateId,
     });
     updateSite(fromApiSite(created));
     setPersistedFlag(true);
-    setSites((list) => (list.some((s) => s.id === created.id) ? list : [...list, created]));
     return created.id;
-  }, [updateSite, setPersistedFlag]);
+  }, [createSite, updateSite, setPersistedFlag]);
 
   const handlePublish = useCallback(async () => {
     setPublishing(true);
     setBanner(null);
     try {
       const id = await ensurePersisted();
-      await api.publishSite(id);
-      const updated = await api.getSite(id);
+      await publishSite.mutateAsync(id);
+      const updated = await queryClient.fetchQuery(siteQueries.detail(id));
       updateSite(fromApiSite(updated));
       setBanner({
         kind: "success",
@@ -227,38 +242,38 @@ export default function App() {
     } finally {
       setPublishing(false);
     }
-  }, [ensurePersisted, updateSite]);
+  }, [ensurePersisted, publishSite, queryClient, updateSite]);
 
   const handleSetDomain = useCallback(
     async (domain: string): Promise<DomainSetup> => {
       const id = await ensurePersisted();
-      return api.setDomain(id, domain);
+      return setDomain.mutateAsync({ id, domain });
     },
-    [ensurePersisted],
+    [ensurePersisted, setDomain],
   );
 
   const handleVerifyDomain = useCallback(async (): Promise<Site> => {
     const id = await ensurePersisted();
-    const updated = await api.verifyDomain(id);
+    const updated = await verifyDomain.mutateAsync(id);
     updateSite(fromApiSite(updated));
     return updated;
-  }, [ensurePersisted, updateSite]);
+  }, [ensurePersisted, verifyDomain, updateSite]);
 
   const handleRemoveDomain = useCallback(async (): Promise<Site> => {
     const id = await ensurePersisted();
-    const updated = await api.removeDomain(id);
+    const updated = await removeDomain.mutateAsync(id);
     updateSite(fromApiSite(updated));
     return updated;
-  }, [ensurePersisted, updateSite]);
+  }, [ensurePersisted, removeDomain, updateSite]);
 
   const handleSelectSite = useCallback(
     (id: string) => {
-      const next = sites.find((s) => s.id === id);
+      const next = sitesQuery.data?.find((s) => s.id === id);
       if (!next) return;
       updateSite(fromApiSite(next));
       setPersistedFlag(true);
     },
-    [sites, updateSite, setPersistedFlag],
+    [sitesQuery.data, updateSite, setPersistedFlag],
   );
 
   // Applying a template switches the site's templateId and seeds its palette

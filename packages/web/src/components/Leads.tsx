@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
-import type { Lead, Site } from "../types.ts";
+import { useQuery } from "@tanstack/react-query";
+import type { Site } from "../types.ts";
 import Icon from "./Icon.tsx";
-import { api, errorMessage } from "../lib/api.ts";
+import { errorMessage as errorMessageFrom } from "../lib/api.ts";
+import { leadQueries, useDeleteLead } from "../lib/queries.ts";
 
 export default function Leads({
   site,
@@ -12,34 +13,25 @@ export default function Leads({
   online: boolean | null;
   onEdit: () => void;
 }) {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const siteId = online ? site.id : undefined;
+  const {
+    data: leads = [],
+    error,
+    isFetching,
+    refetch,
+  } = useQuery({
+    ...leadQueries.list(siteId ?? ""),
+    enabled: !!siteId,
+  });
+  const deleteLead = useDeleteLead();
+  const errorMessage = deleteLead.error
+    ? errorMessageFrom(deleteLead.error)
+    : error
+      ? errorMessageFrom(error)
+      : null;
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      setLeads(await api.listLeads(site.id));
-    } catch (e) {
-      setError(errorMessage(e));
-      setLeads([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [site.id]);
-
-  useEffect(() => {
-    if (online && site.id) load();
-  }, [online, site.id, load]);
-
-  const remove = async (leadId: string) => {
-    try {
-      await api.deleteLead(site.id, leadId);
-      setLeads((list) => list.filter((lead) => lead.id !== leadId));
-    } catch (e) {
-      setError(errorMessage(e));
-    }
+  const remove = (leadId: string) => {
+    deleteLead.mutate({ siteId: site.id, leadId });
   };
 
   if (!site.id || !online) {
@@ -64,18 +56,18 @@ export default function Leads({
           <p className="overline">Leads</p>
           <h2>{site.business.name} — new inquiries</h2>
         </div>
-        <button className="light-button" onClick={load} disabled={loading}>
-          {loading ? "Loading…" : "Refresh"}
+        <button className="light-button" onClick={() => refetch()} disabled={isFetching}>
+          {isFetching ? "Loading…" : "Refresh"}
         </button>
       </div>
 
-      {error && (
+      {errorMessage && (
         <div className="conn-banner error">
-          <span>{error}</span>
+          <span>{errorMessage}</span>
         </div>
       )}
 
-      {leads.length === 0 && !loading ? (
+      {leads.length === 0 && !isFetching ? (
         <div className="empty-page empty-leads">
           <div className="empty-icon">
             <Icon name="users" size={28} />

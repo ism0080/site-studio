@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.4",
     "@vitejs/plugin-react": "latest",
     "better-auth": "^1.6.26",
     "react": "latest",
