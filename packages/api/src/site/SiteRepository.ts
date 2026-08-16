@@ -11,12 +11,15 @@ import {
   DomainInUse,
   DomainNotVerified,
   DomainSetup,
+  Forbidden,
   Site,
   SiteNotFound,
   decodeSiteJson,
   encodeSiteJson,
   type BuildStatus,
 } from "./site.ts";
+import { accessibleBinds, accessibleWhere, resolveSiteAccess } from "./access.ts";
+import type { Requester, SiteAccess } from "../access/access.ts";
 import { normalizeDomain } from "./keys.ts";
 import { newVerificationToken, verifyTxtRecord } from "./dns.ts";
 import { nowIso } from "../platform/Time.ts";
@@ -24,26 +27,35 @@ import { nowIso } from "../platform/Time.ts";
 type Db = Cloudflare.D1.QueryDatabaseClient;
 
 export interface SiteRepositoryService {
-  readonly list: (ownerId: string) => Effect.Effect<ReadonlyArray<Site>, never, RuntimeContext>;
-  readonly get: (id: string, ownerId: string) => Effect.Effect<Site, SiteNotFound, RuntimeContext>;
+  readonly list: (
+    requester: Requester,
+  ) => Effect.Effect<ReadonlyArray<Site>, never, RuntimeContext>;
+  readonly get: (
+    id: string,
+    requester: Requester,
+  ) => Effect.Effect<Site, SiteNotFound, RuntimeContext>;
+  readonly access: (
+    id: string,
+    requester: Requester,
+  ) => Effect.Effect<SiteAccess | null, never, RuntimeContext>;
   readonly create: (
     payload: CreateSite,
-    ownerId: string,
+    requester: Requester,
   ) => Effect.Effect<Site, never, RuntimeContext | Crypto.Crypto>;
   readonly update: (
     id: string,
     site: Site,
-    ownerId: string,
-  ) => Effect.Effect<Site, SiteNotFound, RuntimeContext>;
+    requester: Requester,
+  ) => Effect.Effect<Site, SiteNotFound | Forbidden, RuntimeContext>;
   readonly remove: (
     id: string,
-    ownerId: string,
-  ) => Effect.Effect<void, SiteNotFound, RuntimeContext>;
+    requester: Requester,
+  ) => Effect.Effect<void, SiteNotFound | Forbidden, RuntimeContext>;
   readonly markPublished: (
     id: string,
-    ownerId: string,
+    requester: Requester,
     publishedAt: string,
-  ) => Effect.Effect<Site, SiteNotFound, RuntimeContext>;
+  ) => Effect.Effect<Site, SiteNotFound | Forbidden, RuntimeContext>;
   readonly markBuildResult: (
     id: string,
     ownerId: string,
@@ -53,17 +65,21 @@ export interface SiteRepositoryService {
   ) => Effect.Effect<Site, SiteNotFound, RuntimeContext>;
   readonly setDomain: (
     id: string,
-    ownerId: string,
+    requester: Requester,
     domain: string,
-  ) => Effect.Effect<DomainSetup, SiteNotFound | DomainInUse, RuntimeContext | Crypto.Crypto>;
+  ) => Effect.Effect<
+    DomainSetup,
+    SiteNotFound | Forbidden | DomainInUse,
+    RuntimeContext | Crypto.Crypto
+  >;
   readonly verifyDomain: (
     id: string,
-    ownerId: string,
-  ) => Effect.Effect<Site, SiteNotFound | DomainNotVerified, RuntimeContext>;
+    requester: Requester,
+  ) => Effect.Effect<Site, SiteNotFound | Forbidden | DomainNotVerified, RuntimeContext>;
   readonly removeDomain: (
     id: string,
-    ownerId: string,
-  ) => Effect.Effect<Site, SiteNotFound, RuntimeContext>;
+    requester: Requester,
+  ) => Effect.Effect<Site, SiteNotFound | Forbidden, RuntimeContext>;
 }
 
 // The `document` column is TEXT; encode the schema then serialize to JSON.
@@ -83,30 +99,38 @@ export const makeSiteRepository = (
 ): SiteRepositoryService => {
   const checkTxt = deps.verifyTxt ?? verifyTxtRecord;
   return {
-    list: Effect.fn("SiteRepository.list")(function* (ownerId: string) {
+    list: Effect.fn("SiteRepository.list")(function* (requester: Requester) {
       return yield* db
-        .prepare("SELECT document FROM sites WHERE owner_id = ? ORDER BY updated_at DESC")
-        .bind(ownerId)
+        .prepare(
+          `SELECT document FROM sites WHERE ${accessibleWhere(requester)} ORDER BY updated_at DESC`,
+        )
+        .bind(...accessibleBinds(requester))
         .all<{ document: string }>()
         .pipe(
           Effect.map((result) => result.results.map((row) => row.document)),
           Effect.flatMap((documents) => Effect.all(documents.map(_parse))),
         );
     }),
-    get: Effect.fn("SiteRepository.get")(function* (id: string, ownerId: string) {
+    get: Effect.fn("SiteRepository.get")(function* (id: string, requester: Requester) {
       const row = yield* db
-        .prepare("SELECT document FROM sites WHERE id = ? AND owner_id = ?")
-        .bind(id, ownerId)
+        .prepare(`SELECT document FROM sites WHERE id = ? AND ${accessibleWhere(requester)}`)
+        .bind(id, ...accessibleBinds(requester))
         .first<{ document: string }>();
       if (row === null) return yield* new SiteNotFound({ id });
       return yield* _parse(row.document);
     }),
-    create: Effect.fn("SiteRepository.create")(function* (payload: CreateSite, ownerId: string) {
+    access: Effect.fn("SiteRepository.access")(function* (id: string, requester: Requester) {
+      return yield* resolveSiteAccess(db, id, requester);
+    }),
+    create: Effect.fn("SiteRepository.create")(function* (
+      payload: CreateSite,
+      requester: Requester,
+    ) {
       const now = yield* nowIso;
       const crypto = yield* Crypto.Crypto;
       const site = new Site({
         id: SiteId.make(yield* crypto.randomUUIDv4.pipe(Effect.orDie)),
-        ownerId: OwnerId.make(ownerId),
+        ownerId: OwnerId.make(requester.id),
         templateId: payload.templateId,
         status: "draft",
         business: {
@@ -150,21 +174,52 @@ export const makeSiteRepository = (
         .run()
         .pipe(Effect.as(site));
     }),
-    update: Effect.fn("SiteRepository.update")(function* (id: string, site: Site, ownerId: string) {
-      const existing = yield* db
-        .prepare("SELECT id FROM sites WHERE id = ? AND owner_id = ?")
-        .bind(id, ownerId)
-        .first<{ id: string }>();
-      if (existing === null) return yield* new SiteNotFound({ id });
-      const updated = new Site({
-        ...site,
-        id: SiteId.make(id),
-        ownerId: OwnerId.make(ownerId),
-        updatedAt: yield* nowIso,
-      });
+    update: Effect.fn("SiteRepository.update")(function* (
+      id: string,
+      site: Site,
+      requester: Requester,
+    ) {
+      const row = yield* db
+        .prepare("SELECT document FROM sites WHERE id = ?")
+        .bind(id)
+        .first<{ document: string }>();
+      if (row === null) return yield* new SiteNotFound({ id });
+      const current = yield* _parse(row.document);
+
+      const access = yield* resolveSiteAccess(db, id, requester);
+      if (access === null) return yield* new SiteNotFound({ id });
+
+      let updated: Site;
+      if (access.kind === "full") {
+        updated = new Site({
+          ...site,
+          id: SiteId.make(id),
+          ownerId: current.ownerId,
+          updatedAt: yield* nowIso,
+        });
+      } else if (!access.canEdit) {
+        return yield* new Forbidden({});
+      } else {
+        // A client editor's update must not reach manager-only fields
+        // (publish state, domain, build metadata, analytics) — those come
+        // from the current document.
+        updated = new Site({
+          ...site,
+          id: current.id,
+          ownerId: current.ownerId,
+          status: current.status,
+          publishedAt: current.publishedAt,
+          customDomain: current.customDomain,
+          buildStatus: current.buildStatus,
+          lastBuiltAt: current.lastBuiltAt,
+          buildError: current.buildError,
+          settings: { ...site.settings, analytics: current.settings.analytics },
+        });
+      }
+
       yield* db
         .prepare(
-          "UPDATE sites SET template_id = ?, status = ?, document = ?, updated_at = ? WHERE id = ? AND owner_id = ?",
+          `UPDATE sites SET template_id = ?, status = ?, document = ?, updated_at = ? WHERE id = ? AND ${accessibleWhere(requester)}`,
         )
         .bind(
           updated.templateId,
@@ -172,26 +227,33 @@ export const makeSiteRepository = (
           _serialize(updated),
           updated.updatedAt,
           id,
-          ownerId,
+          ...accessibleBinds(requester),
         )
         .run();
       return updated;
     }),
-    remove: Effect.fn("SiteRepository.remove")(function* (id: string, ownerId: string) {
+    remove: Effect.fn("SiteRepository.remove")(function* (id: string, requester: Requester) {
+      const access = yield* resolveSiteAccess(db, id, requester);
+      if (access === null) return yield* new SiteNotFound({ id });
+      if (access.kind === "client") return yield* new Forbidden({});
       const result = yield* db
-        .prepare("DELETE FROM sites WHERE id = ? AND owner_id = ?")
-        .bind(id, ownerId)
+        .prepare(`DELETE FROM sites WHERE id = ? AND ${accessibleWhere(requester)}`)
+        .bind(id, ...accessibleBinds(requester))
         .run();
       if (result.meta.changes === 0) return yield* new SiteNotFound({ id });
     }),
     markPublished: Effect.fn("SiteRepository.markPublished")(function* (
       id: string,
-      ownerId: string,
+      requester: Requester,
       publishedAt: string,
     ) {
+      const access = yield* resolveSiteAccess(db, id, requester);
+      if (access === null) return yield* new SiteNotFound({ id });
+      if (access.kind === "client" && !access.canPublish) return yield* new Forbidden({});
+
       const row = yield* db
-        .prepare("SELECT document FROM sites WHERE id = ? AND owner_id = ?")
-        .bind(id, ownerId)
+        .prepare("SELECT document FROM sites WHERE id = ?")
+        .bind(id)
         .first<{ document: string }>();
       if (row === null) return yield* new SiteNotFound({ id });
       const current = yield* _parse(row.document);
@@ -204,7 +266,7 @@ export const makeSiteRepository = (
       });
       yield* db
         .prepare(
-          "UPDATE sites SET status = ?, document = ?, updated_at = ?, published_at = ? WHERE id = ? AND owner_id = ?",
+          `UPDATE sites SET status = ?, document = ?, updated_at = ?, published_at = ? WHERE id = ? AND ${accessibleWhere(requester)}`,
         )
         .bind(
           updated.status,
@@ -212,7 +274,7 @@ export const makeSiteRepository = (
           updated.updatedAt,
           updated.publishedAt,
           id,
-          ownerId,
+          ...accessibleBinds(requester),
         )
         .run();
       return updated;
@@ -245,12 +307,16 @@ export const makeSiteRepository = (
     }),
     setDomain: Effect.fn("SiteRepository.setDomain")(function* (
       id: string,
-      ownerId: string,
+      requester: Requester,
       inputDomain: string,
     ) {
+      const access = yield* resolveSiteAccess(db, id, requester);
+      if (access === null) return yield* new SiteNotFound({ id });
+      if (access.kind === "client") return yield* new Forbidden({});
+
       const site = yield* db
-        .prepare("SELECT document FROM sites WHERE id = ? AND owner_id = ?")
-        .bind(id, ownerId)
+        .prepare("SELECT document FROM sites WHERE id = ?")
+        .bind(id)
         .first<{ document: string }>();
       if (site === null) return yield* new SiteNotFound({ id });
       const current = yield* _parse(site.document);
@@ -281,10 +347,17 @@ export const makeSiteRepository = (
         site: current,
       };
     }),
-    verifyDomain: Effect.fn("SiteRepository.verifyDomain")(function* (id: string, ownerId: string) {
+    verifyDomain: Effect.fn("SiteRepository.verifyDomain")(function* (
+      id: string,
+      requester: Requester,
+    ) {
+      const access = yield* resolveSiteAccess(db, id, requester);
+      if (access === null) return yield* new SiteNotFound({ id });
+      if (access.kind === "client") return yield* new Forbidden({});
+
       const site = yield* db
-        .prepare("SELECT document FROM sites WHERE id = ? AND owner_id = ?")
-        .bind(id, ownerId)
+        .prepare("SELECT document FROM sites WHERE id = ?")
+        .bind(id)
         .first<{ document: string }>();
       if (site === null) return yield* new SiteNotFound({ id });
       const current = yield* _parse(site.document);
@@ -321,14 +394,21 @@ export const makeSiteRepository = (
         .prepare(
           "UPDATE sites SET document = ?, custom_domain = ?, updated_at = ? WHERE id = ? AND owner_id = ?",
         )
-        .bind(_serialize(updated), pending.domain, now, id, ownerId)
+        .bind(_serialize(updated), pending.domain, now, id, requester.id)
         .run();
       return updated;
     }),
-    removeDomain: Effect.fn("SiteRepository.removeDomain")(function* (id: string, ownerId: string) {
+    removeDomain: Effect.fn("SiteRepository.removeDomain")(function* (
+      id: string,
+      requester: Requester,
+    ) {
+      const access = yield* resolveSiteAccess(db, id, requester);
+      if (access === null) return yield* new SiteNotFound({ id });
+      if (access.kind === "client") return yield* new Forbidden({});
+
       const site = yield* db
-        .prepare("SELECT document FROM sites WHERE id = ? AND owner_id = ?")
-        .bind(id, ownerId)
+        .prepare("SELECT document FROM sites WHERE id = ?")
+        .bind(id)
         .first<{ document: string }>();
       if (site === null) return yield* new SiteNotFound({ id });
       const current = yield* _parse(site.document);
@@ -340,7 +420,7 @@ export const makeSiteRepository = (
         .prepare(
           "UPDATE sites SET document = ?, custom_domain = NULL, updated_at = ? WHERE id = ? AND owner_id = ?",
         )
-        .bind(_serialize(updated), now, id, ownerId)
+        .bind(_serialize(updated), now, id, requester.id)
         .run();
       return updated;
     }),

@@ -7,6 +7,7 @@ import { LeadNotifier, type NotifyTarget } from "../src/leads/LeadNotifier.ts";
 import { LeadRateLimiter, submitLead } from "../src/leads/submitLead.ts";
 import { makeSiteRepository } from "../src/site/SiteRepository.ts";
 import type { Lead } from "../src/leads/leads.ts";
+import type { Requester } from "../src/access/access.ts";
 
 let db: DatabaseSync;
 
@@ -14,11 +15,13 @@ beforeEach(() => {
   db = makeDb();
 });
 
+const owner = { id: "owner-1", isAdmin: false } satisfies Requester;
+
 describe("submitLead", () => {
   it("creates the lead and notifies the site owner, in order", async () => {
     const siteRepo = makeSiteRepository(d1(db));
     const created = await run(
-      siteRepo.create({ name: "Aurora Studio", templateId: "editorial-studio" }, "owner-1"),
+      siteRepo.create({ name: "Aurora Studio", templateId: "editorial-studio" }, owner),
     );
     const leads = makeLeadRepository(d1(db));
 
@@ -50,7 +53,7 @@ describe("submitLead", () => {
     expect(lead.name).toBe("Ada");
     expect(lead.email).toBe("ada@example.com");
 
-    const listed = await run(leads.listForSite(created.id, "owner-1"));
+    const listed = await run(leads.listForSite(created.id, owner));
     expect(listed).toHaveLength(1);
     expect(listed[0]!.email).toBe("ada@example.com");
   });

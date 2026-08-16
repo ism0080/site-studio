@@ -1,19 +1,25 @@
 import { useMachine } from "@xstate/react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Device, DomainSetup, SaveState, Site } from "./types.ts";
 import Sidebar from "./components/Sidebar.tsx";
 import Header from "./components/Header.tsx";
 import Overview from "./components/Overview.tsx";
 import Templates from "./components/Templates.tsx";
 import Leads from "./components/Leads.tsx";
+import Access from "./components/Access.tsx";
+import Admin from "./components/Admin.tsx";
 import EditorPanel from "./components/EditorPanel.tsx";
 import Preview from "./components/Preview.tsx";
 import { appMachine } from "./lib/appMachine.ts";
 import { api, liveUrlFor } from "./lib/api.ts";
 import { authClient } from "./lib/auth.ts";
 import {
+  accessQueries,
+  meQueries,
   siteQueries,
   useCreateSite,
+  useInviteAgency,
+  useInviteMember,
   usePublishSite,
   useRemoveDomain,
   useSetDomain,
@@ -46,6 +52,8 @@ function Editor({
   online,
   saveState,
   device,
+  readOnly,
+  manager,
   onDevice,
   onUpdate,
   domain,
@@ -61,6 +69,8 @@ function Editor({
   online: boolean | null;
   saveState: SaveState;
   device: Device;
+  readOnly: boolean;
+  manager: boolean;
   onDevice: (device: Device) => void;
   onUpdate: (site: Site) => void;
   domain: string;
@@ -87,6 +97,8 @@ function Editor({
         onDomainConnect={onDomainConnect}
         onDomainVerify={onDomainVerify}
         onDomainRemove={onDomainRemove}
+        readOnly={readOnly}
+        manager={manager}
       />
       <div className="preview-area">
         <div className="preview-toolbar">
@@ -123,6 +135,8 @@ export default function App() {
   const setDomain = useSetDomain();
   const verifyDomain = useVerifyDomain();
   const removeDomain = useRemoveDomain();
+  const inviteMember = useInviteMember();
+  const inviteAgency = useInviteAgency();
 
   const [snapshot, send] = useMachine(appMachine, {
     input: {
@@ -140,15 +154,57 @@ export default function App() {
       setDomain: (id, domain) => setDomain.mutateAsync({ id, domain }),
       verifyDomain: (id) => verifyDomain.mutateAsync(id),
       removeDomain: (id) => removeDomain.mutateAsync(id),
+      inviteMember: (siteId, input) => inviteMember.mutateAsync({ siteId, input }),
+      inviteAgency: (email) => inviteAgency.mutateAsync(email),
     },
   });
 
-  const { user, authLoading, active, site, online, saveState, publishing, banner, device, sites } =
-    snapshot.context;
+  const {
+    user,
+    authLoading,
+    active,
+    site,
+    online,
+    saveState,
+    publishing,
+    banner,
+    device,
+    sites,
+    accessEmail,
+    accessToggles,
+    accessError,
+    adminEmail,
+    adminError,
+  } = snapshot.context;
   const domainBusy =
     snapshot.matches({ ready: { domain: "connecting" } }) ||
     snapshot.matches({ ready: { domain: "verifying" } }) ||
     snapshot.matches({ ready: { domain: "removing" } });
+  const accessBusy = snapshot.matches({ ready: { access: "inviting" } });
+  const adminBusy = snapshot.matches({ ready: { admin: "inviting" } });
+
+  const { data: me } = useQuery({ ...meQueries.me(), enabled: user !== null });
+  const { data: access } = useQuery({
+    ...accessQueries.detail(site.id),
+    enabled: online === true && !!site.id,
+  });
+
+  const role = me?.role;
+  // While access is unknown (loading or offline demo) the optimistic default is
+  // full manager access, which keeps the existing single-owner experience intact.
+  const isFull = access === undefined || access.kind === "full" || online === false;
+  const canEdit = isFull || (access?.kind === "client" && access.canEdit);
+  const canPublish = isFull || (access?.kind === "client" && access.canPublish);
+  const canLeads = isFull || (access?.kind === "client" && access.canLeads);
+  const canManageMembers = (role === "admin" || role === "agency") && isFull;
+
+  // A view the current site/role can't support falls back to the overview.
+  const view =
+    (active === "leads" && !canLeads) ||
+    (active === "access" && !canManageMembers) ||
+    (active === "admin" && role !== "admin")
+      ? "overview"
+      : active;
 
   if (authLoading) {
     return <div className="auth-screen">Loading…</div>;
@@ -161,9 +217,12 @@ export default function App() {
     <div className="app-shell">
       <Sidebar
         active={active}
-        onChange={(view) => send({ type: "SET_VIEW", view })}
+        onChange={(next) => send({ type: "SET_VIEW", view: next })}
         user={user}
         onSignOut={() => send({ type: "SIGN_OUT" })}
+        canLeads={canLeads}
+        canManageMembers={canManageMembers}
+        isAdmin={role === "admin"}
       />
       <main className="main-content">
         {banner && (
@@ -175,39 +234,65 @@ export default function App() {
           </div>
         )}
         <Header
-          active={active}
+          active={view}
           site={site}
           online={online}
           publishing={publishing}
           sites={sites}
           user={user}
           liveUrl={liveUrlFor(site)}
+          canPublish={canPublish}
           onPublish={() => send({ type: "PUBLISH" })}
           onSelectSite={(id) => send({ type: "SELECT_SITE", id })}
         />
-        {active === "overview" && (
+        {view === "overview" && (
           <Overview
             onEdit={() => send({ type: "SET_VIEW", view: "editor" })}
             site={site}
             sites={sites}
           />
         )}
-        {active === "templates" && (
+        {view === "templates" && (
           <Templates onSelect={(template) => send({ type: "SELECT_TEMPLATE", template })} />
         )}
-        {active === "leads" && (
+        {view === "leads" && (
           <Leads
             site={site}
             online={online}
             onEdit={() => send({ type: "SET_VIEW", view: "editor" })}
           />
         )}
-        {active === "editor" && (
+        {view === "access" && (
+          <Access
+            site={site}
+            online={online}
+            email={accessEmail}
+            toggles={accessToggles}
+            busy={accessBusy}
+            error={accessError}
+            onEmailInput={(email) => send({ type: "ACCESS_EMAIL_INPUT", email })}
+            onToggle={(key) => send({ type: "ACCESS_TOGGLE", key })}
+            onInvite={() => send({ type: "ACCESS_INVITE" })}
+          />
+        )}
+        {view === "admin" && (
+          <Admin
+            online={online}
+            email={adminEmail}
+            busy={adminBusy}
+            error={adminError}
+            onEmailInput={(email) => send({ type: "ADMIN_EMAIL_INPUT", email })}
+            onInvite={() => send({ type: "ADMIN_INVITE" })}
+          />
+        )}
+        {view === "editor" && (
           <Editor
             site={site}
             online={online}
             saveState={saveState}
             device={device}
+            readOnly={!canEdit}
+            manager={isFull}
             onDevice={(d) => send({ type: "SET_DEVICE", device: d })}
             onUpdate={(next) => send({ type: "UPDATE", site: next })}
             domain={snapshot.context.domain}

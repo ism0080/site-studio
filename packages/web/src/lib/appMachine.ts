@@ -2,9 +2,12 @@ import { assign, fromPromise, setup } from "xstate";
 
 import type { User } from "better-auth";
 import type {
+  Agency,
   CreateSitePayload,
   Device,
   DomainSetup,
+  Member,
+  MemberInput,
   PublishResult,
   SaveState,
   Site,
@@ -27,9 +30,13 @@ export interface AppApi {
   setDomain: (id: string, domain: string) => Promise<DomainSetup>;
   verifyDomain: (id: string) => Promise<Site>;
   removeDomain: (id: string) => Promise<Site>;
+  inviteMember: (siteId: string, input: MemberInput) => Promise<Member>;
+  inviteAgency: (email: string) => Promise<Agency>;
 }
 
 export type Banner = { kind: "error" | "success"; message: string };
+
+export type AccessToggles = { canEdit: boolean; canPublish: boolean; canLeads: boolean };
 
 export type AppMachineContext = {
   api: AppApi;
@@ -47,6 +54,11 @@ export type AppMachineContext = {
   domain: string;
   setup: DomainSetup | null;
   domainError: string | null;
+  accessEmail: string;
+  accessToggles: AccessToggles;
+  accessError: string | null;
+  adminEmail: string;
+  adminError: string | null;
 };
 
 export type AppMachineEvent =
@@ -62,7 +74,14 @@ export type AppMachineEvent =
   | { type: "DOMAIN_INPUT"; domain: string }
   | { type: "DOMAIN_CONNECT" }
   | { type: "DOMAIN_VERIFY" }
-  | { type: "DOMAIN_REMOVE" };
+  | { type: "DOMAIN_REMOVE" }
+  | { type: "ACCESS_EMAIL_INPUT"; email: string }
+  | { type: "ACCESS_TOGGLE"; key: keyof AccessToggles }
+  | { type: "ACCESS_INVITE" }
+  | { type: "ADMIN_EMAIL_INPUT"; email: string }
+  | { type: "ADMIN_INVITE" };
+
+const _noToggles = (): AccessToggles => ({ canEdit: false, canPublish: false, canLeads: false });
 
 const _sessionActor = fromPromise<{ user: User | null }, { api: AppApi }>(({ input }) =>
   input.api.getSession(),
@@ -134,6 +153,20 @@ const _domainRemoveActor = fromPromise<SiteOutput, PersistInput>(async ({ input 
   return { site: updated, persisted: true };
 });
 
+const _accessInviteActor = fromPromise<
+  void,
+  { api: AppApi; siteId: string; email: string; toggles: AccessToggles }
+>(async ({ input }) => {
+  await input.api.inviteMember(input.siteId, {
+    email: input.email,
+    ...input.toggles,
+  });
+});
+
+const _adminInviteActor = fromPromise<void, { api: AppApi; email: string }>(async ({ input }) => {
+  await input.api.inviteAgency(input.email);
+});
+
 const _applyTemplate = (site: Site, template: Template): Site => ({
   ...site,
   templateId: template.id,
@@ -163,6 +196,8 @@ export const appMachine = setup({
     domainConnect: _domainConnectActor,
     domainVerify: _domainVerifyActor,
     domainRemove: _domainRemoveActor,
+    accessInvite: _accessInviteActor,
+    adminInvite: _adminInviteActor,
   },
 }).createMachine({
   context: ({ input }): AppMachineContext => ({
@@ -181,6 +216,11 @@ export const appMachine = setup({
     domain: "",
     setup: null,
     domainError: null,
+    accessEmail: "",
+    accessToggles: _noToggles(),
+    accessError: null,
+    adminEmail: "",
+    adminError: null,
   }),
   initial: "checking",
   states: {
@@ -513,6 +553,91 @@ export const appMachine = setup({
                     },
                     persisted: true,
                     saveState: "idle",
+                  }),
+                },
+              },
+            },
+          },
+        },
+        access: {
+          initial: "idle",
+          states: {
+            idle: {
+              on: {
+                ACCESS_EMAIL_INPUT: {
+                  actions: assign({ accessEmail: ({ event }) => event.email }),
+                },
+                ACCESS_TOGGLE: {
+                  actions: assign({
+                    accessToggles: ({ context, event }) => ({
+                      ...context.accessToggles,
+                      [event.key]: !context.accessToggles[event.key],
+                    }),
+                  }),
+                },
+                ACCESS_INVITE: {
+                  target: "inviting",
+                  guard: ({ context }) => context.accessEmail.trim().length > 0,
+                  actions: assign({ accessError: null }),
+                },
+              },
+            },
+            inviting: {
+              invoke: {
+                src: "accessInvite",
+                input: ({ context }) => ({
+                  api: context.api,
+                  siteId: context.site.id,
+                  email: context.accessEmail.trim(),
+                  toggles: context.accessToggles,
+                }),
+                onDone: {
+                  target: "idle",
+                  actions: assign({
+                    accessEmail: "",
+                    accessToggles: _noToggles(),
+                  }),
+                },
+                onError: {
+                  target: "idle",
+                  actions: assign({
+                    accessError: ({ event }) => errorMessage(event.error),
+                  }),
+                },
+              },
+            },
+          },
+        },
+        admin: {
+          initial: "idle",
+          states: {
+            idle: {
+              on: {
+                ADMIN_EMAIL_INPUT: {
+                  actions: assign({ adminEmail: ({ event }) => event.email }),
+                },
+                ADMIN_INVITE: {
+                  target: "inviting",
+                  guard: ({ context }) => context.adminEmail.trim().length > 0,
+                  actions: assign({ adminError: null }),
+                },
+              },
+            },
+            inviting: {
+              invoke: {
+                src: "adminInvite",
+                input: ({ context }) => ({
+                  api: context.api,
+                  email: context.adminEmail.trim(),
+                }),
+                onDone: {
+                  target: "idle",
+                  actions: assign({ adminEmail: "" }),
+                },
+                onError: {
+                  target: "idle",
+                  actions: assign({
+                    adminError: ({ event }) => errorMessage(event.error),
                   }),
                 },
               },

@@ -1,5 +1,5 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { CreateSitePayload, DomainSetup, Site } from "../types.ts";
+import type { CreateSitePayload, DomainSetup, MemberInput, Site } from "../types.ts";
 import { api } from "./api.ts";
 
 // Query options factories (https://tkdodo.eu/blog/effective-react-query-keys):
@@ -7,6 +7,15 @@ import { api } from "./api.ts";
 // together and stale lists are refreshed whenever a mutation lands. Callers
 // pass the factory result straight to useQuery and spread `enabled` when the
 // query must wait (auth, offline) rather than wrapping it in a custom hook.
+
+export const meQueries = {
+  all: () => ["me"] as const,
+  me: () =>
+    queryOptions({
+      queryKey: meQueries.all(),
+      queryFn: api.me,
+    }),
+};
 
 export const siteQueries = {
   all: () => ["sites"] as const,
@@ -24,6 +33,15 @@ export const siteQueries = {
     }),
 };
 
+export const accessQueries = {
+  all: () => ["access"] as const,
+  detail: (siteId: string) =>
+    queryOptions({
+      queryKey: [...accessQueries.all(), siteId],
+      queryFn: () => api.getSiteAccess(siteId),
+    }),
+};
+
 export const leadQueries = {
   all: () => ["leads"] as const,
   lists: () => [...leadQueries.all(), "list"] as const,
@@ -31,6 +49,25 @@ export const leadQueries = {
     queryOptions({
       queryKey: [...leadQueries.lists(), siteId],
       queryFn: () => api.listLeads(siteId),
+    }),
+};
+
+export const memberQueries = {
+  all: () => ["members"] as const,
+  lists: () => [...memberQueries.all(), "list"] as const,
+  list: (siteId: string) =>
+    queryOptions({
+      queryKey: [...memberQueries.lists(), siteId],
+      queryFn: () => api.listMembers(siteId),
+    }),
+};
+
+export const agencyQueries = {
+  all: () => ["agencies"] as const,
+  list: () =>
+    queryOptions({
+      queryKey: agencyQueries.all(),
+      queryFn: api.listAgencies,
     }),
 };
 
@@ -114,6 +151,59 @@ export function useDeleteLead() {
       api.deleteLead(siteId, leadId),
     onSuccess: (_result, { siteId }) => {
       queryClient.invalidateQueries({ queryKey: leadQueries.list(siteId).queryKey });
+    },
+  });
+}
+
+export function useInviteMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ siteId, input }: { siteId: string; input: MemberInput }) =>
+      api.inviteMember(siteId, input),
+    onSuccess: (member) => {
+      queryClient.invalidateQueries({ queryKey: memberQueries.list(member.siteId).queryKey });
+    },
+  });
+}
+
+export function useUpdateMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ siteId, email, input }: { siteId: string; email: string; input: MemberInput }) =>
+      api.updateMember(siteId, email, input),
+    onSuccess: (member) => {
+      queryClient.invalidateQueries({ queryKey: memberQueries.list(member.siteId).queryKey });
+    },
+  });
+}
+
+export function useRemoveMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ siteId, email }: { siteId: string; email: string }) =>
+      api.removeMember(siteId, email),
+    onSuccess: (_result, { siteId }) => {
+      queryClient.invalidateQueries({ queryKey: memberQueries.list(siteId).queryKey });
+    },
+  });
+}
+
+export function useInviteAgency() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (email: string) => api.inviteAgency(email),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: agencyQueries.list().queryKey });
+    },
+  });
+}
+
+export function useRemoveAgency() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (email: string) => api.removeAgency(email),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: agencyQueries.list().queryKey });
     },
   });
 }

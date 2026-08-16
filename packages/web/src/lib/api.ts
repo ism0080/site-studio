@@ -1,4 +1,15 @@
-import type { CreateSitePayload, DomainSetup, Lead, PublishResult, Site } from "../types.ts";
+import type {
+  Agency,
+  CreateSitePayload,
+  DomainSetup,
+  Lead,
+  Member,
+  MemberInput,
+  Me,
+  PublishResult,
+  Site,
+  SiteAccess,
+} from "../types.ts";
 import type { Site as ApiSite } from "@site-studio/api/contract";
 import { sdk } from "./sdk.ts";
 
@@ -44,8 +55,10 @@ export const fromApiSite = (site: ApiSite): Site => ({
 });
 
 export const api = {
+  me: (): Promise<Me> => sdk.me(),
   listSites: (): Promise<readonly Site[]> => sdk.listSites(),
   getSite: (id: string): Promise<Site> => sdk.getSite(id),
+  getSiteAccess: (id: string): Promise<SiteAccess> => sdk.getSiteAccess(id),
   createSite: (payload: CreateSitePayload): Promise<Site> => sdk.createSite(payload),
   updateSite: (id: string, site: Site): Promise<Site> => sdk.updateSite(id, toApiSite(site)),
   publishSite: (id: string): Promise<PublishResult> => sdk.publishSite(id),
@@ -54,6 +67,15 @@ export const api = {
   removeDomain: (id: string): Promise<Site> => sdk.removeDomain(id),
   listLeads: (siteId: string): Promise<readonly Lead[]> => sdk.listLeads(siteId),
   deleteLead: (siteId: string, leadId: string): Promise<void> => sdk.deleteLead(siteId, leadId),
+  listMembers: (siteId: string): Promise<readonly Member[]> => sdk.listMembers(siteId),
+  inviteMember: (siteId: string, input: MemberInput): Promise<Member> =>
+    sdk.inviteMember(siteId, input),
+  updateMember: (siteId: string, email: string, input: MemberInput): Promise<Member> =>
+    sdk.updateMember(siteId, email, input),
+  removeMember: (siteId: string, email: string): Promise<void> => sdk.removeMember(siteId, email),
+  listAgencies: (): Promise<readonly Agency[]> => sdk.listAgencies(),
+  inviteAgency: (email: string): Promise<Agency> => sdk.inviteAgency(email),
+  removeAgency: (email: string): Promise<void> => sdk.removeAgency(email),
 };
 
 // Public URL for a published site: the custom domain when verified, otherwise

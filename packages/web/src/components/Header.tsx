@@ -8,6 +8,8 @@ const HEADINGS = {
   editor: ["Edit your site", "Make updates, see them live."],
   templates: ["Templates", "A starting point for every kind of business."],
   leads: ["Leads", "Keep track of new opportunities."],
+  access: ["Access", "Invite clients to edit and publish their site."],
+  admin: ["Admin", "Manage the agencies on your platform."],
 } satisfies Record<View, [string, string]>;
 
 export default function Header({
@@ -18,6 +20,7 @@ export default function Header({
   sites,
   user,
   liveUrl,
+  canPublish,
   onPublish,
   onSelectSite,
 }: {
@@ -28,6 +31,7 @@ export default function Header({
   sites: readonly Site[];
   user: User;
   liveUrl: string | null;
+  canPublish: boolean;
   onPublish: () => void;
   onSelectSite: (id: string) => void;
 }) {
@@ -63,7 +67,7 @@ export default function Header({
             View live site <Icon name="arrow" size={16} />
           </a>
         )}
-        {inEditor && (
+        {inEditor && canPublish && (
           <button
             className="dark-button publish-button"
             onClick={onPublish}

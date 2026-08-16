@@ -1,11 +1,16 @@
 import * as HttpApi from "effect/unstable/httpapi";
 import * as Schema from "effect/Schema";
 import { LeadsPublicGroup, SiteLeadsGroup } from "../leads/leads.ts";
+import { MembersGroup } from "../members/members.ts";
+import { AdminGroup } from "../admin/admin.ts";
+import { MeGroup } from "../access/me.ts";
+import { SiteAccess } from "../access/access.ts";
 import {
   CreateSite,
   DomainInUse,
   DomainNotVerified,
   DomainSetup,
+  Forbidden,
   PublishError,
   PublishResult,
   Site,
@@ -31,23 +36,29 @@ const getSite = HttpApi.HttpApiEndpoint.get("get", "/:id", {
   error: SiteNotFound,
 });
 
+const getSiteAccess = HttpApi.HttpApiEndpoint.get("access", "/:id/access", {
+  params: SiteParams,
+  success: SiteAccess,
+  error: SiteNotFound,
+});
+
 const updateSite = HttpApi.HttpApiEndpoint.put("update", "/:id", {
   params: SiteParams,
   payload: Site,
   success: Site,
-  error: SiteNotFound,
+  error: Schema.Union([SiteNotFound, Forbidden]),
 });
 
 const deleteSite = HttpApi.HttpApiEndpoint.delete("remove", "/:id", {
   params: SiteParams,
   success: HttpApi.HttpApiSchema.NoContent,
-  error: SiteNotFound,
+  error: Schema.Union([SiteNotFound, Forbidden]),
 });
 
 const publishSite = HttpApi.HttpApiEndpoint.post("publish", "/:id/publish", {
   params: SiteParams,
   success: PublishResult,
-  error: Schema.Union([SiteNotFound, PublishError]),
+  error: Schema.Union([SiteNotFound, PublishError, Forbidden]),
 });
 
 const DomainInput = Schema.Struct({
@@ -58,25 +69,26 @@ const setDomain = HttpApi.HttpApiEndpoint.post("setDomain", "/:id/domain", {
   params: SiteParams,
   payload: DomainInput,
   success: DomainSetup,
-  error: Schema.Union([SiteNotFound, DomainInUse]),
+  error: Schema.Union([SiteNotFound, DomainInUse, Forbidden]),
 });
 
 const verifyDomain = HttpApi.HttpApiEndpoint.post("verifyDomain", "/:id/domain/verify", {
   params: SiteParams,
   success: Site,
-  error: Schema.Union([SiteNotFound, DomainNotVerified]),
+  error: Schema.Union([SiteNotFound, DomainNotVerified, Forbidden]),
 });
 
 const removeDomain = HttpApi.HttpApiEndpoint.delete("removeDomain", "/:id/domain", {
   params: SiteParams,
   success: Site,
-  error: SiteNotFound,
+  error: Schema.Union([SiteNotFound, Forbidden]),
 });
 
 export class SitesGroup extends HttpApi.HttpApiGroup.make("Sites")
   .add(listSites)
   .add(createSite)
   .add(getSite)
+  .add(getSiteAccess)
   .add(updateSite)
   .add(deleteSite)
   .add(publishSite)
@@ -88,4 +100,7 @@ export class SitesGroup extends HttpApi.HttpApiGroup.make("Sites")
 export class SiteApi extends HttpApi.HttpApi.make("SiteApi")
   .add(SitesGroup)
   .add(SiteLeadsGroup)
-  .add(LeadsPublicGroup) {}
+  .add(LeadsPublicGroup)
+  .add(MembersGroup)
+  .add(AdminGroup)
+  .add(MeGroup) {}

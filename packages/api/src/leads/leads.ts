@@ -1,6 +1,6 @@
 import * as HttpApi from "effect/unstable/httpapi";
 import * as Schema from "effect/Schema";
-import { SiteId, SiteNotFound } from "../site/site.ts";
+import { Forbidden, SiteId, SiteNotFound } from "../site/site.ts";
 
 export const LeadId = Schema.String.pipe(Schema.brand("LeadId"));
 export type LeadId = (typeof LeadId)["Type"];
@@ -59,13 +59,13 @@ export class LeadsPublicGroup extends HttpApi.HttpApiGroup.make("LeadsPublic")
 const listLeads = HttpApi.HttpApiEndpoint.get("listLeads", "/:id/leads", {
   params: Schema.Struct({ id: Schema.String }),
   success: Schema.Array(Lead),
-  error: SiteNotFound,
+  error: Schema.Union([SiteNotFound, Forbidden]),
 });
 
 const deleteLead = HttpApi.HttpApiEndpoint.delete("deleteLead", "/:id/leads/:leadId", {
   params: LeadParams,
   success: HttpApi.HttpApiSchema.NoContent,
-  error: Schema.Union([SiteNotFound, LeadNotFound]),
+  error: Schema.Union([SiteNotFound, Forbidden, LeadNotFound]),
 });
 
 export class SiteLeadsGroup extends HttpApi.HttpApiGroup.make("SiteLeads")

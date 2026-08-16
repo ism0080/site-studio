@@ -22,6 +22,10 @@ import { WebCrypto } from "./platform/WebCrypto.ts";
 import { BuildQueue, encodeBuildJob } from "./publish/BuildQueue.ts";
 import { BuildJobSink } from "./publish/BuildJobSink.ts";
 import { AUTH_PATH, CurrentUser, createAuth } from "./auth/auth.ts";
+import { requesterFor, type GlobalRole } from "./access/access.ts";
+import { makeMemberRepository, MemberRepository } from "./members/MemberRepository.ts";
+import { makeAdminRepository, AdminRepository } from "./admin/AdminRepository.ts";
+import { Forbidden, SiteNotFound } from "./site/site.ts";
 
 const HttpPlatformStub = Layer.succeed(Http.HttpPlatform.HttpPlatform, {
   platform: "web",
@@ -57,6 +61,8 @@ export default Cloudflare.Worker(
     // per-request to the router.
     const siteRepo = makeSiteRepository(db);
     const leadRepo = makeLeadRepository(db);
+    const memberRepo = makeMemberRepository(db);
+    const adminRepo = makeAdminRepository(db);
     const siteStorage = makeR2SiteStorage(bucket);
 
     // Lead notifications are best-effort and swappable. Cloudflare's
@@ -80,6 +86,15 @@ export default Cloudflare.Worker(
       googleClientId: Config.string("GOOGLE_CLIENT_ID").pipe(Config.withDefault("")),
       googleClientSecret: Config.redacted("GOOGLE_CLIENT_SECRET").pipe(
         Config.withDefault(Redacted.make("")),
+      ),
+      adminEmails: Config.string("ADMIN_EMAILS").pipe(
+        Config.withDefault(""),
+        Config.map((raw) =>
+          raw
+            .split(",")
+            .map((s) => s.trim().toLowerCase())
+            .filter(Boolean),
+        ),
       ),
     });
     const auth = createAuth(rawDb, {
@@ -112,36 +127,54 @@ export default Cloudflare.Worker(
     const sitesGroup = HttpApi.HttpApiBuilder.group(SiteApi, "Sites", (handlers) =>
       handlers
         .handle("list", () =>
-          CurrentUser.use((user) => SiteRepository.use((repo) => repo.list(user.id))),
+          CurrentUser.use((user) => SiteRepository.use((repo) => repo.list(requesterFor(user)))),
         )
         .handle("get", ({ params }) =>
-          CurrentUser.use((user) => SiteRepository.use((repo) => repo.get(params.id, user.id))),
+          CurrentUser.use((user) =>
+            SiteRepository.use((repo) => repo.get(params.id, requesterFor(user))),
+          ),
+        )
+        .handle("access", ({ params }) =>
+          CurrentUser.use((user) =>
+            Effect.gen(function* () {
+              const repo = yield* SiteRepository;
+              const access = yield* repo.access(params.id, requesterFor(user));
+              if (access === null) return yield* new SiteNotFound({ id: params.id });
+              return access;
+            }),
+          ),
         )
         .handle("create", ({ payload }) =>
-          CurrentUser.use((user) => SiteRepository.use((repo) => repo.create(payload, user.id))),
+          CurrentUser.use((user) =>
+            SiteRepository.use((repo) => repo.create(payload, requesterFor(user))),
+          ),
         )
         .handle("update", ({ params, payload }) =>
           CurrentUser.use((user) =>
-            SiteRepository.use((repo) => repo.update(params.id, payload, user.id)),
+            SiteRepository.use((repo) => repo.update(params.id, payload, requesterFor(user))),
           ),
         )
         .handle("remove", ({ params }) =>
-          CurrentUser.use((user) => SiteRepository.use((repo) => repo.remove(params.id, user.id))),
+          CurrentUser.use((user) =>
+            SiteRepository.use((repo) => repo.remove(params.id, requesterFor(user))),
+          ),
         )
         .handle("publish", ({ params }) => publishSite(params.id))
         .handle("setDomain", ({ params, payload }) =>
           CurrentUser.use((user) =>
-            SiteRepository.use((repo) => repo.setDomain(params.id, user.id, payload.domain)),
+            SiteRepository.use((repo) =>
+              repo.setDomain(params.id, requesterFor(user), payload.domain),
+            ),
           ),
         )
         .handle("verifyDomain", ({ params }) =>
           CurrentUser.use((user) =>
-            SiteRepository.use((repo) => repo.verifyDomain(params.id, user.id)),
+            SiteRepository.use((repo) => repo.verifyDomain(params.id, requesterFor(user))),
           ),
         )
         .handle("removeDomain", ({ params }) =>
           CurrentUser.use((user) =>
-            SiteRepository.use((repo) => repo.removeDomain(params.id, user.id)),
+            SiteRepository.use((repo) => repo.removeDomain(params.id, requesterFor(user))),
           ),
         ),
     );
@@ -150,14 +183,102 @@ export default Cloudflare.Worker(
       handlers
         .handle("listLeads", ({ params }) =>
           CurrentUser.use((user) =>
-            LeadRepository.use((leads) => leads.listForSite(params.id, user.id)),
+            LeadRepository.use((leads) => leads.listForSite(params.id, requesterFor(user))),
           ),
         )
         .handle("deleteLead", ({ params }) =>
           CurrentUser.use((user) =>
-            LeadRepository.use((leads) => leads.remove(params.id, params.leadId, user.id)),
+            LeadRepository.use((leads) =>
+              leads.remove(params.id, params.leadId, requesterFor(user)),
+            ),
           ),
         ),
+    );
+
+    // Site members can only be managed by the platform admin or the managing
+    // agency (the site owner). A self-managed client owner has no invite power.
+    const requireManage = (siteId: string) =>
+      Effect.gen(function* () {
+        const user = yield* CurrentUser;
+        const repo = yield* SiteRepository;
+        const access = yield* repo.access(siteId, requesterFor(user));
+        if (access === null || access.kind !== "full") {
+          return yield* new SiteNotFound({ id: siteId });
+        }
+        if (user.role === "client") return yield* new Forbidden({});
+        return user;
+      });
+
+    const membersGroup = HttpApi.HttpApiBuilder.group(SiteApi, "Members", (handlers) =>
+      handlers
+        .handle("list", ({ params }) =>
+          Effect.gen(function* () {
+            yield* requireManage(params.id);
+            const repo = yield* MemberRepository;
+            return yield* repo.list(params.id);
+          }),
+        )
+        .handle("invite", ({ params, payload }) =>
+          Effect.gen(function* () {
+            yield* requireManage(params.id);
+            const repo = yield* MemberRepository;
+            return yield* repo.invite(params.id, payload);
+          }),
+        )
+        .handle("update", ({ params, payload }) =>
+          Effect.gen(function* () {
+            yield* requireManage(params.id);
+            const repo = yield* MemberRepository;
+            return yield* repo.update(params.id, params.email, payload);
+          }),
+        )
+        .handle("remove", ({ params }) =>
+          Effect.gen(function* () {
+            yield* requireManage(params.id);
+            const repo = yield* MemberRepository;
+            return yield* repo.remove(params.id, params.email);
+          }),
+        ),
+    );
+
+    const requireAdmin = () =>
+      Effect.gen(function* () {
+        const user = yield* CurrentUser;
+        if (user.role !== "admin") return yield* new Forbidden({});
+        return user;
+      });
+
+    const adminGroup = HttpApi.HttpApiBuilder.group(SiteApi, "Admin", (handlers) =>
+      handlers
+        .handle("listAgencies", () =>
+          Effect.gen(function* () {
+            yield* requireAdmin();
+            const repo = yield* AdminRepository;
+            return yield* repo.list();
+          }),
+        )
+        .handle("inviteAgency", ({ payload }) =>
+          Effect.gen(function* () {
+            yield* requireAdmin();
+            const repo = yield* AdminRepository;
+            return yield* repo.invite(payload.email);
+          }),
+        )
+        .handle("removeAgency", ({ params }) =>
+          Effect.gen(function* () {
+            yield* requireAdmin();
+            const repo = yield* AdminRepository;
+            return yield* repo.remove(params.email);
+          }),
+        ),
+    );
+
+    const meGroup = HttpApi.HttpApiBuilder.group(SiteApi, "Me", (handlers) =>
+      handlers.handle("me", () =>
+        CurrentUser.use((user) =>
+          Effect.succeed({ id: user.id, email: user.email, role: user.role }),
+        ),
+      ),
     );
 
     // Public — visitor contact-form submissions (no session).
@@ -175,6 +296,9 @@ export default Cloudflare.Worker(
         Layer.provide(sitesGroup),
         Layer.provide(siteLeadsGroup),
         Layer.provide(leadsPublicGroup),
+        Layer.provide(membersGroup),
+        Layer.provide(adminGroup),
+        Layer.provide(meGroup),
         Layer.provide([Http.Etag.layer, HttpPlatformStub, Path.layer]),
         Layer.provide(
           Http.HttpRouter.cors({
@@ -190,13 +314,15 @@ export default Cloudflare.Worker(
     // The router effect requires the service context (CurrentUser + the
     // swappable impls). Public submissions never read CurrentUser, so a guest
     // identity keeps the type satisfied.
-    const guestUser = { id: "guest", email: "" };
+    const guestUser = { id: "guest", email: "", role: "client" as const };
 
-    const provideServices = (user: { id: string; email: string }) =>
+    const provideServices = (user: { id: string; email: string; role: GlobalRole }) =>
       httpEffect.pipe(
         Effect.provideService(CurrentUser, user),
         Effect.provideService(SiteRepository, siteRepo),
         Effect.provideService(LeadRepository, leadRepo),
+        Effect.provideService(MemberRepository, memberRepo),
+        Effect.provideService(AdminRepository, adminRepo),
         Effect.provideService(SiteStorage, siteStorage),
         Effect.provideService(LeadNotifier, leadNotifier),
         Effect.provideService(LeadRateLimiter, rateLimiter),
@@ -222,16 +348,19 @@ export default Cloudflare.Worker(
           return yield* provideServices(guestUser);
         }
 
-        // Resolve the session and scope site queries to the owner.
+        // Resolve the session, materialize any pending invites for this
+        // account, and scope site queries to its global role.
         const session = yield* Effect.promise(() =>
           auth.api.getSession({ headers: nativeRequest.headers }),
         );
         if (!session) return yield* unauthorized;
 
-        return yield* provideServices({
-          id: session.user.id,
-          email: session.user.email,
-        });
+        const id = session.user.id;
+        const email = session.user.email.toLowerCase();
+        yield* memberRepo.materialize(id, email).pipe(Effect.orDie);
+        const role = yield* memberRepo.globalRole(id, email, config.adminEmails).pipe(Effect.orDie);
+
+        return yield* provideServices({ id, email, role });
       }),
     };
   }).pipe(

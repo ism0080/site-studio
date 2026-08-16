@@ -172,6 +172,16 @@ export class SiteNotFound extends Schema.TaggedErrorClass<SiteNotFound>()(
   { httpApiStatus: 404 },
 ) {}
 
+/**
+ * The requester can see the site but is not allowed to perform the requested
+ * operation (e.g. a client editing without the `canEdit` grant).
+ */
+export class Forbidden extends Schema.TaggedErrorClass<Forbidden>()(
+  "Forbidden",
+  {},
+  { httpApiStatus: 403 },
+) {}
+
 export class DomainNotVerified extends Schema.TaggedErrorClass<DomainNotVerified>()(
   "DomainNotVerified",
   { domain: Schema.String },

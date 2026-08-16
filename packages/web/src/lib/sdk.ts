@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { FetchHttpClient } from "effect/unstable/http";
 import { HttpApiClient } from "effect/unstable/httpapi";
-import { SiteApi, type CreateSite, type Site } from "@site-studio/api/contract";
+import { SiteApi, type CreateSite, type MemberInput, type Site } from "@site-studio/api/contract";
 
 type ApiClient = HttpApiClient.ForApi<typeof SiteApi>;
 
@@ -22,8 +22,10 @@ const _run = <A>(call: (c: ApiClient) => Effect.Effect<A, unknown, never>): Prom
 };
 
 export const sdk = {
+  me: () => _run((c) => c.Me.me({})),
   listSites: () => _run((c) => c.Sites.list({})),
   getSite: (id: string) => _run((c) => c.Sites.get({ params: { id } })),
+  getSiteAccess: (id: string) => _run((c) => c.Sites.access({ params: { id } })),
   createSite: (payload: CreateSite) => _run((c) => c.Sites.create({ payload })),
   updateSite: (id: string, payload: Site) =>
     _run((c) => c.Sites.update({ params: { id }, payload })),
@@ -35,4 +37,14 @@ export const sdk = {
   listLeads: (siteId: string) => _run((c) => c.SiteLeads.listLeads({ params: { id: siteId } })),
   deleteLead: (siteId: string, leadId: string) =>
     _run((c) => c.SiteLeads.deleteLead({ params: { id: siteId, leadId } })),
+  listMembers: (siteId: string) => _run((c) => c.Members.list({ params: { id: siteId } })),
+  inviteMember: (siteId: string, payload: MemberInput) =>
+    _run((c) => c.Members.invite({ params: { id: siteId }, payload })),
+  updateMember: (siteId: string, email: string, payload: MemberInput) =>
+    _run((c) => c.Members.update({ params: { id: siteId, email }, payload })),
+  removeMember: (siteId: string, email: string) =>
+    _run((c) => c.Members.remove({ params: { id: siteId, email } })),
+  listAgencies: () => _run((c) => c.Admin.listAgencies({})),
+  inviteAgency: (email: string) => _run((c) => c.Admin.inviteAgency({ payload: { email } })),
+  removeAgency: (email: string) => _run((c) => c.Admin.removeAgency({ params: { email } })),
 };

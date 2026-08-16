@@ -49,6 +49,20 @@ const paths = {
       <circle cx="19" cy="12" r="1" fill="currentColor" />
     </>
   ),
+  share: (
+    <>
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="m8.6 10.7 6.8-3.4M8.6 13.3l6.8 3.4" />
+    </>
+  ),
+  shield: (
+    <>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+      <path d="m9 12 2 2 4-4" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof paths;

@@ -5,7 +5,9 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import type { RuntimeContext } from "alchemy";
 import { Lead, LeadInput, LeadId, LeadNotFound } from "./leads.ts";
-import { SiteId, SiteNotFound, decodeSiteJson } from "../site/site.ts";
+import { Forbidden, SiteId, SiteNotFound, decodeSiteJson } from "../site/site.ts";
+import { resolveSiteAccess } from "../site/access.ts";
+import type { Requester } from "../access/access.ts";
 import { nowIso } from "../platform/Time.ts";
 
 type Db = Cloudflare.D1.QueryDatabaseClient;
@@ -16,29 +18,32 @@ export interface LeadRepositoryService {
   ) => Effect.Effect<Lead, SiteNotFound, RuntimeContext | Crypto.Crypto>;
   readonly listForSite: (
     siteId: string,
-    ownerId: string,
-  ) => Effect.Effect<ReadonlyArray<Lead>, SiteNotFound, RuntimeContext>;
+    requester: Requester,
+  ) => Effect.Effect<ReadonlyArray<Lead>, SiteNotFound | Forbidden, RuntimeContext>;
   readonly remove: (
     siteId: string,
     leadId: string,
-    ownerId: string,
-  ) => Effect.Effect<void, SiteNotFound | LeadNotFound, RuntimeContext>;
+    requester: Requester,
+  ) => Effect.Effect<void, SiteNotFound | Forbidden | LeadNotFound, RuntimeContext>;
   readonly siteContact: (
     siteId: string,
   ) => Effect.Effect<{ name: string; email: string } | null, never, RuntimeContext>;
 }
 
-const _siteExists = (db: Db, siteId: string, ownerId?: string) =>
-  ownerId
-    ? db
-        .prepare("SELECT id FROM sites WHERE id = ? AND owner_id = ?")
-        .bind(siteId, ownerId)
-        .first<{ id: string }>()
-    : db.prepare("SELECT id FROM sites WHERE id = ?").bind(siteId).first<{ id: string }>();
+// Leads are only readable by managers or clients granted `canLeads`.
+const _requireLeads = (db: Db, siteId: string, requester: Requester) =>
+  Effect.gen(function* () {
+    const access = yield* resolveSiteAccess(db, siteId, requester);
+    if (access === null) return yield* new SiteNotFound({ id: siteId });
+    if (access.kind === "client" && !access.canLeads) return yield* new Forbidden({});
+  });
 
 export const makeLeadRepository = (db: Db): LeadRepositoryService => ({
   create: Effect.fn("LeadRepository.create")(function* (input: LeadInput) {
-    const site = yield* _siteExists(db, input.siteId);
+    const site = yield* db
+      .prepare("SELECT id FROM sites WHERE id = ?")
+      .bind(input.siteId)
+      .first<{ id: string }>();
     if (site === null) return yield* new SiteNotFound({ id: input.siteId });
     const crypto = yield* Crypto.Crypto;
     const lead: Lead = {
@@ -57,9 +62,11 @@ export const makeLeadRepository = (db: Db): LeadRepositoryService => ({
       .run();
     return lead;
   }),
-  listForSite: Effect.fn("LeadRepository.listForSite")(function* (siteId: string, ownerId: string) {
-    const site = yield* _siteExists(db, siteId, ownerId);
-    if (site === null) return yield* new SiteNotFound({ id: siteId });
+  listForSite: Effect.fn("LeadRepository.listForSite")(function* (
+    siteId: string,
+    requester: Requester,
+  ) {
+    yield* _requireLeads(db, siteId, requester);
     const rows = yield* db
       .prepare("SELECT * FROM leads WHERE site_id = ? ORDER BY created_at DESC")
       .bind(siteId)
@@ -83,10 +90,9 @@ export const makeLeadRepository = (db: Db): LeadRepositoryService => ({
   remove: Effect.fn("LeadRepository.remove")(function* (
     siteId: string,
     leadId: string,
-    ownerId: string,
+    requester: Requester,
   ) {
-    const site = yield* _siteExists(db, siteId, ownerId);
-    if (site === null) return yield* new SiteNotFound({ id: siteId });
+    yield* _requireLeads(db, siteId, requester);
     const result = yield* db
       .prepare("DELETE FROM leads WHERE id = ? AND site_id = ?")
       .bind(leadId, siteId)

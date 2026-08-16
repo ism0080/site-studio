@@ -7,18 +7,27 @@ export default function Sidebar({
   onChange,
   user,
   onSignOut,
+  canLeads,
+  canManageMembers,
+  isAdmin,
 }: {
   active: View;
   onChange: (view: View) => void;
   user: User;
   onSignOut: () => void;
+  canLeads: boolean;
+  canManageMembers: boolean;
+  isAdmin: boolean;
 }) {
   const items: Array<[View, string, IconName]> = [
     ["overview", "Overview", "grid"],
     ["editor", "Site editor", "pen"],
     ["templates", "Templates", "layers"],
-    ["leads", "Leads", "users"],
   ];
+  if (canLeads) items.push(["leads", "Leads", "users"]);
+  if (canManageMembers) items.push(["access", "Access", "share"]);
+  if (isAdmin) items.push(["admin", "Admin", "shield"]);
+
   return (
     <aside className="sidebar">
       <div className="brand">

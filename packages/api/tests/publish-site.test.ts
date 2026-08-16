@@ -3,6 +3,7 @@ import * as Cloudflare from "alchemy/Cloudflare";
 import * as Effect from "effect/Effect";
 import { makeDb, d1, run } from "./helpers.ts";
 import { CurrentUser } from "../src/auth/auth.ts";
+import { requesterFor } from "../src/access/access.ts";
 import { BuildJobSink } from "../src/publish/BuildJobSink.ts";
 import { SiteStorage, type SiteStorageService } from "../src/storage/SiteStorage.ts";
 import {
@@ -10,9 +11,11 @@ import {
   SiteRepository,
   type SiteRepositoryService,
 } from "../src/site/SiteRepository.ts";
+import { makeMemberRepository } from "../src/members/MemberRepository.ts";
 import { publishSite } from "../src/site/publish.ts";
 
-const owner = { id: "owner-1", email: "a@b.co" };
+const owner = { id: "owner-1", email: "a@b.co", role: "client" as const };
+const requester = requesterFor(owner);
 
 const noopSink: BuildJobSink["Service"] = {
   send: () => Effect.void,
@@ -23,16 +26,16 @@ describe("publishSite", () => {
     const db = makeDb();
     const repo = makeSiteRepository(d1(db));
     const created = await run(
-      repo.create({ name: "Aurora Studio", templateId: "editorial-studio" }, owner.id),
+      repo.create({ name: "Aurora Studio", templateId: "editorial-studio" }, requester),
     );
 
     const events: string[] = [];
     let storedDocument: string | undefined;
     const trackingRepo: SiteRepositoryService = {
       ...repo,
-      markPublished: (id, ownerId, publishedAt) => {
+      markPublished: (id, req, publishedAt) => {
         events.push("markPublished");
-        return repo.markPublished(id, ownerId, publishedAt);
+        return repo.markPublished(id, req, publishedAt);
       },
     };
     const storage: SiteStorageService = {
@@ -68,7 +71,7 @@ describe("publishSite", () => {
       `enqueue:${created.id}`,
     ]);
 
-    const site = await run(repo.get(created.id, owner.id));
+    const site = await run(repo.get(created.id, requester));
     expect(site.status).toBe("published");
     expect(site.buildStatus).toBe("building");
     expect(site.publishedAt).toBe(result.publishedAt);
@@ -78,7 +81,7 @@ describe("publishSite", () => {
     const db = makeDb();
     const repo = makeSiteRepository(d1(db));
     const created = await run(
-      repo.create({ name: "Aurora Studio", templateId: "editorial-studio" }, owner.id),
+      repo.create({ name: "Aurora Studio", templateId: "editorial-studio" }, requester),
     );
 
     const storage: SiteStorageService = {
@@ -99,6 +102,46 @@ describe("publishSite", () => {
         ),
       ),
     ).rejects.toMatchObject({ _tag: "PublishError" });
+  });
+
+  it("a client with canPublish can publish, and the build job is owned by the managing agency", async () => {
+    const db = makeDb();
+    const repo = makeSiteRepository(d1(db));
+    const agency = { id: "agency-1", isAdmin: false };
+    const created = await run(repo.create({ name: "A", templateId: "t" }, agency));
+    db.prepare(
+      `INSERT INTO "user" (id, name, email, "emailVerified", "createdAt", "updatedAt") VALUES ('client-1', 'C', 'c@x.co', 1, '2026-01-01', '2026-01-01')`,
+    ).run();
+    await run(
+      makeMemberRepository(d1(db)).invite(created.id, {
+        email: "c@x.co",
+        canEdit: false,
+        canPublish: true,
+        canLeads: false,
+      }),
+    );
+
+    let sentOwner: string | undefined;
+    const sink: BuildJobSink["Service"] = {
+      send: (job) =>
+        Effect.sync(() => {
+          sentOwner = job.ownerId;
+        }),
+    };
+
+    await run(
+      publishSite(created.id).pipe(
+        Effect.provideService(CurrentUser, { id: "client-1", email: "c@x.co", role: "client" }),
+        Effect.provideService(SiteRepository, repo),
+        Effect.provideService(SiteStorage, {
+          putSiteDocument: () => Effect.void,
+          getSiteDocument: () => Effect.succeed(null),
+        }),
+        Effect.provideService(BuildJobSink, sink),
+      ),
+    );
+
+    expect(sentOwner).toBe("agency-1");
   });
 
   it("fails fast when the site is not found", async () => {

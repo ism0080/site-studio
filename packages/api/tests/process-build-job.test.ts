@@ -7,6 +7,9 @@ import { encodeBuildJob } from "../src/publish/BuildQueue.ts";
 import { processBuildJob } from "../src/publish/processBuildJob.ts";
 import { makeSiteRepository, SiteRepository } from "../src/site/SiteRepository.ts";
 import { encodeSiteDocument, Site } from "../src/site/site.ts";
+import type { Requester } from "../src/access/access.ts";
+
+const owner = { id: "owner-1", isAdmin: false } satisfies Requester;
 
 const sample = Schema.decodeUnknownSync(Site)({
   id: "site_1",
@@ -57,7 +60,7 @@ const _job = (site: Site) =>
 const _seed = async (db: ReturnType<typeof makeDb>) => {
   const repo = makeSiteRepository(d1(db));
   const created = await run(
-    repo.create({ name: "Aurora Studio", templateId: "editorial-studio" }, "owner-1"),
+    repo.create({ name: "Aurora Studio", templateId: "editorial-studio" }, owner),
   );
   const site = Schema.decodeUnknownSync(Site)({ ...sample, id: created.id });
   return { repo, site };
@@ -79,7 +82,7 @@ describe("processBuildJob", () => {
       ),
     );
 
-    const stored = await run(repo.get(site.id, "owner-1"));
+    const stored = await run(repo.get(site.id, owner));
     expect(stored.buildStatus).toBe("built");
     expect(stored.lastBuiltAt).toBeTruthy();
     expect(stored.buildError).toBeUndefined();
@@ -103,7 +106,7 @@ describe("processBuildJob", () => {
     );
 
     expect(failure._tag).toBe("BuildError");
-    const stored = await run(repo.get(site.id, "owner-1"));
+    const stored = await run(repo.get(site.id, owner));
     expect(stored.buildStatus).toBe("failed");
     expect(stored.buildError).toContain("astro build failed");
   });

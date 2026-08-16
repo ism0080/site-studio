@@ -585,6 +585,8 @@ export default function EditorPanel({
   onDomainConnect,
   onDomainVerify,
   onDomainRemove,
+  readOnly,
+  manager,
 }: {
   site: Site;
   online: boolean | null;
@@ -598,6 +600,8 @@ export default function EditorPanel({
   onDomainConnect: () => void;
   onDomainVerify: () => void;
   onDomainRemove: () => void;
+  readOnly: boolean;
+  manager: boolean;
 }) {
   const page = findPage(site);
   const hero = findSection(page, "hero");
@@ -625,152 +629,163 @@ export default function EditorPanel({
       </div>
 
       <div className="panel-scroll">
-        <div className="section-title">
-          <span>Business</span>
-        </div>
-        <BusinessFields site={site} onUpdate={onUpdate} />
-
-        <div className="content-divider" />
-
-        <div className="section-title">
-          <span>Theme</span>
-        </div>
-        <ThemeSettings site={site} onUpdate={onUpdate} />
-
-        <div className="content-divider" />
-
-        {hero && (
-          <>
-            <div className="section-title">
-              <span>Hero</span>
-            </div>
-            <HeroFields site={site} onUpdate={onUpdate} hero={hero} page={page} />
-            <div className="content-divider" />
-          </>
+        {readOnly && (
+          <p className="readonly-hint">
+            You have view-only access to this site — your manager decides when changes can be made.
+          </p>
         )}
+        <fieldset className="editor-fields" disabled={readOnly}>
+          <div className="section-title">
+            <span>Business</span>
+          </div>
+          <BusinessFields site={site} onUpdate={onUpdate} />
 
-        {services && (
-          <>
-            <div className="section-title">
-              <span>Services</span>
-            </div>
-            <ServicesFields site={site} onUpdate={onUpdate} services={services} page={page} />
-            <div className="content-divider" />
-          </>
-        )}
+          <div className="content-divider" />
 
-        {about && (
-          <>
-            <div className="section-title">
-              <span>About</span>
-            </div>
-            <AboutFields site={site} onUpdate={onUpdate} about={about} page={page} />
-            <div className="content-divider" />
-          </>
-        )}
+          <div className="section-title">
+            <span>Theme</span>
+          </div>
+          <ThemeSettings site={site} onUpdate={onUpdate} />
 
-        {testimonials && (
-          <>
-            <div className="section-title">
-              <span>Testimonials</span>
-            </div>
-            <TestimonialsFields
-              site={site}
-              onUpdate={onUpdate}
-              testimonials={testimonials}
-              page={page}
-            />
-            <div className="content-divider" />
-          </>
-        )}
+          <div className="content-divider" />
 
-        <div className="section-title">
-          <span>Homepage sections</span>
-        </div>
+          {hero && (
+            <>
+              <div className="section-title">
+                <span>Hero</span>
+              </div>
+              <HeroFields site={site} onUpdate={onUpdate} hero={hero} page={page} />
+              <div className="content-divider" />
+            </>
+          )}
 
-        {page.sections.map((block, i) => {
-          const meta = SECTION_TYPES[block.type];
-          return (
-            <div className="section-card" key={block.id}>
+          {services && (
+            <>
+              <div className="section-title">
+                <span>Services</span>
+              </div>
+              <ServicesFields site={site} onUpdate={onUpdate} services={services} page={page} />
+              <div className="content-divider" />
+            </>
+          )}
+
+          {about && (
+            <>
+              <div className="section-title">
+                <span>About</span>
+              </div>
+              <AboutFields site={site} onUpdate={onUpdate} about={about} page={page} />
+              <div className="content-divider" />
+            </>
+          )}
+
+          {testimonials && (
+            <>
+              <div className="section-title">
+                <span>Testimonials</span>
+              </div>
+              <TestimonialsFields
+                site={site}
+                onUpdate={onUpdate}
+                testimonials={testimonials}
+                page={page}
+              />
+              <div className="content-divider" />
+            </>
+          )}
+
+          <div className="section-title">
+            <span>Homepage sections</span>
+          </div>
+
+          {page.sections.map((block, i) => {
+            const meta = SECTION_TYPES[block.type];
+            return (
+              <div className="section-card" key={block.id}>
+                <div className="drag" aria-hidden="true">
+                  ⠿
+                </div>
+                <div className="section-card-body">
+                  <strong>{meta ? meta.label : block.type}</strong>
+                  <small>{SECTION_TYPES[block.type].sub(block.props)}</small>
+                </div>
+                <div className="section-actions">
+                  <button
+                    type="button"
+                    className="section-btn"
+                    aria-label="Move section up"
+                    disabled={i === 0}
+                    onClick={() => onUpdate(moveSection(site, page.id, block.id, -1))}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    className="section-btn"
+                    aria-label="Move section down"
+                    disabled={i === page.sections.length - 1}
+                    onClick={() => onUpdate(moveSection(site, page.id, block.id, 1))}
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    className="section-btn remove"
+                    aria-label="Remove section"
+                    onClick={() => onUpdate(removeSection(site, page.id, block.id))}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+
+          {addable.map(([type, meta]) => (
+            <div className="section-card muted-card" key={type}>
               <div className="drag" aria-hidden="true">
-                ⠿
+                +
               </div>
               <div className="section-card-body">
-                <strong>{meta ? meta.label : block.type}</strong>
-                <small>{SECTION_TYPES[block.type].sub(block.props)}</small>
+                <strong>{meta.label}</strong>
+                <small>{meta.hint}</small>
               </div>
-              <div className="section-actions">
-                <button
-                  type="button"
-                  className="section-btn"
-                  aria-label="Move section up"
-                  disabled={i === 0}
-                  onClick={() => onUpdate(moveSection(site, page.id, block.id, -1))}
-                >
-                  ↑
-                </button>
-                <button
-                  type="button"
-                  className="section-btn"
-                  aria-label="Move section down"
-                  disabled={i === page.sections.length - 1}
-                  onClick={() => onUpdate(moveSection(site, page.id, block.id, 1))}
-                >
-                  ↓
-                </button>
-                <button
-                  type="button"
-                  className="section-btn remove"
-                  aria-label="Remove section"
-                  onClick={() => onUpdate(removeSection(site, page.id, block.id))}
-                >
-                  ×
-                </button>
+              <button
+                type="button"
+                className="add-small"
+                onClick={() => onUpdate(addSection(site, page.id, SECTION_TYPES[type].create()))}
+              >
+                Add
+              </button>
+            </div>
+          ))}
+
+          {manager && (
+            <>
+              <div className="content-divider" />
+
+              <div className="section-title">
+                <span>Extras</span>
               </div>
-            </div>
-          );
-        })}
+              <AnalyticsField site={site} onUpdate={onUpdate} />
 
-        {addable.map(([type, meta]) => (
-          <div className="section-card muted-card" key={type}>
-            <div className="drag" aria-hidden="true">
-              +
-            </div>
-            <div className="section-card-body">
-              <strong>{meta.label}</strong>
-              <small>{meta.hint}</small>
-            </div>
-            <button
-              type="button"
-              className="add-small"
-              onClick={() => onUpdate(addSection(site, page.id, SECTION_TYPES[type].create()))}
-            >
-              Add
-            </button>
-          </div>
-        ))}
+              <div className="content-divider" />
 
-        <div className="content-divider" />
-
-        <div className="section-title">
-          <span>Extras</span>
-        </div>
-        <AnalyticsField site={site} onUpdate={onUpdate} />
-
-        <div className="content-divider" />
-
-        <DomainSettings
-          site={site}
-          online={online}
-          domain={domain}
-          setup={setup}
-          error={domainError}
-          busy={domainBusy}
-          onDomainInput={onDomainInput}
-          onConnect={onDomainConnect}
-          onVerify={onDomainVerify}
-          onRemove={onDomainRemove}
-        />
+              <DomainSettings
+                site={site}
+                online={online}
+                domain={domain}
+                setup={setup}
+                error={domainError}
+                busy={domainBusy}
+                onDomainInput={onDomainInput}
+                onConnect={onDomainConnect}
+                onVerify={onDomainVerify}
+                onRemove={onDomainRemove}
+              />
+            </>
+          )}
+        </fieldset>
       </div>
     </aside>
   );

@@ -1,5 +1,6 @@
 import * as Context from "effect/Context";
 import { betterAuth } from "better-auth";
+import type { GlobalRole } from "../access/access.ts";
 
 export interface AuthConfig {
   readonly secret: string;
@@ -30,9 +31,10 @@ export const AUTH_PATH = "/api/auth";
 /**
  * The authenticated user resolved from the session. Provided per-request by
  * the worker's fetch handler (via `Effect.provideService`) so site handlers
- * scope all queries to the owner.
+ * scope all queries to the owner. `role` is the user's global account role
+ * (admin from `ADMIN_EMAILS`, otherwise promoted agency or default client).
  */
 export class CurrentUser extends Context.Service<
   CurrentUser,
-  { readonly id: string; readonly email: string }
+  { readonly id: string; readonly email: string; readonly role: GlobalRole }
 >()("@app/CurrentUser") {}

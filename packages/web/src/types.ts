@@ -1,23 +1,43 @@
 import type {
   AboutSection,
+  Agency,
   Analytics,
   BuildStatus,
   Business,
   CreateSite,
   DomainSetup,
+  GlobalRole,
   HeroSection,
   Lead,
+  Member,
+  MemberInput,
+  Me,
   Page,
   PublishResult,
   Section,
   ServicesSection,
   Settings,
   Site as ApiSite,
+  SiteAccess,
   SiteStatus,
   TestimonialsSection,
 } from "@site-studio/api/contract";
 
-export type { Analytics, Business, DomainSetup, Lead, Page, PublishResult, SiteStatus };
+export type {
+  Agency,
+  Analytics,
+  Business,
+  DomainSetup,
+  GlobalRole,
+  Lead,
+  Member,
+  MemberInput,
+  Me,
+  Page,
+  PublishResult,
+  SiteAccess,
+  SiteStatus,
+};
 
 export type { AboutSection, HeroSection, ServicesSection, TestimonialsSection };
 
@@ -56,7 +76,7 @@ export interface Template {
   title: string[];
 }
 
-export type View = "overview" | "editor" | "templates" | "leads";
+export type View = "overview" | "editor" | "templates" | "leads" | "access" | "admin";
 
 export type Device = "desktop" | "mobile";
 
