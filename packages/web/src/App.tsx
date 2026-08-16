@@ -1,6 +1,6 @@
 import { useMachine } from "@xstate/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Device, DomainSetup, SaveState, Site } from "./types.ts";
+
 import Sidebar from "./components/Sidebar.tsx";
 import Header from "./components/Header.tsx";
 import Overview from "./components/Overview.tsx";
@@ -8,8 +8,8 @@ import Templates from "./components/Templates.tsx";
 import Leads from "./components/Leads.tsx";
 import Access from "./components/Access.tsx";
 import Admin from "./components/Admin.tsx";
-import EditorPanel from "./components/EditorPanel.tsx";
-import Preview from "./components/Preview.tsx";
+import Editor from "./components/Editor.tsx";
+import SignInScreen from "./components/SignInScreen.tsx";
 import { appMachine } from "./lib/appMachine.ts";
 import { api, liveUrlFor } from "./lib/api.ts";
 import { authClient } from "./lib/auth.ts";
@@ -26,106 +26,6 @@ import {
   useUpdateSite,
   useVerifyDomain,
 } from "./lib/queries.ts";
-
-function SignInScreen({ onSignIn }: { onSignIn: () => void }) {
-  return (
-    <div className="auth-screen">
-      <div className="auth-card">
-        <div className="brand">
-          <span className="brand-mark">✳</span>
-          <span>
-            site<span className="brand-dot">.</span>studio
-          </span>
-        </div>
-        <h1>Welcome back</h1>
-        <p>Sign in to build and publish your sites.</p>
-        <button className="dark-button google-button" onClick={onSignIn}>
-          <span className="google-mark">G</span> Continue with Google
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function Editor({
-  site,
-  online,
-  saveState,
-  device,
-  readOnly,
-  manager,
-  onDevice,
-  onUpdate,
-  domain,
-  setup,
-  domainError,
-  domainBusy,
-  onDomainInput,
-  onDomainConnect,
-  onDomainVerify,
-  onDomainRemove,
-}: {
-  site: Site;
-  online: boolean | null;
-  saveState: SaveState;
-  device: Device;
-  readOnly: boolean;
-  manager: boolean;
-  onDevice: (device: Device) => void;
-  onUpdate: (site: Site) => void;
-  domain: string;
-  setup: DomainSetup | null;
-  domainError: string | null;
-  domainBusy: boolean;
-  onDomainInput: (domain: string) => void;
-  onDomainConnect: () => void;
-  onDomainVerify: () => void;
-  onDomainRemove: () => void;
-}) {
-  return (
-    <div className="editor-layout">
-      <EditorPanel
-        site={site}
-        online={online}
-        saveState={saveState}
-        onUpdate={onUpdate}
-        domain={domain}
-        setup={setup}
-        domainError={domainError}
-        domainBusy={domainBusy}
-        onDomainInput={onDomainInput}
-        onDomainConnect={onDomainConnect}
-        onDomainVerify={onDomainVerify}
-        onDomainRemove={onDomainRemove}
-        readOnly={readOnly}
-        manager={manager}
-      />
-      <div className="preview-area">
-        <div className="preview-toolbar">
-          <div>
-            <span className="live-dot" /> Live preview <span className="toolbar-divider" />{" "}
-            <span className="muted">Changes save automatically</span>
-          </div>
-          <div className="device-toggle">
-            <button
-              className={device === "desktop" ? "active" : ""}
-              onClick={() => onDevice("desktop")}
-            >
-              Desktop
-            </button>
-            <button
-              className={device === "mobile" ? "active" : ""}
-              onClick={() => onDevice("mobile")}
-            >
-              Mobile
-            </button>
-          </div>
-        </div>
-        <Preview site={site} device={device} />
-      </div>
-    </div>
-  );
-}
 
 export default function App() {
   const queryClient = useQueryClient();
