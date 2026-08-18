@@ -27,6 +27,22 @@ import { makeMemberRepository, MemberRepository } from "./members/MemberReposito
 import { makeAdminRepository, AdminRepository } from "./admin/AdminRepository.ts";
 import { Forbidden, SiteNotFound } from "./site/site.ts";
 
+const AuthEnv = {
+  authSecret: Config.redacted("AUTH_SECRET").pipe(
+    Config.withDefault(Redacted.make("dev-only-secret-0123456789abcdef0123456789abcdef")),
+  ),
+  authBaseUrl: Config.string("AUTH_BASE_URL").pipe(Config.withDefault("http://localhost:8787")),
+  trustedOrigins: Config.string("TRUSTED_ORIGINS").pipe(
+    Config.withDefault("http://localhost:5173"),
+  ),
+  googleClientId: Config.string("GOOGLE_CLIENT_ID").pipe(Config.withDefault("")),
+  googleClientSecret: Config.redacted("GOOGLE_CLIENT_SECRET").pipe(
+    Config.withDefault(Redacted.make("")),
+  ),
+};
+
+const AuthConfig = Effect.all(AuthEnv);
+
 const HttpPlatformStub = Layer.succeed(Http.HttpPlatform.HttpPlatform, {
   platform: "web",
   compression: Http.HttpPlatform.makeCompressionWeb({
@@ -39,7 +55,17 @@ const HttpPlatformStub = Layer.succeed(Http.HttpPlatform.HttpPlatform, {
 
 export default Cloudflare.Worker(
   "api",
-  { main: import.meta.url, dev: { port: 8787 } },
+  {
+    main: import.meta.url,
+    dev: { port: 8787 },
+    env: {
+      AUTH_SECRET: AuthEnv.authSecret,
+      AUTH_BASE_URL: AuthEnv.authBaseUrl,
+      TRUSTED_ORIGINS: AuthEnv.trustedOrigins,
+      GOOGLE_CLIENT_ID: AuthEnv.googleClientId,
+      GOOGLE_CLIENT_SECRET: AuthEnv.googleClientSecret,
+    },
+  },
   Effect.gen(function* () {
     const db = yield* Cloudflare.D1.QueryDatabase(Database);
     const bucket = yield* Cloudflare.R2.ReadWriteBucket(SitesBucket);
@@ -76,17 +102,7 @@ export default Cloudflare.Worker(
         : makeNoopNotifier();
 
     const config = yield* Effect.all({
-      authSecret: Config.redacted("AUTH_SECRET").pipe(
-        Config.withDefault(Redacted.make("dev-only-secret-0123456789abcdef0123456789abcdef")),
-      ),
-      authBaseUrl: Config.string("AUTH_BASE_URL").pipe(Config.withDefault("http://localhost:8787")),
-      trustedOrigins: Config.string("TRUSTED_ORIGINS").pipe(
-        Config.withDefault("http://localhost:5173"),
-      ),
-      googleClientId: Config.string("GOOGLE_CLIENT_ID").pipe(Config.withDefault("")),
-      googleClientSecret: Config.redacted("GOOGLE_CLIENT_SECRET").pipe(
-        Config.withDefault(Redacted.make("")),
-      ),
+      auth: AuthConfig,
       adminEmails: Config.string("ADMIN_EMAILS").pipe(
         Config.withDefault(""),
         Config.map((raw) =>
@@ -98,14 +114,14 @@ export default Cloudflare.Worker(
       ),
     });
     const auth = createAuth(rawDb, {
-      secret: Redacted.value(config.authSecret),
-      baseURL: config.authBaseUrl,
-      trustedOrigins: config.trustedOrigins
+      secret: Redacted.value(config.auth.authSecret),
+      baseURL: config.auth.authBaseUrl,
+      trustedOrigins: config.auth.trustedOrigins
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean),
-      googleClientId: config.googleClientId,
-      googleClientSecret: Redacted.value(config.googleClientSecret),
+      googleClientId: config.auth.googleClientId,
+      googleClientSecret: Redacted.value(config.auth.googleClientSecret),
     });
 
     const rateLimiter = {

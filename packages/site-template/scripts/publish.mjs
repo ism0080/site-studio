@@ -60,14 +60,9 @@ async function uploadManifest(manifest, siteId) {
   const accessKey = process.env.R2_ACCESS_KEY_ID;
   const secretKey = process.env.R2_SECRET_ACCESS_KEY;
   if (!endpoint || !bucket || !accessKey || !secretKey) {
-    console.error(
+    throw new Error(
       "R2 upload credentials missing (R2_ENDPOINT, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY)",
     );
-    console.error("Upload commands:");
-    for (const [key, file] of manifest) {
-      console.error(`  wrangler r2 object put ${bucket}/${key} --file ${file}`);
-    }
-    return false;
   }
   const host = new URL(endpoint).host;
   const date = new Date();
@@ -75,7 +70,8 @@ async function uploadManifest(manifest, siteId) {
   for (const [key, file] of manifest) {
     const body = readFileSync(file);
     const payloadHash = createHash("sha256").update(body).digest("hex");
-    const path = `/${bucket}/${key}`;
+    const objectKey = `sites/${siteId}/${key}`;
+    const path = `/${bucket}/${objectKey}`;
     const authorization = awsSign({
       method: "PUT",
       host,
@@ -104,7 +100,7 @@ async function uploadManifest(manifest, siteId) {
       process.exitCode = 1;
       return ok;
     }
-    console.log(`uploaded sites/${siteId}/${key}`);
+    console.log(`uploaded ${objectKey}`);
   }
   return ok;
 }

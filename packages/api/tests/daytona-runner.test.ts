@@ -114,6 +114,9 @@ describe("Daytona build runner", () => {
     expect(createBody).toContain('"site":"site_test_build"');
     expect(createBody).toContain('"autoDeleteInterval":30');
     expect(createBody).toContain('"snapshot":"site-template"');
+    expect(createBody).not.toContain('"buildInfo"');
+    expect(createBody).not.toContain('"cpu"');
+    expect(createBody).not.toContain('"memory"');
     expect(createBody).toContain('"R2_BUCKET":"sites-bucket"');
 
     const executeBody = String(calls[2].body);

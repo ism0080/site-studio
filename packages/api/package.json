@@ -7,7 +7,7 @@
     "./contract": "./src/contract.ts"
   },
   "scripts": {
-    "dev": "bun alchemy dev",
+    "dev": "bun node_modules/alchemy/bin/alchemy.ts dev --env-file .env",
     "plan": "bun alchemy plan",
     "deploy": "bun alchemy deploy",
     "destroy": "bun alchemy destroy",

@@ -48,12 +48,14 @@ export default Cloudflare.Worker(
     return {
       fetch: Effect.gen(function* () {
         const request = yield* HttpServerRequest;
+        // SAFETY: The web adapter stores the incoming platform Request on HttpServerRequest.source.
+        const nativeRequest = request.source as Request;
 
         if (request.method !== "GET" && request.method !== "HEAD") {
           return HttpServerResponse.text("Method not allowed", { status: 405 });
         }
 
-        const url = new URL(request.url);
+        const url = new URL(nativeRequest.url);
         const hostname = normalizeDomain(url.hostname);
 
         // 1) Custom domain -> site, via the `site_domains` mapping.

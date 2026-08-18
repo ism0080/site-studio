@@ -52,16 +52,14 @@ const site = Schema.decodeUnknownSync(Site)({
 });
 
 describe("LocalBuildRunner", () => {
-  it("publishes a site through the template publish.mjs", { timeout: 30000 }, async () => {
-    const result = await Effect.runPromise(
-      Effect.gen(function* () {
-        const runner = yield* BuildRunner;
-        return yield* runner.publish(site);
-      }).pipe(Effect.provide(LocalBuildRunner)),
-    );
-
-    expect(result.exitCode).toBe(0);
-    expect(result.output).toContain("rendered");
-    expect(result.buildId).toContain(site.id);
+  it("fails rather than reporting a dry run as built", { timeout: 30000 }, async () => {
+    await expect(
+      Effect.runPromise(
+        Effect.gen(function* () {
+          const runner = yield* BuildRunner;
+          return yield* runner.publish(site);
+        }).pipe(Effect.provide(LocalBuildRunner)),
+      ),
+    ).rejects.toThrow("R2 upload credentials missing");
   });
 });

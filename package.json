@@ -6,7 +6,8 @@
   ],
   "type": "module",
   "scripts": {
-    "dev": "bun run --filter @site-studio/web dev",
+    "dev": "bun --cwd packages/api node_modules/alchemy/bin/alchemy.ts dev --env-file .env",
+    "dev:web": "bun run --filter @site-studio/web dev",
     "dev:api": "bun run --filter @site-studio/api dev",
     "build:web": "bun run --filter @site-studio/web build",
     "build:template": "bun run --filter @site-studio/site-template build",

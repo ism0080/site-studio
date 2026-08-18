@@ -26,11 +26,12 @@ const EnvVars = Schema.Record(Schema.String, Schema.String);
 const CreateSandboxRequest = Schema.Struct({
   env: EnvVars,
   labels: EnvVars,
-  cpu: Schema.Number,
-  memory: Schema.Number,
+  cpu: Schema.optional(Schema.Number),
+  memory: Schema.optional(Schema.Number),
   autoDeleteInterval: Schema.Number,
   snapshot: Schema.optional(Schema.String),
   buildInfo: Schema.optional(Schema.Struct({ dockerfileContent: Schema.String })),
+  language: Schema.String,
 });
 
 const SandboxResponse = Schema.Struct({
@@ -72,7 +73,7 @@ export interface DaytonaEnv {
 
 const config = Effect.all({
   apiKey: Config.redacted("DAYTONA_API_KEY"),
-  apiUrl: Config.string("DAYTONA_API_URL").pipe(Config.withDefault("https://api.daytona.io")),
+  apiUrl: Config.string("DAYTONA_API_URL").pipe(Config.withDefault("https://app.daytona.io/api")),
   snapshot: Config.option(Config.string("DAYTONA_SNAPSHOT")),
   image: Config.option(Config.string("DAYTONA_IMAGE")),
   repoDir: Config.string("DAYTONA_REPO_DIR").pipe(
@@ -106,13 +107,14 @@ export const makeClient = (env: DaytonaEnv, fetcher: typeof fetch) => {
     const body = Schema.encodeSync(CreateSandboxBody)({
       env: buildEnvVars(),
       labels: { app: "site-studio", site: site.id },
-      cpu: env.cpu,
-      memory: env.memory,
+      cpu: Option.isSome(env.image) ? env.cpu : undefined,
+      memory: Option.isSome(env.image) ? env.memory : undefined,
       autoDeleteInterval: 30,
       snapshot: Option.isSome(env.snapshot) ? env.snapshot.value : undefined,
       buildInfo: Option.isSome(env.image)
         ? { dockerfileContent: `FROM ${env.image.value}\n` }
         : undefined,
+      language: "typescript",
     });
 
     const response = await fetcher(`${env.apiUrl}/sandbox`, {

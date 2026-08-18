@@ -50,23 +50,32 @@ export const LocalBuildRunner = Layer.effect(
           return siteJson;
         }).pipe(
           Effect.flatMap((siteJson) =>
-            Effect.tryPromise(async (): Promise<BuildResult> => {
-              const { stdout } = await execFileP("bun", ["run", "publish", siteJson, "--upload"], {
-                cwd: env.templateDir,
-                env: {
-                  ...process.env,
-                  R2_ENDPOINT: env.r2Endpoint,
-                  R2_BUCKET: env.r2Bucket,
-                  R2_ACCESS_KEY_ID: env.r2AccessKeyId,
-                  R2_SECRET_ACCESS_KEY: Redacted.value(env.r2SecretAccessKey),
-                  PUBLIC_API_URL: env.publicApiUrl._tag === "Some" ? env.publicApiUrl.value : "",
-                },
-              });
-              return {
-                buildId: `local-${site.id}`,
-                exitCode: 0,
-                output: stdout,
-              };
+            Effect.tryPromise({
+              try: async (): Promise<BuildResult> => {
+                const { stdout } = await execFileP(
+                  "bun",
+                  ["run", "publish", siteJson, "--upload"],
+                  {
+                    cwd: env.templateDir,
+                    env: {
+                      ...process.env,
+                      R2_ENDPOINT: env.r2Endpoint,
+                      R2_BUCKET: env.r2Bucket,
+                      R2_ACCESS_KEY_ID: env.r2AccessKeyId,
+                      R2_SECRET_ACCESS_KEY: Redacted.value(env.r2SecretAccessKey),
+                      PUBLIC_API_URL:
+                        env.publicApiUrl._tag === "Some" ? env.publicApiUrl.value : "",
+                    },
+                  },
+                );
+                return {
+                  buildId: `local-${site.id}`,
+                  exitCode: 0,
+                  output: stdout,
+                };
+              },
+              catch: (cause) =>
+                new Error(cause instanceof Error ? cause.message : String(cause), { cause }),
             }).pipe(Effect.ensuring(Effect.try(() => unlinkSync(siteJson)).pipe(Effect.ignore))),
           ),
           Effect.mapError(
