@@ -81,6 +81,7 @@ export const api = {
 // Public URL for a published site: the custom domain when verified, otherwise
 // the www worker URL (VITE_WWW_URL) under /<siteId>/.
 export const liveUrlFor = (site: Site): string | null => {
+  if (site.status !== "published" || site.buildStatus !== "built") return null;
   if (site.customDomain) return `https://${site.customDomain}/`;
   const www = (import.meta.env?.VITE_WWW_URL ?? "").replace(/\/+$/, "");
   return www ? `${www}/${site.id}/` : null;

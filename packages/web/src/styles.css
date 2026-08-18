@@ -987,7 +987,6 @@ button {
   .header-actions {
     gap: 5px;
   }
-  .preview-link,
   .icon-button {
     display: none;
   }

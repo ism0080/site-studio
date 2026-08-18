@@ -41,7 +41,8 @@ export default function App() {
   const [snapshot, send] = useMachine(appMachine, {
     input: {
       getSession: () => authClient.getSession().then(({ data }) => data ?? { user: null }),
-      signIn: () => authClient.signIn.social({ provider: "google" }),
+      signIn: () =>
+        authClient.signIn.social({ provider: "google", callbackURL: window.location.href }),
       signOut: async () => {
         await authClient.signOut();
         window.location.reload();
