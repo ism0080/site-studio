@@ -1,13 +1,13 @@
 import { describe, expect, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
-import { makeDb, d1, run } from "./helpers.ts";
-import { BuildError, BuildRunner } from "../src/publish/BuildRunner.ts";
-import { encodeBuildJob } from "../src/publish/BuildQueue.ts";
-import { processBuildJob } from "../src/publish/processBuildJob.ts";
-import { makeSiteRepository, SiteRepository } from "../src/site/SiteRepository.ts";
-import { encodeSiteDocument, Site } from "../src/site/site.ts";
-import type { Requester } from "../src/access/access.ts";
+import { makeDb, d1, run } from "../test/helpers.ts";
+import { BuildError, BuildRunner } from "../publish/BuildRunner.ts";
+import { encodeBuildJob } from "../publish/BuildQueue.ts";
+import { processBuildJob } from "../publish/processBuildJob.ts";
+import { makeSiteRepository, SiteRepository } from "../site/SiteRepository.ts";
+import { encodeSiteDocument, Site } from "../site/site.ts";
+import type { Requester } from "../access/access.ts";
 
 const owner = { id: "owner-1", isAdmin: false } satisfies Requester;
 

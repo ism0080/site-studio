@@ -1,9 +1,10 @@
 import { describe, expect, it, beforeEach } from "@effect/vitest";
 import { DatabaseSync } from "node:sqlite";
-import { makeDb, d1, run } from "./helpers.ts";
-import { makeLeadRepository } from "../src/leads/LeadRepository.ts";
-import { makeSiteRepository } from "../src/site/SiteRepository.ts";
-import type { Requester } from "../src/access/access.ts";
+import { makeDb, d1, run } from "../test/helpers.ts";
+import { makeLeadRepository } from "../leads/LeadRepository.ts";
+import { makeSiteRepository } from "../site/SiteRepository.ts";
+import type { Requester } from "../access/access.ts";
+import { SiteId } from "../site/site.ts";
 
 let db: DatabaseSync;
 
@@ -40,7 +41,7 @@ describe("LeadRepository", () => {
     await expect(
       run(
         _leads().create({
-          siteId: "no-such-site",
+          siteId: SiteId.make("no-such-site"),
           name: "Jane",
           email: "j@x.com",
           message: undefined,

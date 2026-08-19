@@ -7,6 +7,7 @@ import * as Layer from "effect/Layer";
 import type { RuntimeContext } from "alchemy";
 import type { Lead } from "./leads.ts";
 
+/** Sending a lead notification email failed. */
 export class LeadNotifierError extends Data.TaggedError("LeadNotifierError")<{
   message: string;
   cause?: unknown;
@@ -71,7 +72,7 @@ export const makeCloudflareNotifier = () =>
             Effect.mapError(
               (cause) =>
                 new LeadNotifierError({
-                  message: cause instanceof Error ? cause.message : String(cause),
+                  message: `leadNotifier: ${cause instanceof Error ? cause.message : String(cause)}`,
                   cause,
                 }),
             ),

@@ -22,12 +22,14 @@ export class Lead extends Schema.Class<Lead>("Lead")({
   createdAt: Schema.String,
 }) {}
 
+/** The lead is not present on the site. */
 export class LeadNotFound extends Schema.TaggedErrorClass<LeadNotFound>()(
   "LeadNotFound",
   {},
   { httpApiStatus: 404 },
 ) {}
 
+/** The visitor hit the public lead-submission rate limit (429). */
 export class TooManyRequests extends Schema.TaggedErrorClass<TooManyRequests>()(
   "TooManyRequests",
   {},

@@ -1,9 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
 import * as Schema from "effect/Schema";
-import { makeNoopNotifier } from "../src/leads/LeadNotifier.ts";
-import { Lead } from "../src/leads/leads.ts";
-import { Site, SiteJson } from "../src/site/site.ts";
-import { run } from "./helpers.ts";
+import { Lead } from "../leads/leads.ts";
+import { Site, SiteJson } from "./site.ts";
 
 const sample = Schema.decodeUnknownSync(Site)({
   id: "site_1",
@@ -44,7 +42,7 @@ const sample = Schema.decodeUnknownSync(Site)({
   updatedAt: "2026-01-01T00:00:00.000Z",
 });
 
-describe("schema", () => {
+describe("site schema", () => {
   it("Site round-trips through encode/decode", () => {
     const decoded = Schema.decodeUnknownSync(SiteJson)(Schema.encodeSync(SiteJson)(sample));
     expect(decoded.id).toBe(sample.id);
@@ -63,20 +61,5 @@ describe("schema", () => {
       createdAt: "2026-01-01T00:00:00.000Z",
     });
     expect(lead.siteId).toBe("site_1");
-  });
-});
-
-describe("LeadNotifier", () => {
-  it("noop notifier is a no-op success", async () => {
-    const notifier = makeNoopNotifier();
-    const lead = Schema.decodeUnknownSync(Lead)({
-      id: "l",
-      siteId: "s",
-      name: "Jane",
-      email: "j@x.com",
-      createdAt: "2026-01-01T00:00:00.000Z",
-    });
-    const result = await run(notifier.notify(lead, { name: "Aurora", email: "a@x.com" }));
-    expect(result).toBeUndefined();
   });
 });

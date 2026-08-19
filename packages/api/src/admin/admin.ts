@@ -10,6 +10,7 @@ export const Agency = Schema.Struct({
 });
 export type Agency = (typeof Agency)["Type"];
 
+/** Payload for inviting an agency by email. */
 export const AgencyInvite = Schema.Struct({
   email: Schema.String,
 });

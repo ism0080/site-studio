@@ -1,9 +1,9 @@
 import { describe, expect, it, beforeEach } from "@effect/vitest";
 import { DatabaseSync } from "node:sqlite";
-import { makeDb, d1, run } from "./helpers.ts";
-import { makeMemberRepository } from "../src/members/MemberRepository.ts";
-import { makeAdminRepository } from "../src/admin/AdminRepository.ts";
-import { makeSiteRepository } from "../src/site/SiteRepository.ts";
+import { makeDb, d1, run } from "../test/helpers.ts";
+import { makeMemberRepository } from "../members/MemberRepository.ts";
+import { makeAdminRepository } from "../admin/AdminRepository.ts";
+import { makeSiteRepository } from "../site/SiteRepository.ts";
 
 let db: DatabaseSync;
 
@@ -73,12 +73,17 @@ describe("MemberRepository", () => {
     await run(m.invite(site.id, { email: "client@example.com", ..._toggles() }));
 
     const updated = await run(
-      m.update(site.id, "client@example.com", _toggles({ canPublish: true })),
+      m.update(site.id, "client@example.com", {
+        email: "client@example.com",
+        ..._toggles({ canPublish: true }),
+      }),
     );
     expect(updated.pending).toBe(true);
     expect(updated.canPublish).toBe(true);
 
-    await expect(run(m.update(site.id, "nobody@example.com", _toggles()))).rejects.toMatchObject({
+    await expect(
+      run(m.update(site.id, "nobody@example.com", { email: "nobody@example.com", ..._toggles() })),
+    ).rejects.toMatchObject({
       _tag: "MemberNotFound",
     });
   });

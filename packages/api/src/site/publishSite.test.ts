@@ -1,18 +1,18 @@
 import { describe, expect, it } from "@effect/vitest";
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as Effect from "effect/Effect";
-import { makeDb, d1, run } from "./helpers.ts";
-import { CurrentUser } from "../src/auth/auth.ts";
-import { requesterFor } from "../src/access/access.ts";
-import { BuildJobSink } from "../src/publish/BuildJobSink.ts";
-import { SiteStorage, type SiteStorageService } from "../src/storage/SiteStorage.ts";
+import { makeDb, d1, run } from "../test/helpers.ts";
+import { CurrentUser } from "../auth/auth.ts";
+import { requesterFor } from "../access/access.ts";
+import { BuildJobSink } from "../publish/BuildJobSink.ts";
+import { SiteStorage, type SiteStorageService } from "../storage/SiteStorage.ts";
 import {
   makeSiteRepository,
   SiteRepository,
   type SiteRepositoryService,
-} from "../src/site/SiteRepository.ts";
-import { makeMemberRepository } from "../src/members/MemberRepository.ts";
-import { publishSite } from "../src/site/publish.ts";
+} from "../site/SiteRepository.ts";
+import { makeMemberRepository } from "../members/MemberRepository.ts";
+import { publishSite } from "../site/publishSite.ts";
 
 const owner = { id: "owner-1", email: "a@b.co", role: "client" as const };
 const requester = requesterFor(owner);

@@ -13,7 +13,12 @@ export const WebCrypto = Layer.succeed(
     },
     digest: (algorithm, data) =>
       Effect.tryPromise({
-        try: () => crypto.subtle.digest(algorithm, data).then((buffer) => new Uint8Array(buffer)),
+        // SAFETY: `data` is a Uint8Array of the effect Crypto service's choosing; WebCrypto.digest
+        // accepts any BufferSource (Uint8Array / ArrayBuffer / typed-array), so the cast is sound.
+        try: () =>
+          crypto.subtle
+            .digest(algorithm, data as BufferSource)
+            .then((buffer) => new Uint8Array(buffer)),
         catch: (cause) =>
           PlatformError.systemError({
             module: "Crypto",

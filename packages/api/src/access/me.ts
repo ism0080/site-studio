@@ -2,6 +2,7 @@ import * as HttpApi from "effect/unstable/httpapi";
 import * as Schema from "effect/Schema";
 import { GlobalRole } from "./access.ts";
 
+/** The signed-in user's own profile: id, email, and global account role. */
 export const Me = Schema.Struct({
   id: Schema.String,
   email: Schema.String,

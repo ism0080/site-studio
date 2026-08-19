@@ -3,8 +3,8 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
-import { DaytonaEnv, makeClient } from "../src/publish/daytona.ts";
-import { Site } from "../src/site/site.ts";
+import { makeClient, type DaytonaEnv } from "./daytona.ts";
+import { Site } from "../site/site.ts";
 
 const site = Schema.decodeUnknownSync(Site)({
   id: "site_test_build",
@@ -109,7 +109,7 @@ describe("Daytona build runner", () => {
       "DELETE https://api.daytona.test/sandbox/sandbox_1",
     ]);
 
-    const createBody = String(calls[0].body);
+    const createBody = String(calls[0]!.body);
     expect(createBody).toContain('"app":"site-studio"');
     expect(createBody).toContain('"site":"site_test_build"');
     expect(createBody).toContain('"autoDeleteInterval":30');
@@ -119,7 +119,7 @@ describe("Daytona build runner", () => {
     expect(createBody).not.toContain('"memory"');
     expect(createBody).toContain('"R2_BUCKET":"sites-bucket"');
 
-    const executeBody = String(calls[2].body);
+    const executeBody = String(calls[2]!.body);
     expect(executeBody).toContain('"command":"bun run publish site.json --upload"');
     expect(executeBody).toContain('"cwd":"/home/daytona/site-template"');
     expect(executeBody).toContain('"timeout":600');

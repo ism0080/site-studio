@@ -6,7 +6,7 @@ import * as Layer from "effect/Layer";
 import type { RuntimeContext } from "alchemy";
 import { Lead, LeadInput, LeadId, LeadNotFound } from "./leads.ts";
 import { Forbidden, SiteId, SiteNotFound, decodeSiteJson } from "../site/site.ts";
-import { resolveSiteAccess } from "../site/access.ts";
+import { resolveSiteAccess } from "../site/siteAccess.ts";
 import type { Requester } from "../access/access.ts";
 import { nowIso } from "../platform/Time.ts";
 

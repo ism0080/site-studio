@@ -25,5 +25,6 @@
       }
     ]
   },
-  "include": ["src", "alchemy.run.ts"]
+  "include": ["src", "alchemy.run.ts"],
+  "exclude": ["src/**/*.test.ts", "src/test"]
 }

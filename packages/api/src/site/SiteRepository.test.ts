@@ -1,10 +1,10 @@
 import { describe, expect, it, beforeEach } from "@effect/vitest";
 import { DatabaseSync } from "node:sqlite";
-import { makeDb, d1, run } from "./helpers.ts";
-import { makeSiteRepository } from "../src/site/SiteRepository.ts";
-import { makeMemberRepository } from "../src/members/MemberRepository.ts";
-import { makeLeadRepository } from "../src/leads/LeadRepository.ts";
-import type { Requester } from "../src/access/access.ts";
+import { makeDb, d1, run } from "../test/helpers.ts";
+import { makeSiteRepository } from "../site/SiteRepository.ts";
+import { makeMemberRepository } from "../members/MemberRepository.ts";
+import { makeLeadRepository } from "../leads/LeadRepository.ts";
+import type { Requester } from "../access/access.ts";
 
 let db: DatabaseSync;
 

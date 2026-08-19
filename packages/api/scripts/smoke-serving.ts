@@ -3,7 +3,7 @@ import {
   normalizeDomain,
   resolveRequestKey,
   resolveSiteObjectKey,
-} from "../src/site/keys.ts";
+} from "../src/site/objectKeys.ts";
 
 let failed = 0;
 type ExpectedKey = string | null;

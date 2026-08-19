@@ -126,6 +126,11 @@ export type SiteId = (typeof SiteId)["Type"];
 export const OwnerId = Schema.String.pipe(Schema.brand("OwnerId"));
 export type OwnerId = (typeof OwnerId)["Type"];
 
+/**
+ * The site document: identity, status, business profile, settings, pages,
+ * publish state, custom domain, and build outcome. Stored in D1 and
+ * serialized to JSON for the build pipeline.
+ */
 export class Site extends Schema.Class<Site>("Site")({
   id: SiteId,
   ownerId: OwnerId,
@@ -143,14 +148,16 @@ export class Site extends Schema.Class<Site>("Site")({
   buildError: Schema.optional(Schema.String),
 }) {}
 
+/** Payload for creating a site: a name and the template to start from. */
 export const CreateSite = Schema.Struct({
   name: Schema.String,
   templateId: Schema.String,
 });
 export type CreateSite = (typeof CreateSite)["Type"];
 
+/** Confirmation of a publish: the site id, the stored artifact path, and when it was published. */
 export const PublishResult = Schema.Struct({
-  siteId: Schema.String,
+  siteId: SiteId,
   path: Schema.String,
   publishedAt: Schema.String,
 });
@@ -166,6 +173,7 @@ export class PublishError extends Schema.TaggedErrorClass<PublishError>()(
   { httpApiStatus: 500 },
 ) {}
 
+/** The site does not exist, or the requester has no relationship to it (404). */
 export class SiteNotFound extends Schema.TaggedErrorClass<SiteNotFound>()(
   "SiteNotFound",
   { id: Schema.String },
@@ -182,12 +190,14 @@ export class Forbidden extends Schema.TaggedErrorClass<Forbidden>()(
   { httpApiStatus: 403 },
 ) {}
 
+/** The custom-domain TXT ownership record has not been published yet (409). */
 export class DomainNotVerified extends Schema.TaggedErrorClass<DomainNotVerified>()(
   "DomainNotVerified",
   { domain: Schema.String },
   { httpApiStatus: 409 },
 ) {}
 
+/** Another site already claims this custom domain (409). */
 export class DomainInUse extends Schema.TaggedErrorClass<DomainInUse>()(
   "DomainInUse",
   { domain: Schema.String },
@@ -208,13 +218,20 @@ export const DomainSetup = Schema.Struct({
 });
 export type DomainSetup = (typeof DomainSetup)["Type"];
 
+/** Union of the custom-domain failure responses. */
 export const DomainError = Schema.Union([SiteNotFound, DomainNotVerified, DomainInUse]);
 
-export const decodeSite = Schema.decodeUnknownEffect(Site);
-export const encodeSite = Schema.encodeUnknownSync(Site);
-
+/** Compact JSON of the Site, used for the D1 `document` column and build-queue payloads. */
 export const SiteJson = Schema.fromJsonString(Site);
+
+/** Pretty-printed JSON of the Site (2-space indent), used for the stored R2 build artifact. */
 export const SiteDocument = Schema.fromJsonString(Site, { space: 2 });
+
+/** Encodes a Site to compact JSON. */
 export const encodeSiteJson = Schema.encodeUnknownSync(SiteJson);
+
+/** Encodes a Site to pretty-printed JSON for the stored artifact. */
 export const encodeSiteDocument = Schema.encodeUnknownSync(SiteDocument);
+
+/** Decodes compact Site JSON back to a Site. */
 export const decodeSiteJson = Schema.decodeUnknownEffect(SiteJson);

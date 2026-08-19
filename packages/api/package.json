@@ -12,6 +12,7 @@
     "deploy": "bun alchemy deploy",
     "destroy": "bun alchemy destroy",
     "typecheck": "tsc --noEmit",
+    "typecheck:test": "tsc -p tsconfig.test.json --noEmit",
     "smoke": "bun run scripts/smoke.ts",
     "smoke:serving": "bun run scripts/smoke-serving.ts",
     "smoke:dns": "bun run scripts/smoke-dns.ts",
@@ -29,6 +30,7 @@
     "@cloudflare/workers-types": "^5.20260808.1",
     "@effect/language-service": "^0.87.2",
     "@effect/vitest": "^4.0.0-beta.106",
+    "@types/node": "^24.0.0",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"
   }

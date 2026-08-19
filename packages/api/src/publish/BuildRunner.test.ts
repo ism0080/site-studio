@@ -1,9 +1,9 @@
 import { describe, expect, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
-import { BuildRunner } from "../src/publish/BuildRunner.ts";
-import { LocalBuildRunner } from "../scripts/build-runner/local.ts";
-import { Site } from "../src/site/site.ts";
+import { BuildRunner } from "./BuildRunner.ts";
+import { LocalBuildRunner } from "../../scripts/build-runner/local.ts";
+import { Site } from "../site/site.ts";
 
 const site = Schema.decodeUnknownSync(Site)({
   id: "site_test_build",

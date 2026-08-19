@@ -7,6 +7,7 @@ import type { RuntimeContext } from "alchemy";
 
 type Bucket = Cloudflare.R2.ReadWriteBucketClient;
 
+/** A site document read or write to the storage backend failed. */
 export class SiteStorageError extends Data.TaggedError("SiteStorageError")<{
   message: string;
   cause?: unknown;
@@ -34,7 +35,7 @@ const _siteKey = (siteId: string) => `sites/${siteId}/site.json`;
 
 const _toStorageError = (cause: unknown) =>
   new SiteStorageError({
-    message: cause instanceof Error ? cause.message : String(cause),
+    message: `siteStorage: ${cause instanceof Error ? cause.message : String(cause)}`,
     cause,
   });
 

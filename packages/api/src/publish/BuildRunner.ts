@@ -16,6 +16,7 @@ export interface BuildResult {
   readonly output: string;
 }
 
+/** The static build failed to produce output. */
 export class BuildError extends Data.TaggedError("BuildError")<{
   message: string;
   cause?: unknown;
@@ -38,7 +39,9 @@ export const makeNoopBuildRunner = (): BuildRunner["Service"] => ({
     Effect.logWarning(`no build backend configured; build skipped for site ${site.id}`).pipe(
       Effect.flatMap(() =>
         Effect.fail(
-          new BuildError({ message: "no build backend configured (set DAYTONA_API_KEY)" }),
+          new BuildError({
+            message: "buildRunner: no build backend configured (set DAYTONA_API_KEY)",
+          }),
         ),
       ),
     ),

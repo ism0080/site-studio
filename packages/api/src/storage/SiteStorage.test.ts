@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
-import { makeR2SiteStorage } from "../src/storage/SiteStorage.ts";
-import { run } from "./helpers.ts";
+import { makeR2SiteStorage } from "../storage/SiteStorage.ts";
+import { run } from "../test/helpers.ts";
 
 /** Minimal ReadWriteBucketClient fake — in-memory Map. */
 const _makeFakeBucket = () => {

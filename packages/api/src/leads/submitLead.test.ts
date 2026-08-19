@@ -1,13 +1,14 @@
 import { describe, expect, it, beforeEach } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import { DatabaseSync } from "node:sqlite";
-import { makeDb, d1, run } from "./helpers.ts";
-import { makeLeadRepository, LeadRepository } from "../src/leads/LeadRepository.ts";
-import { LeadNotifier, type NotifyTarget } from "../src/leads/LeadNotifier.ts";
-import { LeadRateLimiter, submitLead } from "../src/leads/submitLead.ts";
-import { makeSiteRepository } from "../src/site/SiteRepository.ts";
-import type { Lead } from "../src/leads/leads.ts";
-import type { Requester } from "../src/access/access.ts";
+import { makeDb, d1, run } from "../test/helpers.ts";
+import { makeLeadRepository, LeadRepository } from "../leads/LeadRepository.ts";
+import { LeadNotifier, type NotifyTarget } from "../leads/LeadNotifier.ts";
+import { LeadRateLimiter, submitLead } from "../leads/submitLead.ts";
+import { makeSiteRepository } from "../site/SiteRepository.ts";
+import type { Lead } from "../leads/leads.ts";
+import type { Requester } from "../access/access.ts";
+import { SiteId } from "../site/site.ts";
 
 let db: DatabaseSync;
 
@@ -64,7 +65,12 @@ describe("submitLead", () => {
     await expect(
       run(
         submitLead(
-          { siteId: "site_test", name: "Ada", email: "ada@example.com", message: "Hello" },
+          {
+            siteId: SiteId.make("site_test"),
+            name: "Ada",
+            email: "ada@example.com",
+            message: "Hello",
+          },
           "1.2.3.4",
         ).pipe(
           Effect.provideService(LeadRateLimiter, { limit: () => Effect.succeed(false) }),

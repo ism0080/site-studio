@@ -1,9 +1,9 @@
 import * as HttpApi from "effect/unstable/httpapi";
 import * as Schema from "effect/Schema";
-import { Forbidden, SiteNotFound } from "../site/site.ts";
+import { Forbidden, SiteId, SiteNotFound } from "../site/site.ts";
 
 export const Member = Schema.Struct({
-  siteId: Schema.String,
+  siteId: SiteId,
   email: Schema.String,
   canEdit: Schema.Boolean,
   canPublish: Schema.Boolean,
@@ -14,6 +14,7 @@ export const Member = Schema.Struct({
 });
 export type Member = (typeof Member)["Type"];
 
+/** Permission toggles (edit / publish / leads) for a site member or invite. */
 export const MemberInput = Schema.Struct({
   email: Schema.String,
   canEdit: Schema.Boolean,
@@ -22,6 +23,7 @@ export const MemberInput = Schema.Struct({
 });
 export type MemberInput = (typeof MemberInput)["Type"];
 
+/** The member or invite is not present on the site. */
 export class MemberNotFound extends Schema.TaggedErrorClass<MemberNotFound>()(
   "MemberNotFound",
   {},

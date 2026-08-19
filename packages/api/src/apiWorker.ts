@@ -12,7 +12,7 @@ import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 import { SitesBucket } from "./site/bucket.ts";
 import { Database } from "./site/database.ts";
 import { SiteApi } from "./site/siteApi.ts";
-import { publishSite } from "./site/publish.ts";
+import { publishSite } from "./site/publishSite.ts";
 import { makeSiteRepository, SiteRepository } from "./site/SiteRepository.ts";
 import { makeLeadRepository, LeadRepository } from "./leads/LeadRepository.ts";
 import { LeadNotifier, makeCloudflareNotifier, makeNoopNotifier } from "./leads/LeadNotifier.ts";

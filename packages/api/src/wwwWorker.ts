@@ -5,7 +5,7 @@ import { HttpServerRequest } from "effect/unstable/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 import { SitesBucket } from "./site/bucket.ts";
 import { Database } from "./site/database.ts";
-import { contentTypeFor, normalizeDomain, resolveRequestKey } from "./site/keys.ts";
+import { contentTypeFor, normalizeDomain, resolveRequestKey } from "./site/objectKeys.ts";
 
 const SWR_DAYS = 86400;
 

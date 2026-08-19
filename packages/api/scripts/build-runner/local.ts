@@ -81,7 +81,7 @@ export const LocalBuildRunner = Layer.effect(
           Effect.mapError(
             (cause) =>
               new BuildError({
-                message: cause instanceof Error ? cause.message : String(cause),
+                message: `buildRunner: ${cause instanceof Error ? cause.message : String(cause)}`,
                 cause,
               }),
           ),

@@ -6,6 +6,7 @@ import type { RuntimeContext } from "alchemy";
 import type { GlobalRole } from "../access/access.ts";
 import { nowIso } from "../platform/Time.ts";
 import { Member, MemberInput, MemberNotFound } from "./members.ts";
+import { SiteId } from "../site/site.ts";
 
 type Db = Cloudflare.D1.QueryDatabaseClient;
 
@@ -49,7 +50,7 @@ export const makeMemberRepository = (db: Db): MemberRepositoryService => {
     can_leads: number;
     created_at: string;
   }): Member => ({
-    siteId: r.site_id,
+    siteId: SiteId.make(r.site_id),
     email: r.email,
     canEdit: _bool(r.can_edit),
     canPublish: _bool(r.can_publish),
@@ -81,7 +82,7 @@ export const makeMemberRepository = (db: Db): MemberRepositoryService => {
           )
           .run();
         return {
-          siteId,
+          siteId: SiteId.make(siteId),
           email: input.email,
           canEdit: input.canEdit,
           canPublish: input.canPublish,
@@ -107,7 +108,7 @@ export const makeMemberRepository = (db: Db): MemberRepositoryService => {
         )
         .run();
       return {
-        siteId,
+        siteId: SiteId.make(siteId),
         email: input.email,
         canEdit: input.canEdit,
         canPublish: input.canPublish,
@@ -146,7 +147,7 @@ export const makeMemberRepository = (db: Db): MemberRepositoryService => {
       return [
         ...members.results.map(_memberRow),
         ...invites.results.map((r) => ({
-          siteId: r.site_id,
+          siteId: SiteId.make(r.site_id),
           email: r.email,
           canEdit: _bool(r.can_edit),
           canPublish: _bool(r.can_publish),
@@ -181,7 +182,7 @@ export const makeMemberRepository = (db: Db): MemberRepositoryService => {
           )
           .run();
         return {
-          siteId,
+          siteId: SiteId.make(siteId),
           email,
           canEdit: input.canEdit,
           canPublish: input.canPublish,
@@ -209,7 +210,7 @@ export const makeMemberRepository = (db: Db): MemberRepositoryService => {
           )
           .run();
         return {
-          siteId,
+          siteId: SiteId.make(siteId),
           email,
           canEdit: input.canEdit,
           canPublish: input.canPublish,

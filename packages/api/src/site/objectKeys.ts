@@ -17,6 +17,7 @@ const CONTENT_TYPES = new Map<string, string>([
   [".woff2", "font/woff2"],
 ]);
 
+/** Content-Type for an object key's file extension; defaults to application/octet-stream. */
 export const contentTypeFor = (key: string): string => {
   const dot = key.lastIndexOf(".");
   const ext = dot === -1 ? "" : key.slice(dot);

@@ -3,10 +3,11 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as Effect from "effect/Effect";
+import * as Crypto from "effect/Crypto";
 import { RuntimeContext } from "alchemy";
-import { WebCrypto } from "../src/platform/WebCrypto.ts";
+import { WebCrypto } from "../platform/WebCrypto.ts";
 
-const migrationsDir = fileURLToPath(new URL("../migrations", import.meta.url));
+const migrationsDir = fileURLToPath(new URL("../../migrations", import.meta.url));
 
 /** In-memory SQLite with all migrations applied. */
 export const makeDb = (): DatabaseSync => {
@@ -54,7 +55,7 @@ export const d1 = (db: DatabaseSync) =>
  * service is provided to satisfy the type.
  */
 // SAFETY: The D1/R2 shims never read the RuntimeContext service, so a stub value satisfies the type.
-export const run = <A, E>(effect: Effect.Effect<A, E, any>) =>
+export const run = <A, E>(effect: Effect.Effect<A, E, RuntimeContext | Crypto.Crypto>) =>
   Effect.runPromise(
     effect.pipe(
       // SAFETY: The D1/R2 shims never read the RuntimeContext service, so a stub value satisfies the type.

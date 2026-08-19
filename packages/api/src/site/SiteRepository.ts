@@ -18,9 +18,9 @@ import {
   encodeSiteJson,
   type BuildStatus,
 } from "./site.ts";
-import { accessibleBinds, accessibleWhere, resolveSiteAccess } from "./access.ts";
+import { accessibleBinds, accessibleWhere, resolveSiteAccess } from "./siteAccess.ts";
 import type { Requester, SiteAccess } from "../access/access.ts";
-import { normalizeDomain } from "./keys.ts";
+import { normalizeDomain } from "./objectKeys.ts";
 import { newVerificationToken, verifyTxtRecord } from "./dns.ts";
 import { nowIso } from "../platform/Time.ts";
 
@@ -82,12 +82,9 @@ export interface SiteRepositoryService {
   ) => Effect.Effect<Site, SiteNotFound | Forbidden, RuntimeContext>;
 }
 
-// The `document` column is TEXT; encode the schema then serialize to JSON.
-const _serialize = (site: Site) => encodeSiteJson(site);
-
 // Normalizes documents that predate `buildStatus` (or lack it) to a concrete
 // value so the domain never sees an undefined build state.
-const _parse = (document: string) =>
+const _parseSiteDocument = (document: string) =>
   decodeSiteJson(document).pipe(
     Effect.map((site) => new Site({ ...site, buildStatus: site.buildStatus ?? "idle" })),
     Effect.orDie,
@@ -108,7 +105,7 @@ export const makeSiteRepository = (
         .all<{ document: string }>()
         .pipe(
           Effect.map((result) => result.results.map((row) => row.document)),
-          Effect.flatMap((documents) => Effect.all(documents.map(_parse))),
+          Effect.flatMap((documents) => Effect.all(documents.map(_parseSiteDocument))),
         );
     }),
     get: Effect.fn("SiteRepository.get")(function* (id: string, requester: Requester) {
@@ -117,7 +114,7 @@ export const makeSiteRepository = (
         .bind(id, ...accessibleBinds(requester))
         .first<{ document: string }>();
       if (row === null) return yield* new SiteNotFound({ id });
-      return yield* _parse(row.document);
+      return yield* _parseSiteDocument(row.document);
     }),
     access: Effect.fn("SiteRepository.access")(function* (id: string, requester: Requester) {
       return yield* resolveSiteAccess(db, id, requester);
@@ -167,7 +164,7 @@ export const makeSiteRepository = (
           site.ownerId,
           site.templateId,
           site.status,
-          _serialize(site),
+          encodeSiteJson(site),
           site.createdAt,
           site.updatedAt,
         )
@@ -184,7 +181,7 @@ export const makeSiteRepository = (
         .bind(id)
         .first<{ document: string }>();
       if (row === null) return yield* new SiteNotFound({ id });
-      const current = yield* _parse(row.document);
+      const current = yield* _parseSiteDocument(row.document);
 
       const access = yield* resolveSiteAccess(db, id, requester);
       if (access === null) return yield* new SiteNotFound({ id });
@@ -224,7 +221,7 @@ export const makeSiteRepository = (
         .bind(
           updated.templateId,
           updated.status,
-          _serialize(updated),
+          encodeSiteJson(updated),
           updated.updatedAt,
           id,
           ...accessibleBinds(requester),
@@ -256,7 +253,7 @@ export const makeSiteRepository = (
         .bind(id)
         .first<{ document: string }>();
       if (row === null) return yield* new SiteNotFound({ id });
-      const current = yield* _parse(row.document);
+      const current = yield* _parseSiteDocument(row.document);
       const updated = new Site({
         ...current,
         status: "published",
@@ -270,7 +267,7 @@ export const makeSiteRepository = (
         )
         .bind(
           updated.status,
-          _serialize(updated),
+          encodeSiteJson(updated),
           updated.updatedAt,
           updated.publishedAt,
           id,
@@ -291,7 +288,7 @@ export const makeSiteRepository = (
         .bind(id, ownerId)
         .first<{ document: string }>();
       if (row === null) return yield* new SiteNotFound({ id });
-      const current = yield* _parse(row.document);
+      const current = yield* _parseSiteDocument(row.document);
       const updated = new Site({
         ...current,
         buildStatus,
@@ -301,7 +298,7 @@ export const makeSiteRepository = (
       });
       yield* db
         .prepare("UPDATE sites SET document = ?, updated_at = ? WHERE id = ? AND owner_id = ?")
-        .bind(_serialize(updated), builtAt, id, ownerId)
+        .bind(encodeSiteJson(updated), builtAt, id, ownerId)
         .run();
       return updated;
     }),
@@ -319,7 +316,7 @@ export const makeSiteRepository = (
         .bind(id)
         .first<{ document: string }>();
       if (site === null) return yield* new SiteNotFound({ id });
-      const current = yield* _parse(site.document);
+      const current = yield* _parseSiteDocument(site.document);
 
       const domain = normalizeDomain(inputDomain);
       if (!domain) return yield* new SiteNotFound({ id });
@@ -360,7 +357,7 @@ export const makeSiteRepository = (
         .bind(id)
         .first<{ document: string }>();
       if (site === null) return yield* new SiteNotFound({ id });
-      const current = yield* _parse(site.document);
+      const current = yield* _parseSiteDocument(site.document);
 
       const pending = yield* db
         .prepare(
@@ -394,7 +391,7 @@ export const makeSiteRepository = (
         .prepare(
           "UPDATE sites SET document = ?, custom_domain = ?, updated_at = ? WHERE id = ? AND owner_id = ?",
         )
-        .bind(_serialize(updated), pending.domain, now, id, requester.id)
+        .bind(encodeSiteJson(updated), pending.domain, now, id, requester.id)
         .run();
       return updated;
     }),
@@ -411,7 +408,7 @@ export const makeSiteRepository = (
         .bind(id)
         .first<{ document: string }>();
       if (site === null) return yield* new SiteNotFound({ id });
-      const current = yield* _parse(site.document);
+      const current = yield* _parseSiteDocument(site.document);
 
       const now = yield* nowIso;
       yield* db.prepare("DELETE FROM site_domains WHERE site_id = ?").bind(id).run();
@@ -420,7 +417,7 @@ export const makeSiteRepository = (
         .prepare(
           "UPDATE sites SET document = ?, custom_domain = NULL, updated_at = ? WHERE id = ? AND owner_id = ?",
         )
-        .bind(_serialize(updated), now, id, requester.id)
+        .bind(encodeSiteJson(updated), now, id, requester.id)
         .run();
       return updated;
     }),

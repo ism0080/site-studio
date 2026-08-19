@@ -6,8 +6,8 @@ import * as Effect from "effect/Effect";
 import { SitesBucket } from "./src/site/bucket.ts";
 import { Database } from "./src/site/database.ts";
 import { BuildQueue } from "./src/publish/BuildQueue.ts";
-import ApiWorker from "./src/worker.ts";
-import WwwWorker from "./src/www.ts";
+import ApiWorker from "./src/apiWorker.ts";
+import WwwWorker from "./src/wwwWorker.ts";
 import BuildWorker from "./src/buildWorker.ts";
 
 const Providers = Cloudflare.providers();
