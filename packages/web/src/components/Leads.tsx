@@ -1,28 +1,22 @@
 import "./Leads.css";
 import { useQuery } from "@tanstack/react-query";
+import { Link, useParams } from "@tanstack/react-router";
 import type { Site } from "../siteTypes.ts";
 import { readableErrorMessage as readableErrorMessageFrom } from "../lib/formatting.ts";
 import { leadQueries, useDeleteLead } from "../lib/apiQueries.ts";
 import { UsersIcon, ArrowRightIcon } from "@phosphor-icons/react";
 
-export default function Leads({
-  site,
-  online,
-  onEdit,
-}: {
-  site: Site;
-  online: boolean | null;
-  onEdit: () => void;
-}) {
-  const siteId = online ? site.id : undefined;
+export default function Leads({ site, online }: { site: Site; online: boolean }) {
+  const { siteId } = useParams({ from: "/_auth/sites/$siteId" });
+  const siteIdForQuery = online ? site.id : undefined;
   const {
     data: leads = [],
     error,
     isFetching,
     refetch,
   } = useQuery({
-    ...leadQueries.list(siteId ?? ""),
-    enabled: !!siteId,
+    ...leadQueries.list(siteIdForQuery ?? ""),
+    enabled: !!siteIdForQuery,
   });
   const deleteLead = useDeleteLead();
   const errorMessage = deleteLead.error
@@ -39,9 +33,9 @@ export default function Leads({
         </div>
         <h2>Your leads, in one place</h2>
         <p>When visitors reach out through your site, their inquiries will appear here.</p>
-        <button className="dark-button" onClick={onEdit}>
+        <Link to="/sites/$siteId/editor" params={{ siteId }} className="dark-button">
           Customize your site <ArrowRightIcon size={16} />
-        </button>
+        </Link>
       </div>
     );
   }
@@ -71,9 +65,9 @@ export default function Leads({
           </div>
           <h2>No leads yet</h2>
           <p>Add a contact form to your site — messages from visitors will show up here.</p>
-          <button className="dark-button" onClick={onEdit}>
+          <Link to="/sites/$siteId/editor" params={{ siteId }} className="dark-button">
             Open editor <ArrowRightIcon size={16} />
-          </button>
+          </Link>
         </div>
       ) : (
         <div data-slot="lead-list">

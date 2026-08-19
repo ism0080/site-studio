@@ -14,6 +14,7 @@
     "@site-studio/api": "workspace:*",
     "@site-studio/site-template": "workspace:*",
     "@tanstack/react-query": "^5.101.4",
+    "@tanstack/react-router": "^1.170.30",
     "@vitejs/plugin-react": "latest",
     "@xstate/react": "^6.1.0",
     "better-auth": "^1.6.26",
@@ -21,9 +22,11 @@
     "react": "latest",
     "react-dom": "latest",
     "vite": "latest",
-    "xstate": "^5.32.5"
+    "xstate": "^5.32.5",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@tanstack/router-plugin": "^1.168.33",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "msw": "^2.15.0",

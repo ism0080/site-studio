@@ -4,7 +4,6 @@ import type { User } from "better-auth";
 import type {
   Agency,
   CreateSitePayload,
-  Device,
   DomainSetup,
   Member,
   MemberInput,
@@ -12,7 +11,6 @@ import type {
   SaveState,
   Site,
   Template,
-  View,
 } from "../siteTypes.ts";
 import { fromApiSite, toApiSite } from "./siteApi.ts";
 import { readableErrorMessage } from "./formatting.ts";
@@ -23,7 +21,6 @@ export interface AppApi {
   getSession: () => Promise<{ user: User | null }>;
   signIn: () => void;
   signOut: () => Promise<void>;
-  listSites: () => Promise<readonly Site[]>;
   createSite: (payload: CreateSitePayload) => Promise<Site>;
   updateSite: (site: Site) => Promise<Site>;
   publishSite: (id: string) => Promise<PublishResult>;
@@ -46,15 +43,11 @@ export type AppMachineContext = {
   api: AppApi;
   user: User | null;
   authLoading: boolean;
-  active: View;
   site: Site;
   persisted: boolean;
-  online: boolean | null;
   saveState: SaveState;
   publishing: boolean;
   banner: AppBanner | null;
-  device: Device;
-  sites: readonly Site[];
   domain: string;
   setup: DomainSetup | null;
   domainError: string | null;
@@ -69,10 +62,8 @@ export type AppMachineContext = {
 export type AppMachineEvent =
   | { type: "SIGN_IN" }
   | { type: "SIGN_OUT" }
-  | { type: "SET_VIEW"; view: View }
-  | { type: "SET_DEVICE"; device: Device }
+  | { type: "LOAD_SITE"; id: string }
   | { type: "UPDATE"; site: Site }
-  | { type: "SELECT_SITE"; id: string }
   | { type: "SELECT_TEMPLATE"; template: Template }
   | { type: "PUBLISH" }
   | { type: "DISMISS_BANNER" }
@@ -92,8 +83,8 @@ const _sessionActor = fromPromise<{ user: User | null }, { api: AppApi }>(({ inp
   input.api.getSession(),
 );
 
-const _sitesActor = fromPromise<readonly Site[], { api: AppApi }>(({ input }) =>
-  input.api.listSites(),
+const _loadSiteActor = fromPromise<Site, { api: AppApi; id: string }>(({ input }) =>
+  input.api.fetchSite(input.id),
 );
 
 const _ensurePersisted = async (api: AppApi, site: Site, persisted: boolean) => {
@@ -199,7 +190,7 @@ export const appMachine = setup({
   },
   actors: {
     session: _sessionActor,
-    sites: _sitesActor,
+    loadSite: _loadSiteActor,
     save: _saveActor,
     publish: _publishActor,
     domainConnect: _domainConnectActor,
@@ -214,15 +205,11 @@ export const appMachine = setup({
     api: input,
     user: null,
     authLoading: true,
-    active: "overview",
     site: initialSite,
     persisted: false,
-    online: null,
     saveState: "idle",
     publishing: false,
     banner: null,
-    device: "desktop",
-    sites: [],
     domain: "",
     setup: null,
     domainError: null,
@@ -276,41 +263,51 @@ export const appMachine = setup({
             void context.api.signOut();
           },
         },
+        DISMISS_BANNER: {
+          actions: assign({ banner: null }),
+        },
       },
       states: {
-        sites: {
-          initial: "loading",
+        // The router owns the selected site id; this state swaps the editor's
+        // working copy whenever the URL's $siteId changes.
+        siteLoad: {
+          initial: "idle",
           states: {
+            idle: {
+              on: {
+                LOAD_SITE: {
+                  target: "loading",
+                },
+              },
+            },
             loading: {
               invoke: {
-                src: "sites",
-                input: ({ context }) => ({ api: context.api }),
+                src: "loadSite",
+                input: ({ context, event }) => {
+                  // Only LOAD_SITE transitions into loading, so the id is present here.
+                  const id = event.type === "LOAD_SITE" ? event.id : context.site.id;
+                  return { api: context.api, id };
+                },
                 onDone: {
-                  target: "loaded",
+                  target: "idle",
                   actions: assign({
-                    sites: ({ event }) => event.output,
-                    online: true,
-                    site: ({ context, event }) => {
-                      const first = event.output[0];
-                      if (first === undefined) return context.site;
-                      return context.persisted ? context.site : fromApiSite(first);
-                    },
-                    persisted: ({ context, event }) => context.persisted || event.output.length > 0,
+                    site: ({ event }) => event.output,
+                    persisted: true,
+                    saveState: "idle",
                   }),
                 },
                 onError: {
-                  target: "loaded",
+                  target: "idle",
                   actions: assign({
-                    online: false,
-                    banner: _bannerFor(
-                      "error",
-                      "API unreachable — showing local demo data. Start the API and reload to go live.",
-                    ),
+                    banner: ({ event }) =>
+                      _bannerFor(
+                        "error",
+                        `Couldn't load site: ${readableErrorMessage(event.error)}`,
+                      ),
                   }),
                 },
               },
             },
-            loaded: {},
           },
         },
         editor: {
@@ -326,7 +323,6 @@ export const appMachine = setup({
                   target: "dirty",
                   actions: assign({
                     site: ({ context, event }) => _applyTemplate(context.site, event.template),
-                    active: "editor",
                   }),
                 },
                 PUBLISH: {
@@ -345,7 +341,6 @@ export const appMachine = setup({
                   target: "dirty",
                   actions: assign({
                     site: ({ context, event }) => _applyTemplate(context.site, event.template),
-                    active: "editor",
                   }),
                 },
                 PUBLISH: {
@@ -455,14 +450,14 @@ export const appMachine = setup({
               on: {
                 UPDATE: { target: "pending" },
                 SELECT_TEMPLATE: { target: "pending" },
-                SELECT_SITE: { target: "pending" },
+                LOAD_SITE: { target: "pending" },
               },
             },
             pending: {
               on: {
                 UPDATE: { target: "pending" },
                 SELECT_TEMPLATE: { target: "pending" },
-                SELECT_SITE: { target: "pending" },
+                LOAD_SITE: { target: "pending" },
               },
               after: {
                 150: "posting",
@@ -571,34 +566,6 @@ export const appMachine = setup({
                   target: "idle",
                   actions: assign({
                     domainError: ({ event }) => readableErrorMessage(event.error),
-                  }),
-                },
-              },
-            },
-          },
-        },
-        view: {
-          initial: "shown",
-          states: {
-            shown: {
-              on: {
-                SET_VIEW: {
-                  actions: assign({ active: ({ event }) => event.view }),
-                },
-                SET_DEVICE: {
-                  actions: assign({ device: ({ event }) => event.device }),
-                },
-                DISMISS_BANNER: {
-                  actions: assign({ banner: null }),
-                },
-                SELECT_SITE: {
-                  actions: assign({
-                    site: ({ context, event }) => {
-                      const next = context.sites.find((s) => s.id === event.id);
-                      return next === undefined ? context.site : fromApiSite(next);
-                    },
-                    persisted: true,
-                    saveState: "idle",
                   }),
                 },
               },

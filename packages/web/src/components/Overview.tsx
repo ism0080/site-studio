@@ -1,14 +1,12 @@
 import "./Overview.css";
+import { Link, useParams } from "@tanstack/react-router";
 import type { Site } from "../siteTypes.ts";
 import { buildStatusLabel } from "../lib/formatting.ts";
 import { ArrowRightIcon } from "@phosphor-icons/react";
 
-interface OverviewProps {
-  onEdit: () => void;
-  site: Site;
-}
+export default function Overview({ site }: { site: Site }) {
+  const { siteId } = useParams({ from: "/_auth/sites/$siteId" });
 
-export default function Overview({ onEdit, site }: OverviewProps) {
   return (
     <div data-component="overview">
       <section data-slot="stat-grid">
@@ -30,9 +28,13 @@ export default function Overview({ onEdit, site }: OverviewProps) {
           <h2>Keep building your presence</h2>
         </div>
         <div>
-          <button data-component="button" onClick={onEdit}>
+          <Link
+            to="/sites/$siteId/editor"
+            params={{ siteId }}
+            data-component="button"
+          >
             Open editor <ArrowRightIcon data-slot="icon" />
-          </button>
+          </Link>
           <div data-slot="site-meta">
             <span>Edited {site.lastSaved}</span>
           </div>
