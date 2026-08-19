@@ -14,6 +14,7 @@ import SignInScreen from "./components/SignInScreen.tsx";
 import { appMachine } from "./lib/appMachine.ts";
 import { api, liveUrlFor } from "./lib/api.ts";
 import { authClient } from "./lib/auth.ts";
+import { postPreview } from "./lib/preview.ts";
 import {
   accessQueries,
   meQueries,
@@ -59,6 +60,7 @@ export default function App() {
       removeDomain: (id) => removeDomain.mutateAsync(id),
       inviteMember: (siteId, input) => inviteMember.mutateAsync({ siteId, input }),
       inviteAgency: (email) => inviteAgency.mutateAsync(email),
+      preview: (site) => postPreview(site),
     },
   });
 
@@ -78,6 +80,7 @@ export default function App() {
     accessError,
     adminEmail,
     adminError,
+    previewRevision,
   } = snapshot.context;
   const domainBusy =
     snapshot.matches({ ready: { domain: "connecting" } }) ||
@@ -194,6 +197,7 @@ export default function App() {
             online={online}
             saveState={saveState}
             device={device}
+            previewRevision={previewRevision}
             readOnly={!canEdit}
             manager={isFull}
             onDevice={(d) => send({ type: "SET_DEVICE", device: d })}

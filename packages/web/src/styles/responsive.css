@@ -41,9 +41,6 @@
   [data-component="editor-panel"] {
     width: 300px;
   }
-  .public-site {
-    min-width: 590px;
-  }
 }
 @media (max-width: 650px) {
   [data-component="header"] {
@@ -113,9 +110,6 @@
   }
   [data-component="preview"] {
     padding: 20px 12px;
-  }
-  .public-site {
-    min-width: 590px;
   }
   .template-grid {
     grid-template-columns: 1fr;

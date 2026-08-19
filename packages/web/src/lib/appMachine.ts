@@ -32,6 +32,7 @@ export interface AppApi {
   removeDomain: (id: string) => Promise<Site>;
   inviteMember: (siteId: string, input: MemberInput) => Promise<Member>;
   inviteAgency: (email: string) => Promise<Agency>;
+  preview: (site: Site) => Promise<void>;
 }
 
 export type Banner = { kind: "error" | "success"; message: string };
@@ -59,6 +60,7 @@ export type AppMachineContext = {
   accessError: string | null;
   adminEmail: string;
   adminError: string | null;
+  previewRevision: number;
 };
 
 export type AppMachineEvent =
@@ -167,6 +169,10 @@ const _adminInviteActor = fromPromise<void, { api: AppApi; email: string }>(asyn
   await input.api.inviteAgency(input.email);
 });
 
+const _previewActor = fromPromise<void, { api: AppApi; site: Site }>(async ({ input }) => {
+  await input.api.preview(input.site);
+});
+
 const _applyTemplate = (site: Site, template: Template): Site => ({
   ...site,
   templateId: template.id,
@@ -198,6 +204,7 @@ export const appMachine = setup({
     domainRemove: _domainRemoveActor,
     accessInvite: _accessInviteActor,
     adminInvite: _adminInviteActor,
+    preview: _previewActor,
   },
 }).createMachine({
   context: ({ input }): AppMachineContext => ({
@@ -221,6 +228,7 @@ export const appMachine = setup({
     accessError: null,
     adminEmail: "",
     adminError: null,
+    previewRevision: 0,
   }),
   initial: "checking",
   states: {
@@ -420,6 +428,41 @@ export const appMachine = setup({
                       _bannerFor("error", `Publish failed: ${errorMessage(event.error)}`),
                   }),
                 },
+              },
+            },
+          },
+        },
+        preview: {
+          initial: "posting",
+          states: {
+            posting: {
+              invoke: {
+                src: "preview",
+                input: ({ context }) => ({ api: context.api, site: context.site }),
+                onDone: {
+                  target: "idle",
+                  actions: assign({
+                    previewRevision: ({ context }) => context.previewRevision + 1,
+                  }),
+                },
+                onError: { target: "idle" },
+              },
+            },
+            idle: {
+              on: {
+                UPDATE: { target: "pending" },
+                SELECT_TEMPLATE: { target: "pending" },
+                SELECT_SITE: { target: "pending" },
+              },
+            },
+            pending: {
+              on: {
+                UPDATE: { target: "pending" },
+                SELECT_TEMPLATE: { target: "pending" },
+                SELECT_SITE: { target: "pending" },
+              },
+              after: {
+                150: "posting",
               },
             },
           },

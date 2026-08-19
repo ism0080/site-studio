@@ -3,18 +3,26 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": {
+      "bun": "./src/render.tsx",
+      "node": "./dist/render.mjs",
+      "default": "./dist/render.mjs"
+    }
+  },
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "check": "astro check",
+    "build": "bun build ./src/render.tsx --outfile ./dist/render.mjs --external react --external react-dom --external react/jsx-runtime --external react/jsx-dev-runtime --format esm --target node",
     "render": "bun run scripts/render.mjs",
-    "publish": "bun run scripts/publish.mjs"
+    "publish": "bun run scripts/publish.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "astro": "^7.2.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.10",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
     "typescript": "^5.9.3"
   }
 }

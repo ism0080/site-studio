@@ -8,6 +8,7 @@ export default function Editor({
   online,
   saveState,
   device,
+  previewRevision,
   readOnly,
   manager,
   onDevice,
@@ -25,6 +26,7 @@ export default function Editor({
   online: boolean | null;
   saveState: SaveState;
   device: Device;
+  previewRevision: number;
   readOnly: boolean;
   manager: boolean;
   onDevice: (device: Device) => void;
@@ -71,7 +73,7 @@ export default function Editor({
             </button>
           </div>
         </div>
-        <Preview site={site} device={device} />
+        <Preview device={device} revision={previewRevision} />
       </div>
     </div>
   );

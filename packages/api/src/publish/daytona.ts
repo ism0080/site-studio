@@ -17,8 +17,8 @@ import { BuildError, type BuildResult } from "./BuildRunner.ts";
  *   - POST {toolboxProxyUrl}/{id}/files/bulk-upload  (multipart)
  *   - POST {toolboxProxyUrl}/{id}/process/execute
  *   - DELETE /sandbox/{id}
- * The sandbox runs the site-template `publish.mjs --upload`, which builds the
- * site with Astro and uploads the static output to R2.
+ * The sandbox runs the site-template `publish.mjs --upload`, which renders the
+ * site document to static HTML and uploads the output to R2.
  */
 
 const EnvVars = Schema.Record(Schema.String, Schema.String);

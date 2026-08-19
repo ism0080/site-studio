@@ -1,7 +1,0 @@
----
-import SiteLayout from "../components/SiteLayout.astro"
-import { site } from "../site.data.ts"
-
-const page = site.pages.find((p) => p.slug === "/") ?? site.pages[0]
----
-<SiteLayout site={site} page={page} />

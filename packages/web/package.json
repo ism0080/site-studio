@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "bun run --filter @site-studio/site-template build && vite",
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
@@ -12,6 +12,7 @@
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
     "@site-studio/api": "workspace:*",
+    "@site-studio/site-template": "workspace:*",
     "@tanstack/react-query": "^5.101.4",
     "@vitejs/plugin-react": "latest",
     "@xstate/react": "^6.1.0",
