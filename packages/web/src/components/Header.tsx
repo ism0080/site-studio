@@ -6,13 +6,14 @@ import { buildStatusLabel } from "../lib/api.ts";
 import { ArrowRightIcon, ArrowSquareOutIcon } from "@phosphor-icons/react";
 
 const HEADINGS = {
-  overview: ["Good morning, Jordan", "Here’s what’s happening with your sites."],
   editor: ["Edit your site", "Make updates, see them live."],
   templates: ["Templates", "A starting point for every kind of business."],
   leads: ["Leads", "Keep track of new opportunities."],
   access: ["Access", "Invite clients to edit and publish their site."],
   admin: ["Admin", "Manage the agencies on your platform."],
-} satisfies Record<View, [string, string]>;
+} satisfies Partial<Record<View, [string, string]>>;
+
+const OVERVIEW_SUBTITLE = "Here’s what’s happening with your sites.";
 
 export default function Header({
   active,
@@ -37,7 +38,13 @@ export default function Header({
   onPublish: () => void;
   onSelectSite: (id: string) => void;
 }) {
-  const [title, subtitle] = HEADINGS[active] || HEADINGS.overview;
+  const hour = new Date().getHours();
+  const period = hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
+  const greeting = (user.name ?? "there").trim().split(/\s+/)[0];
+  const [title, subtitle] =
+    active === "overview"
+      ? [`Good ${period}, ${greeting}`, OVERVIEW_SUBTITLE]
+      : HEADINGS[active];
   const inEditor = active === "editor";
   return (
     <header data-component="header">
