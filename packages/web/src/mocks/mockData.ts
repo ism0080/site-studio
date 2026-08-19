@@ -1,12 +1,14 @@
 import { LeadId, OwnerId, SiteId } from "@site-studio/api/contract";
 import type { Agency, Lead, Me, Member, Site } from "@site-studio/api/contract";
 
+/** The signed-in mock user's "me" profile (admin role). */
 export const mockMe: Me = {
   id: "user_mock_admin",
   email: "admin@aquira.cloud",
   role: "admin",
 };
 
+/** The mock better-auth user returned by the session endpoint. */
 export const mockUser = {
   id: mockMe.id,
   name: "Jordan",
@@ -157,7 +159,7 @@ export const seedLeads: Lead[] = [
 
 export const seedMembers: Member[] = [
   {
-    siteId: "site_aurora_01",
+    siteId: SiteId.make("site_aurora_01"),
     email: "client@example.com",
     canEdit: true,
     canPublish: false,
@@ -166,7 +168,7 @@ export const seedMembers: Member[] = [
     createdAt: _now(),
   },
   {
-    siteId: "site_aurora_01",
+    siteId: SiteId.make("site_aurora_01"),
     email: "invitee@example.com",
     canEdit: false,
     canPublish: false,

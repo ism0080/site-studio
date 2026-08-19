@@ -1,5 +1,5 @@
 import "./Editor.css";
-import type { Device, DomainSetup, SaveState, Site } from "../types.ts";
+import type { Device, DomainSetup, SaveState, Site } from "../siteTypes.ts";
 import EditorPanel from "./EditorPanel.tsx";
 import Preview from "./Preview.tsx";
 
@@ -10,7 +10,7 @@ export default function Editor({
   device,
   previewRevision,
   readOnly,
-  manager,
+  fullAccess,
   onDevice,
   onUpdate,
   domain,
@@ -28,7 +28,7 @@ export default function Editor({
   device: Device;
   previewRevision: number;
   readOnly: boolean;
-  manager: boolean;
+  fullAccess: boolean;
   onDevice: (device: Device) => void;
   onUpdate: (site: Site) => void;
   domain: string;
@@ -56,7 +56,7 @@ export default function Editor({
         onDomainVerify={onDomainVerify}
         onDomainRemove={onDomainRemove}
         readOnly={readOnly}
-        manager={manager}
+        fullAccess={fullAccess}
       />
       <div data-slot="preview-area">
         <div data-slot="preview-toolbar">

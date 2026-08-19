@@ -1,19 +1,20 @@
-import type { SectionMeta, SectionType } from "../types.ts";
+import type { SectionMeta, SectionType } from "../siteTypes.ts";
 
 let idCounter = 0;
 
-export function nextId(prefix: string): string {
+export function nextPrefixedId(prefix: string): string {
   idCounter += 1;
   return `${prefix}_${Date.now()}_${idCounter}`;
 }
 
+/** Registry of every section type: label, hint, and a factory that creates a default section. */
 export const SECTION_TYPES = {
   hero: {
     label: "Hero",
     sub: () => "Intro + call to action",
     hint: "Intro + call to action",
     create: () => ({
-      id: nextId("block_hero"),
+      id: nextPrefixedId("block_hero"),
       type: "hero",
       props: {
         eyebrow: "Welcome",
@@ -30,23 +31,23 @@ export const SECTION_TYPES = {
     sub: (props) => ("items" in props ? `${props.items.length} items` : "Services"),
     hint: "A list of services",
     create: () => ({
-      id: nextId("block_services"),
+      id: nextPrefixedId("block_services"),
       type: "services",
       props: {
         title: "How we can help",
         items: [
           {
-            id: nextId("service"),
+            id: nextPrefixedId("service"),
             title: "First service",
             description: "Describe what you offer.",
           },
           {
-            id: nextId("service"),
+            id: nextPrefixedId("service"),
             title: "Second service",
             description: "Describe what you offer.",
           },
           {
-            id: nextId("service"),
+            id: nextPrefixedId("service"),
             title: "Third service",
             description: "Describe what you offer.",
           },
@@ -59,7 +60,7 @@ export const SECTION_TYPES = {
     sub: () => "Rich text content",
     hint: "Rich text content",
     create: () => ({
-      id: nextId("block_about"),
+      id: nextPrefixedId("block_about"),
       type: "about",
       props: {
         eyebrow: "A little about us",
@@ -73,19 +74,19 @@ export const SECTION_TYPES = {
     sub: (props) => ("items" in props ? `${props.items.length} items` : "Testimonials"),
     hint: "Quotes from your clients",
     create: () => ({
-      id: nextId("block_testimonials"),
+      id: nextPrefixedId("block_testimonials"),
       type: "testimonials",
       props: {
         title: "Kind words from clients",
         items: [
           {
-            id: nextId("testimonial"),
+            id: nextPrefixedId("testimonial"),
             quote: "Working with this team was a genuine delight.",
             author: "Maya Chen",
             role: "Founder, Field Notes",
           },
           {
-            id: nextId("testimonial"),
+            id: nextPrefixedId("testimonial"),
             quote: "Clear, kind, and incredibly skilled throughout.",
             author: "Jon Bell",
             role: "Creative Director",
@@ -96,4 +97,5 @@ export const SECTION_TYPES = {
   },
 } satisfies Record<SectionType, SectionMeta>;
 
+/** Order in which section types appear in the "add a section" picker. */
 export const SECTION_ORDER: SectionType[] = ["hero", "services", "about", "testimonials"];

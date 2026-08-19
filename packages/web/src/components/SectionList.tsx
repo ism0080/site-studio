@@ -1,4 +1,4 @@
-import type { Page, Site } from "../types.ts";
+import type { Page, Site } from "../siteTypes.ts";
 import { SECTION_ORDER, SECTION_TYPES } from "../data/sections.ts";
 import { addSection, findSection, moveSection, removeSection } from "../lib/siteUpdates.ts";
 import SectionTitle from "./SectionTitle.tsx";
@@ -20,16 +20,16 @@ export default function SectionList({
     <>
       <SectionTitle>Homepage sections</SectionTitle>
 
-      {page.sections.map((block, i) => {
-        const meta = SECTION_TYPES[block.type];
+      {page.sections.map((section, i) => {
+        const meta = SECTION_TYPES[section.type];
         return (
-          <div data-slot="section-card" key={block.id}>
+          <div data-slot="section-card" key={section.id}>
             <div data-slot="drag" aria-hidden="true">
               ⠿
             </div>
             <div data-slot="section-card-body">
-              <strong>{meta ? meta.label : block.type}</strong>
-              <small>{SECTION_TYPES[block.type].sub(block.props)}</small>
+              <strong>{meta ? meta.label : section.type}</strong>
+              <small>{SECTION_TYPES[section.type].sub(section.props)}</small>
             </div>
             <div data-slot="section-actions">
               <button
@@ -37,7 +37,7 @@ export default function SectionList({
                 className="section-btn"
                 aria-label="Move section up"
                 disabled={i === 0}
-                onClick={() => onUpdate(moveSection(site, page.id, block.id, -1))}
+                onClick={() => onUpdate(moveSection(site, page.id, section.id, -1))}
               >
                 ↑
               </button>
@@ -46,7 +46,7 @@ export default function SectionList({
                 className="section-btn"
                 aria-label="Move section down"
                 disabled={i === page.sections.length - 1}
-                onClick={() => onUpdate(moveSection(site, page.id, block.id, 1))}
+                onClick={() => onUpdate(moveSection(site, page.id, section.id, 1))}
               >
                 ↓
               </button>
@@ -54,7 +54,7 @@ export default function SectionList({
                 type="button"
                 className="section-btn remove"
                 aria-label="Remove section"
-                onClick={() => onUpdate(removeSection(site, page.id, block.id))}
+                onClick={() => onUpdate(removeSection(site, page.id, section.id))}
               >
                 ×
               </button>

@@ -1,5 +1,5 @@
 import { OwnerId, SiteId } from "@site-studio/api/contract";
-import type { Site, Template } from "../types.ts";
+import type { Site, Template } from "../siteTypes.ts";
 
 export const initialSite: Site = {
   id: SiteId.make("site_aurora_01"),
@@ -77,7 +77,7 @@ export const initialSite: Site = {
   ],
 };
 
-export const templates: Template[] = [
+export const siteTemplates: Template[] = [
   {
     id: "editorial-studio",
     name: "Editorial Studio",
@@ -110,4 +110,4 @@ export const templates: Template[] = [
   },
 ];
 
-export const FONTS: string[] = ["Manrope", "Fraunces", "Space Grotesk", "Inter", "DM Sans", "Lora"];
+export const templateFonts: string[] = ["Manrope", "Fraunces", "Space Grotesk", "Inter", "DM Sans", "Lora"];

@@ -12,7 +12,7 @@ import Admin from "./components/Admin.tsx";
 import Editor from "./components/Editor.tsx";
 import SignInScreen from "./components/SignInScreen.tsx";
 import { appMachine } from "./lib/appMachine.ts";
-import { api, liveUrlFor } from "./lib/api.ts";
+import { siteApi, liveUrlFor } from "./lib/siteApi.ts";
 import { authClient } from "./lib/auth.ts";
 import { postPreview } from "./lib/preview.ts";
 import {
@@ -27,7 +27,7 @@ import {
   useSetDomain,
   useUpdateSite,
   useVerifyDomain,
-} from "./lib/queries.ts";
+} from "./lib/apiQueries.ts";
 import { XIcon } from "@phosphor-icons/react";
 
 export default function App() {
@@ -50,7 +50,7 @@ export default function App() {
         await authClient.signOut();
         window.location.reload();
       },
-      listSites: () => api.listSites(),
+      listSites: () => siteApi.listSites(),
       createSite: (payload) => createSite.mutateAsync(payload),
       updateSite: (site) => updateSiteMutation.mutateAsync(site),
       publishSite: (id) => publishSite.mutateAsync(id),
@@ -198,7 +198,7 @@ export default function App() {
             device={device}
             previewRevision={previewRevision}
             readOnly={!canEdit}
-            manager={isFull}
+            fullAccess={isFull}
             onDevice={(d) => send({ type: "SET_DEVICE", device: d })}
             onUpdate={(next) => send({ type: "UPDATE", site: next })}
             domain={snapshot.context.domain}

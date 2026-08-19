@@ -1,8 +1,8 @@
 import "./Leads.css";
 import { useQuery } from "@tanstack/react-query";
-import type { Site } from "../types.ts";
-import { errorMessage as errorMessageFrom } from "../lib/api.ts";
-import { leadQueries, useDeleteLead } from "../lib/queries.ts";
+import type { Site } from "../siteTypes.ts";
+import { readableErrorMessage as readableErrorMessageFrom } from "../lib/formatting.ts";
+import { leadQueries, useDeleteLead } from "../lib/apiQueries.ts";
 import { UsersIcon, ArrowRightIcon } from "@phosphor-icons/react";
 
 export default function Leads({
@@ -26,9 +26,9 @@ export default function Leads({
   });
   const deleteLead = useDeleteLead();
   const errorMessage = deleteLead.error
-    ? errorMessageFrom(deleteLead.error)
+    ? readableErrorMessageFrom(deleteLead.error)
     : error
-      ? errorMessageFrom(error)
+      ? readableErrorMessageFrom(error)
       : null;
 
   if (!site.id || !online) {

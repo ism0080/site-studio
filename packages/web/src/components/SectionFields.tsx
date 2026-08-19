@@ -5,8 +5,8 @@ import type {
   ServicesSection,
   Site,
   TestimonialsSection,
-} from "../types.ts";
-import { nextId } from "../data/sections.ts";
+} from "../siteTypes.ts";
+import { nextPrefixedId } from "../data/sections.ts";
 import {
   addSectionItem,
   removeSectionItem,
@@ -166,7 +166,7 @@ export function ServicesFields({
         onClick={() =>
           onUpdate(
             addSectionItem(site, page.id, services.id, {
-              id: nextId("service"),
+              id: nextPrefixedId("service"),
               title: "New service",
               description: "",
             }),
@@ -310,7 +310,7 @@ export function TestimonialsFields({
         onClick={() =>
           onUpdate(
             addSectionItem(site, page.id, testimonials.id, {
-              id: nextId("testimonial"),
+              id: nextPrefixedId("testimonial"),
               quote: "",
               author: "",
               role: "",

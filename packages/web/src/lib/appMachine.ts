@@ -13,8 +13,9 @@ import type {
   Site,
   Template,
   View,
-} from "../types.ts";
-import { errorMessage, fromApiSite, toApiSite } from "./api.ts";
+} from "../siteTypes.ts";
+import { fromApiSite, toApiSite } from "./siteApi.ts";
+import { readableErrorMessage } from "./formatting.ts";
 import { initialSite } from "../data/site.ts";
 
 /** App-shell operations the machine orchestrates (injected by the caller). */
@@ -35,8 +36,10 @@ export interface AppApi {
   preview: (site: Site) => Promise<void>;
 }
 
-export type Banner = { kind: "error" | "success"; message: string };
+/** Top-of-app alert banner (error or success) with the message to show. */
+export type AppBanner = { kind: "error" | "success"; message: string };
 
+/** Invite permission toggles (edit / publish / leads) for a site member. */
 export type AccessToggles = { canEdit: boolean; canPublish: boolean; canLeads: boolean };
 
 export type AppMachineContext = {
@@ -49,7 +52,7 @@ export type AppMachineContext = {
   online: boolean | null;
   saveState: SaveState;
   publishing: boolean;
-  banner: Banner | null;
+  banner: AppBanner | null;
   device: Device;
   sites: readonly Site[];
   domain: string;
@@ -183,7 +186,7 @@ const _applyTemplate = (site: Site, template: Template): Site => ({
   },
 });
 
-const _bannerFor = (kind: Banner["kind"], message: string): Banner => ({ kind, message });
+const _bannerFor = (kind: AppBanner["kind"], message: string): AppBanner => ({ kind, message });
 
 /** App-shell state: auth, sites, editor save/publish, and custom-domain flow. */
 export const appMachine = setup({
@@ -381,7 +384,7 @@ export const appMachine = setup({
                   actions: assign({
                     saveState: "error",
                     banner: ({ event }) =>
-                      _bannerFor("error", `Save failed: ${errorMessage(event.error)}`),
+                      _bannerFor("error", `Save failed: ${readableErrorMessage(event.error)}`),
                   }),
                 },
               },
@@ -425,7 +428,7 @@ export const appMachine = setup({
                   actions: assign({
                     publishing: false,
                     banner: ({ event }) =>
-                      _bannerFor("error", `Publish failed: ${errorMessage(event.error)}`),
+                      _bannerFor("error", `Publish failed: ${readableErrorMessage(event.error)}`),
                   }),
                 },
               },
@@ -507,7 +510,7 @@ export const appMachine = setup({
                 onError: {
                   target: "idle",
                   actions: assign({
-                    domainError: ({ event }) => errorMessage(event.error),
+                    domainError: ({ event }) => readableErrorMessage(event.error),
                   }),
                 },
               },
@@ -541,7 +544,7 @@ export const appMachine = setup({
                 onError: {
                   target: "pending",
                   actions: assign({
-                    domainError: ({ event }) => errorMessage(event.error),
+                    domainError: ({ event }) => readableErrorMessage(event.error),
                   }),
                 },
               },
@@ -567,7 +570,7 @@ export const appMachine = setup({
                 onError: {
                   target: "idle",
                   actions: assign({
-                    domainError: ({ event }) => errorMessage(event.error),
+                    domainError: ({ event }) => readableErrorMessage(event.error),
                   }),
                 },
               },
@@ -644,7 +647,7 @@ export const appMachine = setup({
                 onError: {
                   target: "idle",
                   actions: assign({
-                    accessError: ({ event }) => errorMessage(event.error),
+                    accessError: ({ event }) => readableErrorMessage(event.error),
                   }),
                 },
               },
@@ -680,7 +683,7 @@ export const appMachine = setup({
                 onError: {
                   target: "idle",
                   actions: assign({
-                    adminError: ({ event }) => errorMessage(event.error),
+                    adminError: ({ event }) => readableErrorMessage(event.error),
                   }),
                 },
               },

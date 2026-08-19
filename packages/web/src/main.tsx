@@ -17,8 +17,8 @@ const queryClient = new QueryClient({
 // responses (src/mocks) instead of the real backend, so it runs offline.
 void (async () => {
   if (import.meta.env.VITE_MOCK_API) {
-    const { worker } = await import("./mocks/browser.ts");
-    await worker.start({ onUnhandledRequest: "bypass" });
+    const { mockWorker } = await import("./mocks/mockWorker.ts");
+    await mockWorker.start({ onUnhandledRequest: "bypass" });
   }
   createRoot(document.getElementById("root")!).render(
     <StrictMode>

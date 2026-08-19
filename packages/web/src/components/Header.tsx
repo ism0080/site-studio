@@ -1,8 +1,8 @@
 import "./Header.css";
 import type { User } from "better-auth";
-import type { Site, View } from "../types.ts";
+import type { Site, View } from "../siteTypes.ts";
 import Avatar from "./Avatar.tsx";
-import { buildStatusLabel } from "../lib/api.ts";
+import { buildStatusLabel } from "../lib/formatting.ts";
 import { ArrowRightIcon, ArrowSquareOutIcon } from "@phosphor-icons/react";
 
 const HEADINGS = {

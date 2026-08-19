@@ -13,7 +13,7 @@ import {
   type PublishResult,
   type SiteAccess,
 } from "@site-studio/api/contract";
-import { mockMe, mockUser, seedAgencies, seedLeads, seedMembers, seedSites } from "./data.ts";
+import { mockMe, mockUser, seedAgencies, seedLeads, seedMembers, seedSites } from "./mockData.ts";
 
 const DomainInput = Schema.Struct({ domain: Schema.String });
 
@@ -31,10 +31,11 @@ const _siteById = (id: string): Site | undefined => sites.find((s) => s.id === i
 const _siteNotFound = (id: string) =>
   HttpResponse.json({ _tag: "SiteNotFound", id }, { status: 404 });
 
-// The API contract (src/lib/sdk.ts) issues these requests to a same-origin
-// /api base, and better-auth issues /api/auth/* requests. MSW intercepts all
-// of them in the browser, so the web app runs fully offline with mock data.
-export const handlers: HttpHandler[] = [
+// The API contract (src/lib/siteApiHttpClient.ts) issues these requests to a
+// same-origin /api base, and better-auth issues /api/auth/* requests. MSW
+// intercepts all of them in the browser, so the web app runs fully offline with
+// mock data.
+export const mockApiHandlers: HttpHandler[] = [
   // --- Better Auth ---------------------------------------------------------
   http.get("/api/auth/get-session", () =>
     HttpResponse.json({
@@ -96,7 +97,11 @@ export const handlers: HttpHandler[] = [
       publishedAt: _now(),
       updatedAt: _now(),
     };
-    const result: PublishResult = { siteId: String(params.id), path: "/", publishedAt: _now() };
+    const result: PublishResult = {
+      siteId: SiteId.make(String(params.id)),
+      path: "/",
+      publishedAt: _now(),
+    };
     return HttpResponse.json(result);
   }),
   http.post("/api/sites/:id/domain", async ({ params, request }): Promise<Response> => {
@@ -140,7 +145,7 @@ export const handlers: HttpHandler[] = [
   http.post("/api/sites/:id/members", async ({ params, request }) => {
     const input = Schema.decodeUnknownSync(MemberInput)(await request.json());
     const member: Member = {
-      siteId: String(params.id),
+      siteId: SiteId.make(String(params.id)),
       email: input.email,
       canEdit: input.canEdit,
       canPublish: input.canPublish,

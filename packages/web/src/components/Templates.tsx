@@ -1,6 +1,6 @@
 import "./Templates.css";
-import type { Template } from "../types.ts";
-import { templates } from "../data/site.ts";
+import type { Template } from "../siteTypes.ts";
+import { siteTemplates } from "../data/site.ts";
 
 function TemplateArt({ template }: { template: Template }) {
   return (
@@ -36,7 +36,7 @@ export default function Templates({ onSelect }: { onSelect: (template: Template)
         </button>
       </div>
       <div data-slot="grid">
-        {templates.map((template) => (
+        {siteTemplates.map((template) => (
           <button data-slot="card" key={template.id} onClick={() => onSelect(template)}>
             <TemplateArt template={template} />
             <div data-slot="card-footer">

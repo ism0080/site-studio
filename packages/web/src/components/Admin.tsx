@@ -1,7 +1,7 @@
 import "./Access.css";
 import { useQuery } from "@tanstack/react-query";
-import { errorMessage as errorMessageFrom } from "../lib/api.ts";
-import { agencyQueries, useRemoveAgency } from "../lib/queries.ts";
+import { readableErrorMessage as readableErrorMessageFrom } from "../lib/formatting.ts";
+import { agencyQueries, useRemoveAgency } from "../lib/apiQueries.ts";
 
 export default function Admin({
   online,
@@ -27,7 +27,7 @@ export default function Admin({
     enabled: online === true,
   });
   const removeAgency = useRemoveAgency();
-  const errorMessage = error ? errorMessageFrom(error) : null;
+  const errorMessage = error ? readableErrorMessageFrom(error) : null;
 
   return (
     <div data-component="admin">

@@ -21,7 +21,8 @@ const _run = <A>(call: (c: ApiClient) => Effect.Effect<A, unknown, never>): Prom
   return clientPromise.then((c) => Effect.runPromise(call(c)));
 };
 
-export const sdk = {
+/** Raw HTTP client for the site-studio API contract (one method per endpoint). */
+export const siteApiHttpClient = {
   me: () => _run((c) => c.Me.me({})),
   listSites: () => _run((c) => c.Sites.list({})),
   getSite: (id: string) => _run((c) => c.Sites.get({ params: { id } })),

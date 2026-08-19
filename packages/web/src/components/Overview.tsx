@@ -1,6 +1,6 @@
 import "./Overview.css";
-import type { Site } from "../types.ts";
-import { buildStatusLabel } from "../lib/api.ts";
+import type { Site } from "../siteTypes.ts";
+import { buildStatusLabel } from "../lib/formatting.ts";
 import { ArrowRightIcon } from "@phosphor-icons/react";
 
 interface OverviewProps {

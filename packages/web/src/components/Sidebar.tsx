@@ -1,6 +1,6 @@
 import "./Sidebar.css";
 import type { User } from "better-auth";
-import type { View } from "../types.ts";
+import type { View } from "../siteTypes.ts";
 import Brand from "./Brand.tsx";
 import Avatar from "./Avatar.tsx";
 import {

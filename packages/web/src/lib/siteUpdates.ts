@@ -7,12 +7,18 @@ import type {
   Site,
   StringSettingKey,
   TestimonialItem,
-} from "../types.ts";
+} from "../siteTypes.ts";
 
+function _mapPage(site: Site, pageId: string, callback: (page: Page) => Page): Page[] {
+  return site.pages.map((page) => (page.id !== pageId ? page : callback(page)));
+}
+
+/** The page in a site whose slug matches, falling back to the first page. */
 export function findPage(site: Site, slug = "/"): Page {
   return site.pages.find((page) => page.slug === slug) || site.pages[0];
 }
 
+/** The first section of the given type on a page, or undefined if absent. */
 export function findSection<T extends SectionType>(
   page: Page,
   type: T,
@@ -22,14 +28,17 @@ export function findSection<T extends SectionType>(
   );
 }
 
+/** Returns a new site with the given business fields overridden. */
 export function updateBusiness(site: Site, patch: Partial<Business>): Site {
   return { ...site, business: { ...site.business, ...patch } };
 }
 
+/** Returns a new site with a string setting (e.g. accent, font) overridden. */
 export function updateSetting(site: Site, key: StringSettingKey, value: string): Site {
   return { ...site, settings: { ...site.settings, [key]: value } };
 }
 
+/** Returns a new site with analytics set to OneDollarStats, or cleared when siteId is null. */
 export function updateAnalytics(site: Site, siteId: string | null): Site {
   return {
     ...site,
@@ -40,14 +49,10 @@ export function updateAnalytics(site: Site, siteId: string | null): Site {
   };
 }
 
-function _mapPage(site: Site, pageId: string, callback: (page: Page) => Page): Page[] {
-  return site.pages.map((page) => (page.id !== pageId ? page : callback(page)));
-}
-
 export function updateSectionProp(
   site: Site,
   pageId: string,
-  blockId: string,
+  sectionId: string,
   key: string,
   value: string,
 ): Site {
@@ -56,7 +61,7 @@ export function updateSectionProp(
     pages: _mapPage(site, pageId, (page) => ({
       ...page,
       sections: page.sections.map((section) => {
-        if (section.id !== blockId) return section;
+        if (section.id !== sectionId) return section;
         // SAFETY: The callback replaces `props` wholesale with an object built
         // from the same section's props, so the section's shape is preserved;
         // only the targeted key is overridden.
@@ -69,7 +74,7 @@ export function updateSectionProp(
 export function updateSectionItem(
   site: Site,
   pageId: string,
-  blockId: string,
+  sectionId: string,
   itemId: string,
   key: string,
   value: string,
@@ -79,7 +84,7 @@ export function updateSectionItem(
     pages: _mapPage(site, pageId, (page) => ({
       ...page,
       sections: page.sections.map((section) => {
-        if (section.id !== blockId) return section;
+        if (section.id !== sectionId) return section;
         if (section.type === "services") {
           return {
             ...section,
@@ -111,7 +116,7 @@ export function updateSectionItem(
 export function addSectionItem(
   site: Site,
   pageId: string,
-  blockId: string,
+  sectionId: string,
   item: ServiceItem | TestimonialItem,
 ): Site {
   return {
@@ -119,7 +124,7 @@ export function addSectionItem(
     pages: _mapPage(site, pageId, (page) => ({
       ...page,
       sections: page.sections.map((section) => {
-        if (section.id !== blockId) return section;
+        if (section.id !== sectionId) return section;
         if (section.type === "services") {
           // SAFETY: the caller supplies a service item for service sections;
           // the union narrows at the call site, so casting is safe.
@@ -145,7 +150,7 @@ export function addSectionItem(
 export function removeSectionItem(
   site: Site,
   pageId: string,
-  blockId: string,
+  sectionId: string,
   itemId: string,
 ): Site {
   return {
@@ -153,7 +158,7 @@ export function removeSectionItem(
     pages: _mapPage(site, pageId, (page) => ({
       ...page,
       sections: page.sections.map((section) => {
-        if (section.id !== blockId) return section;
+        if (section.id !== sectionId) return section;
         if (section.type === "services") {
           return {
             ...section,
@@ -188,22 +193,22 @@ export function addSection(site: Site, pageId: string, section: Section): Site {
   };
 }
 
-export function removeSection(site: Site, pageId: string, blockId: string): Site {
+export function removeSection(site: Site, pageId: string, sectionId: string): Site {
   return {
     ...site,
     pages: _mapPage(site, pageId, (page) => ({
       ...page,
-      sections: page.sections.filter((section) => section.id !== blockId),
+      sections: page.sections.filter((section) => section.id !== sectionId),
     })),
   };
 }
 
-export function moveSection(site: Site, pageId: string, blockId: string, direction: number): Site {
+export function moveSection(site: Site, pageId: string, sectionId: string, direction: number): Site {
   return {
     ...site,
     pages: _mapPage(site, pageId, (page) => {
       const sections = [...page.sections];
-      const index = sections.findIndex((section) => section.id === blockId);
+      const index = sections.findIndex((section) => section.id === sectionId);
       const target = index + direction;
       if (index === -1 || target < 0 || target >= sections.length) return page;
       const [section] = sections.splice(index, 1);

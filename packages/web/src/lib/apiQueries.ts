@@ -1,6 +1,6 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { CreateSitePayload, DomainSetup, MemberInput, Site } from "../types.ts";
-import { api } from "./api.ts";
+import type { CreateSitePayload, DomainSetup, MemberInput, Site } from "../siteTypes.ts";
+import { siteApi } from "./siteApi.ts";
 
 // Query options factories (https://tkdodo.eu/blog/effective-react-query-keys):
 // collocate every key with a shape helper so related queries invalidate
@@ -13,7 +13,7 @@ export const meQueries = {
   me: () =>
     queryOptions({
       queryKey: meQueries.all(),
-      queryFn: api.me,
+      queryFn: siteApi.me,
     }),
 };
 
@@ -23,13 +23,13 @@ export const siteQueries = {
   list: () =>
     queryOptions({
       queryKey: siteQueries.lists(),
-      queryFn: api.listSites,
+      queryFn: siteApi.listSites,
     }),
   details: () => [...siteQueries.all(), "detail"] as const,
   detail: (id: string) =>
     queryOptions({
       queryKey: [...siteQueries.details(), id],
-      queryFn: () => api.getSite(id),
+      queryFn: () => siteApi.getSite(id),
     }),
 };
 
@@ -38,7 +38,7 @@ export const accessQueries = {
   detail: (siteId: string) =>
     queryOptions({
       queryKey: [...accessQueries.all(), siteId],
-      queryFn: () => api.getSiteAccess(siteId),
+      queryFn: () => siteApi.getSiteAccess(siteId),
     }),
 };
 
@@ -48,7 +48,7 @@ export const leadQueries = {
   list: (siteId: string) =>
     queryOptions({
       queryKey: [...leadQueries.lists(), siteId],
-      queryFn: () => api.listLeads(siteId),
+      queryFn: () => siteApi.listLeads(siteId),
     }),
 };
 
@@ -58,7 +58,7 @@ export const memberQueries = {
   list: (siteId: string) =>
     queryOptions({
       queryKey: [...memberQueries.lists(), siteId],
-      queryFn: () => api.listMembers(siteId),
+      queryFn: () => siteApi.listMembers(siteId),
     }),
 };
 
@@ -67,14 +67,14 @@ export const agencyQueries = {
   list: () =>
     queryOptions({
       queryKey: agencyQueries.all(),
-      queryFn: api.listAgencies,
+      queryFn: siteApi.listAgencies,
     }),
 };
 
 export function useCreateSite() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: CreateSitePayload) => api.createSite(payload),
+    mutationFn: (payload: CreateSitePayload) => siteApi.createSite(payload),
     onSuccess: (site) => {
       queryClient.setQueryData(siteQueries.detail(site.id).queryKey, site);
       queryClient.invalidateQueries({ queryKey: siteQueries.lists() });
@@ -85,7 +85,7 @@ export function useCreateSite() {
 export function useUpdateSite() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (site: Site) => api.updateSite(site.id, site),
+    mutationFn: (site: Site) => siteApi.updateSite(site.id, site),
     onSuccess: (updated) => {
       queryClient.setQueryData(siteQueries.detail(updated.id).queryKey, updated);
       queryClient.setQueryData<readonly Site[]>(siteQueries.lists(), (old) =>
@@ -98,7 +98,7 @@ export function useUpdateSite() {
 export function usePublishSite() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.publishSite(id),
+    mutationFn: (id: string) => siteApi.publishSite(id),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: siteQueries.detail(result.siteId).queryKey });
     },
@@ -108,7 +108,7 @@ export function usePublishSite() {
 export function useSetDomain() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, domain }: { id: string; domain: string }) => api.setDomain(id, domain),
+    mutationFn: ({ id, domain }: { id: string; domain: string }) => siteApi.setDomain(id, domain),
     onSuccess: (setup: DomainSetup) => {
       queryClient.setQueryData(siteQueries.detail(setup.site.id).queryKey, setup.site);
       queryClient.setQueryData<readonly Site[]>(siteQueries.lists(), (old) =>
@@ -121,7 +121,7 @@ export function useSetDomain() {
 export function useVerifyDomain() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.verifyDomain(id),
+    mutationFn: (id: string) => siteApi.verifyDomain(id),
     onSuccess: (updated) => {
       queryClient.setQueryData(siteQueries.detail(updated.id).queryKey, updated);
       queryClient.setQueryData<readonly Site[]>(siteQueries.lists(), (old) =>
@@ -134,7 +134,7 @@ export function useVerifyDomain() {
 export function useRemoveDomain() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.removeDomain(id),
+    mutationFn: (id: string) => siteApi.removeDomain(id),
     onSuccess: (updated) => {
       queryClient.setQueryData(siteQueries.detail(updated.id).queryKey, updated);
       queryClient.setQueryData<readonly Site[]>(siteQueries.lists(), (old) =>
@@ -148,7 +148,7 @@ export function useDeleteLead() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ siteId, leadId }: { siteId: string; leadId: string }) =>
-      api.deleteLead(siteId, leadId),
+      siteApi.deleteLead(siteId, leadId),
     onSuccess: (_result, { siteId }) => {
       queryClient.invalidateQueries({ queryKey: leadQueries.list(siteId).queryKey });
     },
@@ -159,7 +159,7 @@ export function useInviteMember() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ siteId, input }: { siteId: string; input: MemberInput }) =>
-      api.inviteMember(siteId, input),
+      siteApi.inviteMember(siteId, input),
     onSuccess: (member) => {
       queryClient.invalidateQueries({ queryKey: memberQueries.list(member.siteId).queryKey });
     },
@@ -170,7 +170,7 @@ export function useUpdateMember() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ siteId, email, input }: { siteId: string; email: string; input: MemberInput }) =>
-      api.updateMember(siteId, email, input),
+      siteApi.updateMember(siteId, email, input),
     onSuccess: (member) => {
       queryClient.invalidateQueries({ queryKey: memberQueries.list(member.siteId).queryKey });
     },
@@ -181,7 +181,7 @@ export function useRemoveMember() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ siteId, email }: { siteId: string; email: string }) =>
-      api.removeMember(siteId, email),
+      siteApi.removeMember(siteId, email),
     onSuccess: (_result, { siteId }) => {
       queryClient.invalidateQueries({ queryKey: memberQueries.list(siteId).queryKey });
     },
@@ -191,7 +191,7 @@ export function useRemoveMember() {
 export function useInviteAgency() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (email: string) => api.inviteAgency(email),
+    mutationFn: (email: string) => siteApi.inviteAgency(email),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: agencyQueries.list().queryKey });
     },
@@ -201,7 +201,7 @@ export function useInviteAgency() {
 export function useRemoveAgency() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (email: string) => api.removeAgency(email),
+    mutationFn: (email: string) => siteApi.removeAgency(email),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: agencyQueries.list().queryKey });
     },

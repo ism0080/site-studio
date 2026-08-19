@@ -1,6 +1,6 @@
 import "./EditorPanel.css";
-import type { DomainSetup, SaveState, Site, StringSettingKey } from "../types.ts";
-import { FONTS, templates } from "../data/site.ts";
+import type { DomainSetup, SaveState, Site, StringSettingKey } from "../siteTypes.ts";
+import { siteTemplates, templateFonts } from "../data/site.ts";
 import {
   findPage,
   findSection,
@@ -45,7 +45,7 @@ function ColorField({
 }
 
 function ThemeSettings({ site, onUpdate }: { site: Site; onUpdate: (site: Site) => void }) {
-  const template = templates.find((t) => t.id === site.templateId) ?? templates[0];
+  const template = siteTemplates.find((t) => t.id === site.templateId) ?? siteTemplates[0];
   const fallback = {
     accent: template.palette[1],
     bg: template.palette[0],
@@ -62,7 +62,7 @@ function ThemeSettings({ site, onUpdate }: { site: Site; onUpdate: (site: Site) 
           value={site.settings.font}
           onChange={(e) => onUpdate(updateSetting(site, "font", e.target.value))}
         >
-          {FONTS.map((font) => (
+          {templateFonts.map((font) => (
             <option key={font}>{font}</option>
           ))}
         </select>
@@ -192,7 +192,7 @@ export default function EditorPanel({
   onDomainVerify,
   onDomainRemove,
   readOnly,
-  manager,
+  fullAccess,
 }: {
   site: Site;
   online: boolean | null;
@@ -207,7 +207,7 @@ export default function EditorPanel({
   onDomainVerify: () => void;
   onDomainRemove: () => void;
   readOnly: boolean;
-  manager: boolean;
+  fullAccess: boolean;
 }) {
   const page = findPage(site);
   const hero = findSection(page, "hero");
@@ -286,7 +286,7 @@ export default function EditorPanel({
 
           <SectionList site={site} page={page} onUpdate={onUpdate} />
 
-          {manager && (
+          {fullAccess && (
             <>
               <div data-slot="content-divider" />
 

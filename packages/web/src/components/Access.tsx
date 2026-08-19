@@ -1,9 +1,9 @@
 import "./Access.css";
 import { useQuery } from "@tanstack/react-query";
-import type { Member, Site } from "../types.ts";
+import type { Member, Site } from "../siteTypes.ts";
 import type { AccessToggles } from "../lib/appMachine.ts";
-import { errorMessage as errorMessageFrom } from "../lib/api.ts";
-import { memberQueries, useRemoveMember, useUpdateMember } from "../lib/queries.ts";
+import { readableErrorMessage as readableErrorMessageFrom } from "../lib/formatting.ts";
+import { memberQueries, useRemoveMember, useUpdateMember } from "../lib/apiQueries.ts";
 
 const TOGGLE_LABELS: ReadonlyArray<[keyof AccessToggles, string]> = [
   ["canEdit", "Edit"],
@@ -88,7 +88,7 @@ export default function Access({
     ...memberQueries.list(siteId ?? ""),
     enabled: !!siteId,
   });
-  const errorMessage = error ? errorMessageFrom(error) : null;
+  const errorMessage = error ? readableErrorMessageFrom(error) : null;
 
   return (
     <div data-component="access">
