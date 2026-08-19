@@ -1,19 +1,15 @@
 import "./Overview.css";
 import type { Site } from "../types.ts";
-import Icon from "./Icon.tsx";
 import { buildStatusLabel } from "../lib/api.ts";
-import { findPage, findSection } from "../lib/siteUpdates.ts";
+import { ArrowRightIcon } from "@phosphor-icons/react";
 
-export default function Overview({
-  onEdit,
-  site,
-  sites,
-}: {
+interface OverviewProps {
   onEdit: () => void;
   site: Site;
   sites: readonly Site[];
-}) {
-  const hero = findSection(findPage(site), "hero");
+}
+
+export default function Overview({ onEdit, site, sites }: OverviewProps) {
   const publishedCount = sites.filter((s) => s.status === "published").length;
   return (
     <div data-component="overview">
@@ -42,23 +38,12 @@ export default function Overview({
           <p className="overline">Your sites</p>
           <h2>Keep building your presence</h2>
         </div>
-        <button className="dark-button" onClick={onEdit}>
-          Open editor <Icon name="arrow" size={16} />
+        <button data-component="button" onClick={onEdit}>
+          Open editor <ArrowRightIcon data-slot="icon" />
         </button>
       </section>
 
       <div className="site-list-card">
-        <div className="site-preview-thumb">
-          <div className="thumb-header">
-            {site.business.logo}
-            <span>About　Services　Contact</span>
-          </div>
-          <div className="thumb-body">
-            <small>{hero?.props.eyebrow}</small>
-            <b>{hero?.props.headline}</b>
-            <i />
-          </div>
-        </div>
         <div className="site-info">
           <div className="site-info-title">
             <div>
@@ -72,8 +57,8 @@ export default function Overview({
           <div className="site-meta">
             <span>Edited {site.lastSaved}</span>
             <span>Editorial Studio</span>
-            <button onClick={onEdit}>
-              Edit site <Icon name="arrow" size={15} />
+            <button data-component="button" onClick={onEdit}>
+              Edit site <ArrowRightIcon data-slot="icon" />
             </button>
           </div>
         </div>
@@ -85,8 +70,8 @@ export default function Overview({
           <strong>Make your first impression count</strong>
           <p>Add a profile photo and your best work to help visitors get to know your business.</p>
         </div>
-        <button>
-          View checklist <Icon name="arrow" size={15} />
+        <button data-component="button">
+          View checklist <ArrowRightIcon data-slot="icon" size={15} />
         </button>
       </div>
     </div>

@@ -1,9 +1,9 @@
 import "./Leads.css";
 import { useQuery } from "@tanstack/react-query";
 import type { Site } from "../types.ts";
-import Icon from "./Icon.tsx";
 import { errorMessage as errorMessageFrom } from "../lib/api.ts";
 import { leadQueries, useDeleteLead } from "../lib/queries.ts";
+import { UsersIcon, ArrowRightIcon } from "@phosphor-icons/react";
 
 export default function Leads({
   site,
@@ -35,12 +35,12 @@ export default function Leads({
     return (
       <div className="empty-page">
         <div className="empty-icon">
-          <Icon name="users" size={28} />
+          <UsersIcon size={28} />
         </div>
         <h2>Your leads, in one place</h2>
         <p>When visitors reach out through your site, their inquiries will appear here.</p>
         <button className="dark-button" onClick={onEdit}>
-          Customize your site <Icon name="arrow" size={16} />
+          Customize your site <ArrowRightIcon size={16} />
         </button>
       </div>
     );
@@ -67,12 +67,12 @@ export default function Leads({
       {leads.length === 0 && !isFetching ? (
         <div className="empty-page empty-leads">
           <div className="empty-icon">
-            <Icon name="users" size={28} />
+            <UsersIcon size={28} />
           </div>
           <h2>No leads yet</h2>
           <p>Add a contact form to your site — messages from visitors will show up here.</p>
           <button className="dark-button" onClick={onEdit}>
-            Open editor <Icon name="arrow" size={16} />
+            Open editor <ArrowRightIcon size={16} />
           </button>
         </div>
       ) : (

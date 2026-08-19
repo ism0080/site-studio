@@ -1,9 +1,29 @@
 import "./Sidebar.css";
 import type { User } from "better-auth";
 import type { View } from "../types.ts";
-import Icon, { type IconName } from "./Icon.tsx";
 import Brand from "./Brand.tsx";
 import Avatar from "./Avatar.tsx";
+import {
+  SignOutIcon,
+  GearIcon,
+  GaugeIcon,
+  type Icon,
+  PenIcon,
+  StackSimpleIcon,
+  UsersIcon,
+  ShareIcon,
+  ShieldIcon,
+} from "@phosphor-icons/react";
+
+interface SidebarProps {
+  active: View;
+  onChange: (view: View) => void;
+  user: User;
+  onSignOut: () => void;
+  canLeads: boolean;
+  canManageMembers: boolean;
+  isAdmin: boolean;
+}
 
 export default function Sidebar({
   active,
@@ -13,37 +33,29 @@ export default function Sidebar({
   canLeads,
   canManageMembers,
   isAdmin,
-}: {
-  active: View;
-  onChange: (view: View) => void;
-  user: User;
-  onSignOut: () => void;
-  canLeads: boolean;
-  canManageMembers: boolean;
-  isAdmin: boolean;
-}) {
-  const items: Array<[View, string, IconName]> = [
-    ["overview", "Overview", "grid"],
-    ["editor", "Site editor", "pen"],
-    ["templates", "Templates", "layers"],
+}: SidebarProps) {
+  const items: Array<[View, string, Icon]> = [
+    ["overview", "Overview", GaugeIcon],
+    ["editor", "Site editor", PenIcon],
+    ["templates", "Templates", StackSimpleIcon],
   ];
-  if (canLeads) items.push(["leads", "Leads", "users"]);
-  if (canManageMembers) items.push(["access", "Access", "share"]);
-  if (isAdmin) items.push(["admin", "Admin", "shield"]);
+  if (canLeads) items.push(["leads", "Leads", UsersIcon]);
+  if (canManageMembers) items.push(["access", "Access", ShareIcon]);
+  if (isAdmin) items.push(["admin", "Admin", ShieldIcon]);
 
   return (
     <aside data-component="sidebar">
       <Brand />
       <div className="workspace-label">Workspace</div>
       <nav>
-        {items.map(([id, label, icon]) => (
+        {items.map(([id, label, Icon]) => (
           <button
             className="nav-item"
             data-active={active === id ? "" : undefined}
             key={id}
             onClick={() => onChange(id)}
           >
-            <Icon name={icon} />
+            <Icon size={18} />
             <span>{label}</span>
             {id === "leads" && <span className="nav-badge">3</span>}
           </button>
@@ -51,7 +63,7 @@ export default function Sidebar({
       </nav>
       <div className="sidebar-bottom">
         <button className="nav-item">
-          <Icon name="settings" />
+          <GearIcon name="settings" />
           <span>Settings</span>
         </button>
         <div className="profile">
@@ -60,10 +72,7 @@ export default function Sidebar({
             <strong>{user?.name}</strong>
             <small>{user?.email}</small>
           </div>
-          <Icon name="more" size={16} />
-          <button className="sign-out" onClick={onSignOut} title="Sign out">
-            ⎋
-          </button>
+          <SignOutIcon onClick={onSignOut} size={18} />
         </div>
       </div>
     </aside>

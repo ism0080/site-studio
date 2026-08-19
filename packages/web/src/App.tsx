@@ -27,6 +27,7 @@ import {
   useUpdateSite,
   useVerifyDomain,
 } from "./lib/queries.ts";
+import { XIcon } from "@phosphor-icons/react";
 
 export default function App() {
   const queryClient = useQueryClient();
@@ -131,7 +132,7 @@ export default function App() {
           <div className="conn-banner" data-kind={banner.kind}>
             <span>{banner.message}</span>
             <button className="banner-close" onClick={() => send({ type: "DISMISS_BANNER" })}>
-              ×
+              <XIcon size={32} />
             </button>
           </div>
         )}

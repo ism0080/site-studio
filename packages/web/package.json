@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "@site-studio/api": "workspace:*",
     "@tanstack/react-query": "^5.101.4",
     "@vitejs/plugin-react": "latest",
@@ -24,6 +25,12 @@
   "devDependencies": {
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
+    "msw": "^2.15.0",
     "typescript": "^5.9.3"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

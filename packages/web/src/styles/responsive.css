@@ -51,7 +51,7 @@
     padding: 24px 20px;
     align-items: start;
   }
-[data-component="header"] h1 {
+  [data-component="header"] h1 {
     font-size: 21px;
   }
   .header-actions {

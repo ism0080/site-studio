@@ -1,10 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import "./styles/base.css";
-import "./styles/primitives.css";
 import App from "./App.tsx";
-import "./styles/responsive.css";
+import "./styles/index.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,10 +13,18 @@ const queryClient = new QueryClient({
   },
 });
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </StrictMode>,
-);
+// Set VITE_MOCK_API=true to run the web app against in-browser mocked API
+// responses (src/mocks) instead of the real backend, so it runs offline.
+void (async () => {
+  if (import.meta.env.VITE_MOCK_API) {
+    const { worker } = await import("./mocks/browser.ts");
+    await worker.start({ onUnhandledRequest: "bypass" });
+  }
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </StrictMode>,
+  );
+})();

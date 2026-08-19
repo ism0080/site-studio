@@ -1,9 +1,9 @@
 import "./Header.css";
 import type { User } from "better-auth";
 import type { Site, View } from "../types.ts";
-import Icon from "./Icon.tsx";
 import Avatar from "./Avatar.tsx";
 import { buildStatusLabel } from "../lib/api.ts";
+import { ArrowRightIcon, ArrowSquareOutIcon } from "@phosphor-icons/react";
 
 const HEADINGS = {
   overview: ["Good morning, Jordan", "Here’s what’s happening with your sites."],
@@ -66,7 +66,7 @@ export default function Header({
         )}
         {liveUrl && (
           <a className="preview-link" href={liveUrl} target="_blank" rel="noreferrer">
-            View live site <Icon name="arrow" size={16} />
+            View live site <ArrowRightIcon size={16} />
           </a>
         )}
         {inEditor && canPublish && (
@@ -75,7 +75,7 @@ export default function Header({
             onClick={onPublish}
             disabled={publishing || online === false}
           >
-            <Icon name="external" size={15} />
+            <ArrowSquareOutIcon size={15} />
             {publishing ? "Publishing…" : `Publish · ${buildStatusLabel(site)}`}
           </button>
         )}

@@ -66,12 +66,5 @@
   color: #7e8179;
 }
 .sign-out {
-  margin-left: 8px;
-  border: 1px solid #3b3e39;
-  background: none;
-  color: #888b84;
-  border-radius: 4px;
-  font-size: 12px;
-  padding: 2px 7px;
   cursor: pointer;
 }
