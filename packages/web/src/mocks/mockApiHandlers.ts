@@ -73,11 +73,16 @@ export const mockApiHandlers: HttpHandler[] = [
       id: SiteId.make(`site_${Date.now()}`),
       ownerId: OwnerId.make(mockMe.id),
       templateId: input.templateId,
+      subdomain: input.subdomain,
       status: "draft",
       buildStatus: "idle",
       createdAt: _now(),
       updatedAt: _now(),
-      business: { name: input.name, category: "", location: "", email: "", phone: "", logo: "" },
+      business: {
+        ...(input.business ?? { category: "", location: "", email: "", phone: "", logo: "" }),
+        name: input.name,
+        logo: input.business?.logo || input.name.slice(0, 6).toUpperCase(),
+      },
       settings: { accent: "#4567db", font: "Manrope", showDirectory: true },
       pages: [
         {

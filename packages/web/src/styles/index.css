@@ -10,6 +10,7 @@
 @import "./component/hint.css";
 @import "./component/section-header.css";
 @import "./component/status.css";
+@import "./component/onboarding.css";
 
 @import "./reset.css";
 @import "./base.css";

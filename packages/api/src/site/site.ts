@@ -135,6 +135,8 @@ export class Site extends Schema.Class<Site>("Site")({
   id: SiteId,
   ownerId: OwnerId,
   templateId: Schema.String,
+  /** Reserved public subdomain selected during onboarding. */
+  subdomain: Schema.optional(Schema.String),
   status: SiteStatus,
   business: Business,
   settings: Settings,
@@ -148,9 +150,11 @@ export class Site extends Schema.Class<Site>("Site")({
   buildError: Schema.optional(Schema.String),
 }) {}
 
-/** Payload for creating a site: a name and the template to start from. */
+/** Payload for creating a site from the onboarding profile. */
 export const CreateSite = Schema.Struct({
   name: Schema.String,
+  subdomain: Schema.optional(Schema.String),
+  business: Schema.optional(Business),
   templateId: Schema.String,
 });
 export type CreateSite = (typeof CreateSite)["Type"];
@@ -227,6 +231,13 @@ export class DomainNotVerified extends Schema.TaggedErrorClass<DomainNotVerified
 export class DomainInUse extends Schema.TaggedErrorClass<DomainInUse>()(
   "DomainInUse",
   { domain: Schema.String },
+  { httpApiStatus: 409 },
+) {}
+
+/** Another site already claims the requested public subdomain (409). */
+export class SubdomainInUse extends Schema.TaggedErrorClass<SubdomainInUse>()(
+  "SubdomainInUse",
+  { subdomain: Schema.String },
   { httpApiStatus: 409 },
 ) {}
 

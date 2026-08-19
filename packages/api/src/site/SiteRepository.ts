@@ -14,6 +14,7 @@ import {
   Forbidden,
   Site,
   SiteNotFound,
+  SubdomainInUse,
   decodeSiteJson,
   encodeSiteJson,
   type BuildStatus,
@@ -24,6 +25,14 @@ import { normalizeDomain } from "./objectKeys.ts";
 import { newVerificationToken, verifyTxtRecord } from "./dns.ts";
 import { nowIso } from "../platform/Time.ts";
 import { withDefaultSections } from "./templateDefaults.ts";
+
+const _normalizeSubdomain = (input: string): string =>
+  input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 
 type Db = Cloudflare.D1.QueryDatabaseClient;
 
@@ -42,12 +51,12 @@ export interface SiteRepositoryService {
   readonly create: (
     payload: CreateSite,
     requester: Requester,
-  ) => Effect.Effect<Site, never, RuntimeContext | Crypto.Crypto>;
+  ) => Effect.Effect<Site, SubdomainInUse, RuntimeContext | Crypto.Crypto>;
   readonly update: (
     id: string,
     site: Site,
     requester: Requester,
-  ) => Effect.Effect<Site, SiteNotFound | Forbidden, RuntimeContext>;
+  ) => Effect.Effect<Site, SiteNotFound | Forbidden | SubdomainInUse, RuntimeContext>;
   readonly remove: (
     id: string,
     requester: Requester,
@@ -127,18 +136,25 @@ export const makeSiteRepository = (
     ) {
       const now = yield* nowIso;
       const crypto = yield* Crypto.Crypto;
+      const business = payload.business ?? {
+        name: payload.name,
+        category: "",
+        location: "",
+        email: "",
+        phone: "",
+        logo: "",
+      };
+      const subdomain = _normalizeSubdomain(payload.subdomain ?? payload.name);
       const site = new Site({
         id: SiteId.make(yield* crypto.randomUUIDv4.pipe(Effect.orDie)),
         ownerId: OwnerId.make(requester.id),
         templateId: payload.templateId,
+        subdomain,
         status: "draft",
         business: {
+          ...business,
           name: payload.name,
-          category: "",
-          location: "",
-          email: "",
-          phone: "",
-          logo: payload.name.slice(0, 6).toUpperCase(),
+          logo: business.logo || payload.name.slice(0, 6).toUpperCase(),
         },
         settings: {
           accent: "#e56645",
@@ -159,7 +175,7 @@ export const makeSiteRepository = (
       });
       return yield* db
         .prepare(
-          "INSERT INTO sites (id, owner_id, template_id, status, document, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO sites (id, owner_id, template_id, status, document, created_at, updated_at, subdomain) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         )
         .bind(
           site.id,
@@ -169,8 +185,16 @@ export const makeSiteRepository = (
           encodeSiteJson(site),
           site.createdAt,
           site.updatedAt,
+          site.subdomain ?? null,
         )
         .run()
+        .pipe(
+          Effect.catch((cause) =>
+            String(cause).toUpperCase().includes("UNIQUE")
+              ? Effect.fail(new SubdomainInUse({ subdomain }))
+              : Effect.die(cause),
+          ),
+        )
         .pipe(Effect.as(withDefaultSections(site)));
     }),
     update: Effect.fn("SiteRepository.update")(function* (
@@ -192,6 +216,7 @@ export const makeSiteRepository = (
       if (access.kind === "full") {
         updated = new Site({
           ...site,
+          subdomain: site.subdomain ? _normalizeSubdomain(site.subdomain) : undefined,
           id: SiteId.make(id),
           ownerId: current.ownerId,
           updatedAt: yield* nowIso,
@@ -204,6 +229,7 @@ export const makeSiteRepository = (
         // from the current document.
         updated = new Site({
           ...site,
+          subdomain: site.subdomain ? _normalizeSubdomain(site.subdomain) : undefined,
           id: current.id,
           ownerId: current.ownerId,
           status: current.status,
@@ -218,17 +244,25 @@ export const makeSiteRepository = (
 
       yield* db
         .prepare(
-          `UPDATE sites SET template_id = ?, status = ?, document = ?, updated_at = ? WHERE id = ? AND ${accessibleWhere(requester)}`,
+          `UPDATE sites SET template_id = ?, status = ?, document = ?, updated_at = ?, subdomain = ? WHERE id = ? AND ${accessibleWhere(requester)}`,
         )
         .bind(
           updated.templateId,
           updated.status,
           encodeSiteJson(updated),
           updated.updatedAt,
+          updated.subdomain ?? null,
           id,
           ...accessibleBinds(requester),
         )
-        .run();
+        .run()
+        .pipe(
+          Effect.catch((cause) =>
+            String(cause).toUpperCase().includes("UNIQUE")
+              ? Effect.fail(new SubdomainInUse({ subdomain: updated.subdomain ?? "" }))
+              : Effect.die(cause),
+          ),
+        );
       return updated;
     }),
     remove: Effect.fn("SiteRepository.remove")(function* (id: string, requester: Requester) {

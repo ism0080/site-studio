@@ -11,12 +11,7 @@ function SitesIndex() {
   const { data: sites = [] } = useQuery({ ...siteQueries.list(), enabled: true });
 
   if (sites.length === 0) {
-    return (
-      <div data-component="empty-page">
-        <h2>Welcome to SiteStudio</h2>
-        <p>Create a site to get started.</p>
-      </div>
-    );
+    return <Navigate to="/onboarding" replace />;
   }
 
   return <Navigate to="/sites/$siteId" params={{ siteId: sites[0].id }} replace />;

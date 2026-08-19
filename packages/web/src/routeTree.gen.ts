@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as AuthIndexRouteImport } from './routes/_auth.index'
+import { Route as AuthOnboardingRouteImport } from './routes/_auth.onboarding'
 import { Route as AuthSitesSiteIdRouteImport } from './routes/_auth.sites.$siteId'
 import { Route as AuthSitesSiteIdIndexRouteImport } from './routes/_auth.sites.$siteId.index'
 import { Route as AuthSitesSiteIdAccessRouteImport } from './routes/_auth.sites.$siteId.access'
@@ -26,6 +27,11 @@ const AuthRoute = AuthRouteImport.update({
 const AuthIndexRoute = AuthIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthOnboardingRoute = AuthOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthSitesSiteIdRoute = AuthSitesSiteIdRouteImport.update({
@@ -67,6 +73,7 @@ const AuthSitesSiteIdTemplatesRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthIndexRoute
+  '/onboarding': typeof AuthOnboardingRoute
   '/sites/$siteId': typeof AuthSitesSiteIdRouteWithChildren
   '/sites/$siteId/access': typeof AuthSitesSiteIdAccessRoute
   '/sites/$siteId/admin': typeof AuthSitesSiteIdAdminRoute
@@ -76,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/sites/$siteId/': typeof AuthSitesSiteIdIndexRoute
 }
 export interface FileRoutesByTo {
+  '/onboarding': typeof AuthOnboardingRoute
   '/': typeof AuthIndexRoute
   '/sites/$siteId/access': typeof AuthSitesSiteIdAccessRoute
   '/sites/$siteId/admin': typeof AuthSitesSiteIdAdminRoute
@@ -87,6 +95,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_auth': typeof AuthRouteWithChildren
+  '/_auth/onboarding': typeof AuthOnboardingRoute
   '/_auth/': typeof AuthIndexRoute
   '/_auth/sites/$siteId': typeof AuthSitesSiteIdRouteWithChildren
   '/_auth/sites/$siteId/access': typeof AuthSitesSiteIdAccessRoute
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/onboarding'
     | '/sites/$siteId'
     | '/sites/$siteId/access'
     | '/sites/$siteId/admin'
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/sites/$siteId/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/onboarding'
     | '/'
     | '/sites/$siteId/access'
     | '/sites/$siteId/admin'
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_auth'
+    | '/_auth/onboarding'
     | '/_auth/'
     | '/_auth/sites/$siteId'
     | '/_auth/sites/$siteId/access'
@@ -147,6 +159,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthIndexRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/onboarding': {
+      id: '/_auth/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthOnboardingRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_auth/sites/$siteId': {
@@ -224,11 +243,13 @@ const AuthSitesSiteIdRouteWithChildren = AuthSitesSiteIdRoute._addFileChildren(
 )
 
 interface AuthRouteChildren {
+  AuthOnboardingRoute: typeof AuthOnboardingRoute
   AuthIndexRoute: typeof AuthIndexRoute
   AuthSitesSiteIdRoute: typeof AuthSitesSiteIdRouteWithChildren
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthOnboardingRoute: AuthOnboardingRoute,
   AuthIndexRoute: AuthIndexRoute,
   AuthSitesSiteIdRoute: AuthSitesSiteIdRouteWithChildren,
 }

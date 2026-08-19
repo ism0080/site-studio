@@ -15,6 +15,7 @@ import {
   PublishResult,
   Site,
   SiteNotFound,
+  SubdomainInUse,
   TemplateInfo,
 } from "./site.ts";
 
@@ -33,6 +34,7 @@ const listSites = HttpApi.HttpApiEndpoint.get("list", "/", {
 const createSite = HttpApi.HttpApiEndpoint.post("create", "/", {
   payload: CreateSite,
   success: Site,
+  error: SubdomainInUse,
 });
 
 const getSite = HttpApi.HttpApiEndpoint.get("get", "/:id", {
@@ -51,7 +53,7 @@ const updateSite = HttpApi.HttpApiEndpoint.put("update", "/:id", {
   params: SiteParams,
   payload: Site,
   success: Site,
-  error: Schema.Union([SiteNotFound, Forbidden]),
+  error: Schema.Union([SiteNotFound, Forbidden, SubdomainInUse]),
 });
 
 const deleteSite = HttpApi.HttpApiEndpoint.delete("remove", "/:id", {

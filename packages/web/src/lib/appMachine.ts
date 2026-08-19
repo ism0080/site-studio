@@ -91,6 +91,8 @@ const _ensurePersisted = async (api: AppApi, site: Site, persisted: boolean) => 
   }
   const created = await api.createSite({
     name: site.business.name,
+    subdomain: site.subdomain ?? site.business.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+    business: site.business,
     templateId: site.templateId,
   });
   return { id: created.id, site: created, persisted: true };
@@ -107,6 +109,8 @@ const _saveActor = fromPromise<{ persisted: boolean; created: Site | null }, Per
     }
     const created = await input.api.createSite({
       name: input.site.business.name,
+      subdomain: input.site.subdomain ?? input.site.business.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      business: input.site.business,
       templateId: input.site.templateId,
     });
     return { persisted: true, created };
