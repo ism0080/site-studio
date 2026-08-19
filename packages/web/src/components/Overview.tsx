@@ -6,21 +6,12 @@ import { ArrowRightIcon } from "@phosphor-icons/react";
 interface OverviewProps {
   onEdit: () => void;
   site: Site;
-  sites: readonly Site[];
 }
 
-export default function Overview({ onEdit, site, sites }: OverviewProps) {
-  const publishedCount = sites.filter((s) => s.status === "published").length;
+export default function Overview({ onEdit, site }: OverviewProps) {
   return (
     <div data-component="overview">
       <section data-slot="stat-grid">
-        <div data-slot="stat-card">
-          <span>Published site</span>
-          <strong>{publishedCount || (site.status === "published" ? 1 : 0)}</strong>
-          <small>
-            <b>↗</b> connected to API
-          </small>
-        </div>
         <div data-slot="stat-card">
           <span>Site visits</span>
           <strong>—</strong>
@@ -38,9 +29,14 @@ export default function Overview({ onEdit, site, sites }: OverviewProps) {
           <p className="overline">Your site</p>
           <h2>Keep building your presence</h2>
         </div>
-        <button data-component="button" onClick={onEdit}>
-          Open editor <ArrowRightIcon data-slot="icon" />
-        </button>
+        <div>
+          <button data-component="button" onClick={onEdit}>
+            Open editor <ArrowRightIcon data-slot="icon" />
+          </button>
+          <div data-slot="site-meta">
+            <span>Edited {site.lastSaved}</span>
+          </div>
+        </div>
       </section>
 
       <div data-slot="site-list-card">
@@ -53,13 +49,6 @@ export default function Overview({ onEdit, site, sites }: OverviewProps) {
             <span className="status-pill">
               <i /> {buildStatusLabel(site)}
             </span>
-          </div>
-          <div data-slot="site-meta">
-            <span>Edited {site.lastSaved}</span>
-            <span>Editorial Studio</span>
-            <button data-component="button" onClick={onEdit}>
-              Edit site <ArrowRightIcon data-slot="icon" />
-            </button>
           </div>
         </div>
       </div>

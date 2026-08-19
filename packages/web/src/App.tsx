@@ -155,7 +155,6 @@ export default function App() {
           <Overview
             onEdit={() => send({ type: "SET_VIEW", view: "editor" })}
             site={site}
-            sites={sites}
           />
         )}
         {view === "templates" && (
