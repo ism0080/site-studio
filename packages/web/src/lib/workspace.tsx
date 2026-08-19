@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { appMachine } from "./appMachine.ts";
 import { authClient } from "./auth.ts";
 import { setSiteLoadHandler } from "./routerBridge.ts";
+import { siteApi } from "./siteApi.ts";
 import { WorkspaceContext, type WorkspaceValue } from "./workspaceContext.ts";
 import {
   accessQueries,
@@ -42,6 +43,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         window.location.reload();
       },
       fetchSite: (id) => queryClient.fetchQuery(siteQueries.detail(id)),
+      getDomainSetup: (id) => siteApi.getDomainSetup(id),
       createSite: (payload) => createSite.mutateAsync(payload),
       updateSite: (site) => updateSiteMutation.mutateAsync(site),
       publishSite: (id) => publishSite.mutateAsync(id),

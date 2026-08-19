@@ -7,7 +7,9 @@ import { MeGroup } from "../access/me.ts";
 import { SiteAccess } from "../access/access.ts";
 import {
   CreateSite,
+  CloudflareSaasError,
   DomainInUse,
+  DomainUnsupported,
   DomainNotVerified,
   DomainSetup,
   Forbidden,
@@ -43,6 +45,12 @@ const getSite = HttpApi.HttpApiEndpoint.get("get", "/:id", {
   error: SiteNotFound,
 });
 
+const getDomain = HttpApi.HttpApiEndpoint.get("getDomain", "/:id/domain", {
+  params: SiteParams,
+  success: Schema.NullOr(DomainSetup),
+  error: Schema.Union([SiteNotFound, Forbidden, CloudflareSaasError]),
+});
+
 const getSiteAccess = HttpApi.HttpApiEndpoint.get("access", "/:id/access", {
   params: SiteParams,
   success: SiteAccess,
@@ -76,19 +84,25 @@ const setDomain = HttpApi.HttpApiEndpoint.post("setDomain", "/:id/domain", {
   params: SiteParams,
   payload: DomainInput,
   success: DomainSetup,
-  error: Schema.Union([SiteNotFound, DomainInUse, Forbidden]),
+  error: Schema.Union([
+    SiteNotFound,
+    DomainInUse,
+    DomainUnsupported,
+    Forbidden,
+    CloudflareSaasError,
+  ]),
 });
 
 const verifyDomain = HttpApi.HttpApiEndpoint.post("verifyDomain", "/:id/domain/verify", {
   params: SiteParams,
   success: Site,
-  error: Schema.Union([SiteNotFound, DomainNotVerified, Forbidden]),
+  error: Schema.Union([SiteNotFound, DomainNotVerified, Forbidden, CloudflareSaasError]),
 });
 
 const removeDomain = HttpApi.HttpApiEndpoint.delete("removeDomain", "/:id/domain", {
   params: SiteParams,
   success: Site,
-  error: Schema.Union([SiteNotFound, Forbidden]),
+  error: Schema.Union([SiteNotFound, Forbidden, CloudflareSaasError]),
 });
 
 export class SitesGroup extends HttpApi.HttpApiGroup.make("Sites")
@@ -96,6 +110,7 @@ export class SitesGroup extends HttpApi.HttpApiGroup.make("Sites")
   .add(listSites)
   .add(createSite)
   .add(getSite)
+  .add(getDomain)
   .add(getSiteAccess)
   .add(updateSite)
   .add(deleteSite)

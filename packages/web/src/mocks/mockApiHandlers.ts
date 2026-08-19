@@ -137,12 +137,13 @@ export const mockApiHandlers: HttpHandler[] = [
     const setup: DomainSetup = {
       domain,
       status: "pending",
-      txtName: `_aquira.${domain}`,
-      txtValue: "mock-txt-value",
+      cnameTarget: "customers.site-studio.dev",
+      records: [{ name: `_aquira.${domain}`, value: "mock-txt-value" }],
       site,
     };
     return HttpResponse.json(setup);
   }),
+  http.get("/api/sites/:id/domain", () => HttpResponse.json(null)),
   http.post("/api/sites/:id/domain/verify", () =>
     HttpResponse.json({ _tag: "DomainNotVerified", domain: "" }, { status: 409 }),
   ),

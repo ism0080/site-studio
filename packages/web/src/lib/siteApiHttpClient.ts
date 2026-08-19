@@ -33,6 +33,7 @@ export const siteApiHttpClient = {
   listTemplates: (): Promise<readonly TemplateInfo[]> => _run((c) => c.Sites.listTemplates({})),
   listSites: () => _run((c) => c.Sites.list({})),
   getSite: (id: string) => _run((c) => c.Sites.get({ params: { id } })),
+  getDomainSetup: (id: string) => _run((c) => c.Sites.getDomain({ params: { id } })),
   getSiteAccess: (id: string) => _run((c) => c.Sites.access({ params: { id } })),
   createSite: (payload: CreateSite) => _run((c) => c.Sites.create({ payload })),
   updateSite: (id: string, payload: Site) =>

@@ -6,9 +6,11 @@ import * as Layer from "effect/Layer";
 import type { RuntimeContext } from "alchemy";
 import {
   CreateSite,
+  CloudflareSaasError,
   OwnerId,
   SiteId,
   DomainInUse,
+  DomainUnsupported,
   DomainNotVerified,
   DomainSetup,
   Forbidden,
@@ -23,6 +25,7 @@ import { accessibleBinds, accessibleWhere, resolveSiteAccess } from "./siteAcces
 import type { Requester, SiteAccess } from "../access/access.ts";
 import { normalizeDomain } from "./objectKeys.ts";
 import { newVerificationToken, verifyTxtRecord } from "./dns.ts";
+import type { CloudflareSaas } from "./cloudflareSaas.ts";
 import { nowIso } from "../platform/Time.ts";
 import { withDefaultSections } from "./templateDefaults.ts";
 
@@ -44,6 +47,14 @@ export interface SiteRepositoryService {
     id: string,
     requester: Requester,
   ) => Effect.Effect<Site, SiteNotFound, RuntimeContext>;
+  readonly getDomainSetup: (
+    id: string,
+    requester: Requester,
+  ) => Effect.Effect<
+    DomainSetup | null,
+    SiteNotFound | Forbidden | CloudflareSaasError,
+    RuntimeContext
+  >;
   readonly access: (
     id: string,
     requester: Requester,
@@ -79,17 +90,21 @@ export interface SiteRepositoryService {
     domain: string,
   ) => Effect.Effect<
     DomainSetup,
-    SiteNotFound | Forbidden | DomainInUse,
+    SiteNotFound | Forbidden | DomainInUse | DomainUnsupported | CloudflareSaasError,
     RuntimeContext | Crypto.Crypto
   >;
   readonly verifyDomain: (
     id: string,
     requester: Requester,
-  ) => Effect.Effect<Site, SiteNotFound | Forbidden | DomainNotVerified, RuntimeContext>;
+  ) => Effect.Effect<
+    Site,
+    SiteNotFound | Forbidden | DomainNotVerified | CloudflareSaasError,
+    RuntimeContext
+  >;
   readonly removeDomain: (
     id: string,
     requester: Requester,
-  ) => Effect.Effect<Site, SiteNotFound | Forbidden, RuntimeContext>;
+  ) => Effect.Effect<Site, SiteNotFound | Forbidden | CloudflareSaasError, RuntimeContext>;
 }
 
 // Normalizes documents that predate `buildStatus` (or lack it) to a concrete
@@ -100,11 +115,47 @@ const _parseSiteDocument = (document: string) =>
     Effect.orDie,
   );
 
+const _domainSetup = (
+  domain: string,
+  site: Site,
+  hostname: Awaited<ReturnType<CloudflareSaas["get"]>>,
+  cnameTarget: string,
+): DomainSetup => ({
+  domain,
+  status: "pending",
+  cnameTarget,
+  records: [
+    ...(hostname.ownership_verification
+      ? [
+          {
+            name: hostname.ownership_verification.name,
+            value: hostname.ownership_verification.value,
+          },
+        ]
+      : []),
+    ...(hostname.ssl?.validation_records ?? []).flatMap((record) =>
+      record.txt_name && record.txt_value
+        ? [{ name: record.txt_name, value: record.txt_value }]
+        : [],
+    ),
+  ],
+  site,
+});
+
 export const makeSiteRepository = (
   db: Db,
-  deps: { verifyTxt?: typeof verifyTxtRecord } = {},
+  deps: {
+    cloudflareSaas?: CloudflareSaas;
+    cnameTarget?: string;
+    verifyTxt?: typeof verifyTxtRecord;
+  } = {},
 ): SiteRepositoryService => {
-  const checkTxt = deps.verifyTxt ?? verifyTxtRecord;
+  const cloudflareSaas = deps.cloudflareSaas;
+  const cnameTarget = deps.cnameTarget ?? "customers.site-studio.dev";
+  const providerError = (error: unknown) =>
+    error instanceof CloudflareSaasError
+      ? error
+      : new CloudflareSaasError({ message: "Cloudflare custom hostname request failed" });
   return {
     list: Effect.fn("SiteRepository.list")(function* (requester: Requester) {
       return yield* db
@@ -126,6 +177,36 @@ export const makeSiteRepository = (
       if (row === null) return yield* new SiteNotFound({ id });
       const parsed = yield* _parseSiteDocument(row.document);
       return withDefaultSections(parsed);
+    }),
+    getDomainSetup: Effect.fn("SiteRepository.getDomainSetup")(function* (
+      id: string,
+      requester: Requester,
+    ) {
+      const access = yield* resolveSiteAccess(db, id, requester);
+      if (access === null) return yield* new SiteNotFound({ id });
+      if (access.kind === "client") return yield* new Forbidden({});
+      if (cloudflareSaas === undefined) return null;
+
+      const site = yield* db
+        .prepare("SELECT document FROM sites WHERE id = ?")
+        .bind(id)
+        .first<{ document: string }>();
+      if (site === null) return yield* new SiteNotFound({ id });
+      const current = yield* _parseSiteDocument(site.document);
+      const pending = yield* db
+        .prepare(
+          "SELECT domain, provider_id FROM site_domains WHERE site_id = ? AND verified = 0 LIMIT 1",
+        )
+        .bind(id)
+        .first<{ domain: string; provider_id: string | null }>();
+      if (pending === null || pending.provider_id === null) return null;
+
+      const providerId = pending.provider_id;
+      const hostname = yield* Effect.tryPromise({
+        try: () => cloudflareSaas.get(providerId),
+        catch: providerError,
+      });
+      return _domainSetup(pending.domain, current, hostname, cnameTarget);
     }),
     access: Effect.fn("SiteRepository.access")(function* (id: string, requester: Requester) {
       return yield* resolveSiteAccess(db, id, requester);
@@ -356,6 +437,7 @@ export const makeSiteRepository = (
 
       const domain = normalizeDomain(inputDomain);
       if (!domain) return yield* new SiteNotFound({ id });
+      if (domain.split(".").length < 3) return yield* new DomainUnsupported({ domain });
 
       const existing = yield* db
         .prepare("SELECT site_id FROM site_domains WHERE domain = ?")
@@ -363,22 +445,22 @@ export const makeSiteRepository = (
         .first<{ site_id: string }>();
       if (existing !== null) return yield* new DomainInUse({ domain });
 
+      if (cloudflareSaas === undefined)
+        return yield* new CloudflareSaasError({ message: "Cloudflare SaaS is not configured" });
       const token = yield* newVerificationToken;
+      const hostname = yield* Effect.tryPromise({
+        try: () => cloudflareSaas.create(domain),
+        catch: providerError,
+      });
       const now = yield* nowIso;
       yield* db
         .prepare(
-          "INSERT OR IGNORE INTO site_domains (domain, site_id, verification_token, verified, created_at) VALUES (?, ?, ?, 0, ?)",
+          "INSERT OR IGNORE INTO site_domains (domain, site_id, verification_token, verified, created_at, provider_id) VALUES (?, ?, ?, 0, ?, ?)",
         )
-        .bind(domain, id, token, now)
+        .bind(domain, id, token, now, hostname.id)
         .run();
 
-      return {
-        domain,
-        status: "pending" as const,
-        txtName: "_site-studio-verify." + domain,
-        txtValue: token,
-        site: current,
-      };
+      return _domainSetup(domain, current, hostname, cnameTarget);
     }),
     verifyDomain: Effect.fn("SiteRepository.verifyDomain")(function* (
       id: string,
@@ -397,30 +479,25 @@ export const makeSiteRepository = (
 
       const pending = yield* db
         .prepare(
-          "SELECT domain, verification_token FROM site_domains WHERE site_id = ? AND verified = 0 LIMIT 1",
+          "SELECT domain, provider_id FROM site_domains WHERE site_id = ? AND verified = 0 LIMIT 1",
         )
         .bind(id)
-        .first<{ domain: string; verification_token: string }>();
+        .first<{ domain: string; provider_id: string | null }>();
       if (pending === null) return yield* new SiteNotFound({ id });
-
-      const verified = yield* Effect.tryPromise(() =>
-        checkTxt(pending.domain, pending.verification_token),
-      ).pipe(Effect.catch(() => Effect.succeed(false)));
-      if (!verified) {
+      if (cloudflareSaas === undefined || pending.provider_id === null) {
+        return yield* new CloudflareSaasError({ message: "Cloudflare SaaS is not configured" });
+      }
+      const providerId = pending.provider_id;
+      const hostname = yield* Effect.tryPromise({
+        try: () => cloudflareSaas.get(providerId),
+        catch: providerError,
+      });
+      if (hostname.status !== "active" || hostname.ssl?.status !== "active") {
         return yield* new DomainNotVerified({ domain: pending.domain });
       }
 
       const now = yield* nowIso;
-      const twin = pending.domain.startsWith("www.")
-        ? pending.domain.slice(4)
-        : "www." + pending.domain;
       yield* db.prepare("UPDATE site_domains SET verified = 1 WHERE site_id = ?").bind(id).run();
-      yield* db
-        .prepare(
-          "INSERT OR IGNORE INTO site_domains (domain, site_id, verification_token, verified, created_at) VALUES (?, ?, ?, 1, ?)",
-        )
-        .bind(twin, id, pending.verification_token, now)
-        .run();
 
       const updated = new Site({ ...current, customDomain: pending.domain, updatedAt: now });
       yield* db
@@ -446,6 +523,21 @@ export const makeSiteRepository = (
       if (site === null) return yield* new SiteNotFound({ id });
       const current = yield* _parseSiteDocument(site.document);
 
+      const domainRows = yield* db
+        .prepare("SELECT provider_id FROM site_domains WHERE site_id = ?")
+        .bind(id)
+        .all<{ provider_id: string | null }>();
+      if (cloudflareSaas !== undefined) {
+        for (const row of domainRows.results) {
+          if (row.provider_id !== null) {
+            const providerId = row.provider_id;
+            yield* Effect.tryPromise({
+              try: () => cloudflareSaas.remove(providerId),
+              catch: providerError,
+            });
+          }
+        }
+      }
       const now = yield* nowIso;
       yield* db.prepare("DELETE FROM site_domains WHERE site_id = ?").bind(id).run();
       const updated = new Site({ ...current, customDomain: undefined, updatedAt: now });
@@ -463,8 +555,8 @@ export class SiteRepository extends Context.Service<SiteRepository, SiteReposito
   "@app/SiteRepository",
 ) {}
 
-export const SiteRepositoryLayer = (db: Db) =>
+export const SiteRepositoryLayer = (db: Db, deps: Parameters<typeof makeSiteRepository>[1] = {}) =>
   Layer.effect(
     SiteRepository,
-    Effect.sync(() => makeSiteRepository(db)),
+    Effect.sync(() => makeSiteRepository(db, deps)),
   );

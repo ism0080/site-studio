@@ -26,6 +26,7 @@ import { requesterFor, type GlobalRole } from "./access/access.ts";
 import { MemberRepository, MemberRepositoryLayer } from "./members/MemberRepository.ts";
 import { AdminRepository, AdminRepositoryLayer } from "./admin/AdminRepository.ts";
 import { Forbidden, SiteNotFound } from "./site/site.ts";
+import { makeCloudflareSaas } from "./site/cloudflareSaas.ts";
 
 const AuthEnv = {
   authSecret: Config.redacted("AUTH_SECRET").pipe(
@@ -42,6 +43,12 @@ const AuthEnv = {
 };
 
 const AuthConfig = Effect.all(AuthEnv);
+
+const CloudflareSaasEnv = {
+  zoneId: Config.string("CF_SAAS_ZONE_ID"),
+  apiToken: Config.redacted("CF_API_TOKEN"),
+  cnameTarget: Config.string("CF_SAAS_CNAME_TARGET"),
+};
 
 const HttpPlatformStub = Layer.succeed(Http.HttpPlatform.HttpPlatform, {
   platform: "web",
@@ -64,6 +71,9 @@ export default Cloudflare.Worker(
       TRUSTED_ORIGINS: AuthEnv.trustedOrigins,
       GOOGLE_CLIENT_ID: AuthEnv.googleClientId,
       GOOGLE_CLIENT_SECRET: AuthEnv.googleClientSecret,
+      CF_SAAS_ZONE_ID: CloudflareSaasEnv.zoneId,
+      CF_API_TOKEN: CloudflareSaasEnv.apiToken,
+      CF_SAAS_CNAME_TARGET: CloudflareSaasEnv.cnameTarget,
     },
   },
   Effect.gen(function* () {
@@ -86,9 +96,26 @@ export default Cloudflare.Worker(
     // the Context tags above, and each impl is built here in init and provided
     // per-request to the router. Each impl is produced by providing its owning
     // layer, so requirements resolve at this composition root.
+    const cloudflareSaas = yield* Effect.map(
+      Effect.all(CloudflareSaasEnv).pipe(Effect.orDie),
+      (config) => ({
+        client: makeCloudflareSaas({
+          zoneId: config.zoneId,
+          apiToken: Redacted.value(config.apiToken),
+        }),
+        cnameTarget: config.cnameTarget,
+      }),
+    );
     const siteRepo = yield* Effect.gen(function* () {
       return yield* SiteRepository;
-    }).pipe(Effect.provide(SiteRepositoryLayer(db)));
+    }).pipe(
+      Effect.provide(
+        SiteRepositoryLayer(db, {
+          cloudflareSaas: cloudflareSaas.client,
+          cnameTarget: cloudflareSaas.cnameTarget,
+        }),
+      ),
+    );
     const leadRepo = yield* Effect.gen(function* () {
       return yield* LeadRepository;
     }).pipe(Effect.provide(LeadRepositoryLayer(db)));
@@ -153,6 +180,11 @@ export default Cloudflare.Worker(
         .handle("get", ({ params }) =>
           CurrentUser.use((user) =>
             SiteRepository.use((repo) => repo.get(params.id, requesterFor(user))),
+          ),
+        )
+        .handle("getDomain", ({ params }) =>
+          CurrentUser.use((user) =>
+            SiteRepository.use((repo) => repo.getDomainSetup(params.id, requesterFor(user))),
           ),
         )
         .handle("access", ({ params }) =>

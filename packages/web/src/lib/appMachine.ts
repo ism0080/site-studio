@@ -25,6 +25,7 @@ export interface AppApi {
   updateSite: (site: Site) => Promise<Site>;
   publishSite: (id: string) => Promise<PublishResult>;
   fetchSite: (id: string) => Promise<Site>;
+  getDomainSetup: (id: string) => Promise<DomainSetup | null>;
   setDomain: (id: string, domain: string) => Promise<DomainSetup>;
   verifyDomain: (id: string) => Promise<Site>;
   removeDomain: (id: string) => Promise<Site>;
@@ -81,8 +82,13 @@ const _sessionActor = fromPromise<{ user: User | null }, { api: AppApi }>(({ inp
   input.api.getSession(),
 );
 
-const _loadSiteActor = fromPromise<Site, { api: AppApi; id: string }>(({ input }) =>
-  input.api.fetchSite(input.id),
+const _loadSiteActor = fromPromise<
+  { site: Site; setup: DomainSetup | null },
+  { api: AppApi; id: string }
+>(({ input }) =>
+  Promise.all([input.api.fetchSite(input.id), input.api.getDomainSetup(input.id)]).then(
+    ([site, setup]) => ({ site, setup }),
+  ),
 );
 
 const _ensurePersisted = async (api: AppApi, site: Site, persisted: boolean) => {
@@ -109,7 +115,8 @@ const _saveActor = fromPromise<{ persisted: boolean; created: Site | null }, Per
     }
     const created = await input.api.createSite({
       name: input.site.business.name,
-      subdomain: input.site.subdomain ?? input.site.business.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      subdomain:
+        input.site.subdomain ?? input.site.business.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       business: input.site.business,
       templateId: input.site.templateId,
     });
@@ -287,7 +294,8 @@ export const appMachine = setup({
                 onDone: {
                   target: "idle",
                   actions: assign({
-                    site: ({ event }) => event.output,
+                    site: ({ event }) => event.output.site,
+                    setup: ({ event }) => event.output.setup,
                     persisted: true,
                     saveState: "idle",
                   }),

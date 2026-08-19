@@ -234,6 +234,20 @@ export class DomainInUse extends Schema.TaggedErrorClass<DomainInUse>()(
   { httpApiStatus: 409 },
 ) {}
 
+/** Bare apex domains require Cloudflare's separately priced apex product (400). */
+export class DomainUnsupported extends Schema.TaggedErrorClass<DomainUnsupported>()(
+  "DomainUnsupported",
+  { domain: Schema.String },
+  { httpApiStatus: 400 },
+) {}
+
+/** Cloudflare could not provision or inspect the custom hostname (502). */
+export class CloudflareSaasError extends Schema.TaggedErrorClass<CloudflareSaasError>()(
+  "CloudflareSaasError",
+  { message: Schema.String },
+  { httpApiStatus: 502 },
+) {}
+
 /** Another site already claims the requested public subdomain (409). */
 export class SubdomainInUse extends Schema.TaggedErrorClass<SubdomainInUse>()(
   "SubdomainInUse",
@@ -242,21 +256,33 @@ export class SubdomainInUse extends Schema.TaggedErrorClass<SubdomainInUse>()(
 ) {}
 
 /**
- * Response for a pending custom-domain request. The owner must publish a TXT
- * record (`txtName` = `txtValue`) at their DNS provider, then call
- * `POST /sites/:id/domain/verify` to activate the domain.
+ * Response for a pending custom-domain request. The owner must point the
+ * hostname at the SaaS CNAME target and publish the returned TXT records,
+ * then call `POST /sites/:id/domain/verify` to activate the domain.
  */
+export const DomainDnsRecord = Schema.Struct({
+  name: Schema.String,
+  value: Schema.String,
+});
+export type DomainDnsRecord = (typeof DomainDnsRecord)["Type"];
+
 export const DomainSetup = Schema.Struct({
   domain: Schema.String,
   status: Schema.Literal("pending"),
-  txtName: Schema.String,
-  txtValue: Schema.String,
+  cnameTarget: Schema.String,
+  records: Schema.Array(DomainDnsRecord),
   site: Site,
 });
 export type DomainSetup = (typeof DomainSetup)["Type"];
 
 /** Union of the custom-domain failure responses. */
-export const DomainError = Schema.Union([SiteNotFound, DomainNotVerified, DomainInUse]);
+export const DomainError = Schema.Union([
+  SiteNotFound,
+  DomainNotVerified,
+  DomainInUse,
+  DomainUnsupported,
+  CloudflareSaasError,
+]);
 
 /** Compact JSON of the Site, used for the D1 `document` column and build-queue payloads. */
 export const SiteJson = Schema.fromJsonString(Site);

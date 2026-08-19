@@ -25,6 +25,14 @@ export default Alchemy.Stack(
     const api = yield* ApiWorker;
     const www = yield* WwwWorker;
     const build = yield* BuildWorker;
+    const saasZoneId = process.env.CF_SAAS_ZONE_ID;
+    const wwwDomain = process.env.WWW_DOMAIN;
+    if (saasZoneId && wwwDomain) {
+      yield* Cloudflare.CustomHostname.FallbackOrigin("SaasFallbackOrigin", {
+        zoneId: saasZoneId,
+        origin: wwwDomain,
+      });
+    }
     const web = yield* Command.Dev("Web", {
       command: "node node_modules/vite/bin/vite.js",
       cwd: "../web",

@@ -34,6 +34,7 @@ export const siteApi = {
   listTemplates: (): Promise<readonly Template[]> => siteApiHttpClient.listTemplates(),
   listSites: (): Promise<readonly Site[]> => siteApiHttpClient.listSites(),
   getSite: (id: string): Promise<Site> => siteApiHttpClient.getSite(id),
+  getDomainSetup: (id: string): Promise<DomainSetup | null> => siteApiHttpClient.getDomainSetup(id),
   getSiteAccess: (id: string): Promise<SiteAccess> => siteApiHttpClient.getSiteAccess(id),
   createSite: (payload: CreateSitePayload): Promise<Site> => siteApiHttpClient.createSite(payload),
   updateSite: (id: string, site: Site): Promise<Site> =>

@@ -67,10 +67,19 @@ export default function DomainSettings({
       )}
       {setup && (
         <div data-slot="records">
-          <p className="domain-hint">Add this TXT record at your DNS provider, then verify.</p>
+          <p className="domain-hint">
+            Point your domain at the CNAME target and add these TXT records, then verify.
+          </p>
           <div data-slot="record">
-            <code>{setup.txtName}</code>
-            <code>{setup.txtValue}</code>
+            <code>
+              {domain} CNAME {setup.cnameTarget}
+            </code>
+            {setup.records.map((record) => (
+              <span key={record.name}>
+                <code>{record.name}</code>
+                <code>{record.value}</code>
+              </span>
+            ))}
           </div>
           <button className="dark-button" onClick={onVerify} disabled={busy}>
             Verify ownership

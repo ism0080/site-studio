@@ -5,6 +5,7 @@ import { makeSiteRepository } from "../site/SiteRepository.ts";
 import { makeMemberRepository } from "../members/MemberRepository.ts";
 import { makeLeadRepository } from "../leads/LeadRepository.ts";
 import type { Requester } from "../access/access.ts";
+import type { CloudflareSaas } from "../site/cloudflareSaas.ts";
 
 let db: DatabaseSync;
 
@@ -12,7 +13,23 @@ beforeEach(() => {
   db = makeDb();
 });
 
-const _repo = () => makeSiteRepository(d1(db));
+const _domainProvider: CloudflareSaas = {
+  create: async (hostname) => ({
+    id: `cf-${hostname}`,
+    hostname,
+    status: "pending",
+    ssl: { status: "pending", validation_records: [] },
+  }),
+  get: async (id) => ({
+    id,
+    hostname: "example.com",
+    status: "active",
+    ssl: { status: "active", validation_records: [] },
+  }),
+  remove: async () => undefined,
+};
+
+const _repo = () => makeSiteRepository(d1(db), { cloudflareSaas: _domainProvider });
 
 const _owner = (id: string): Requester => ({ id, isAdmin: false });
 const admin = { id: "admin-1", isAdmin: true };
@@ -113,30 +130,69 @@ describe("SiteRepository", () => {
   });
 
   it("setDomain -> verify (TXT ok) -> remove", async () => {
+    let active = false;
+    const provider: CloudflareSaas = {
+      create: async (hostname) => ({
+        id: "cf-hostname-1",
+        hostname,
+        status: "pending",
+        ownership_verification: { type: "txt", name: "_cf.example.com", value: "ownership" },
+        ssl: {
+          status: "pending",
+          validation_records: [{ txt_name: "_acme.example.com", txt_value: "certificate" }],
+        },
+      }),
+      get: async (id) => ({
+        id,
+        hostname: "www.example.com",
+        status: active ? "active" : "pending",
+        ownership_verification: { type: "txt", name: "_cf.example.com", value: "ownership" },
+        ssl: {
+          status: active ? "active" : "pending",
+          validation_records: [{ txt_name: "_acme.example.com", txt_value: "certificate" }],
+        },
+      }),
+      remove: async () => undefined,
+    };
     const r = makeSiteRepository(d1(db), {
-      verifyTxt: () => Promise.resolve(true),
+      cloudflareSaas: provider,
+      cnameTarget: "customers.site-studio.dev",
     });
     const created = await run(r.create({ name: "A", templateId: "t" }, _owner("owner-1")));
 
-    const setup = await run(r.setDomain(created.id, _owner("owner-1"), "example.com"));
-    expect(setup.domain).toBe("example.com");
+    const setup = await run(r.setDomain(created.id, _owner("owner-1"), "www.example.com"));
+    expect(setup.domain).toBe("www.example.com");
     expect(setup.status).toBe("pending");
-    expect(setup.txtName).toBe("_site-studio-verify.example.com");
-    expect(setup.txtValue).toMatch(/^site-studio-verify=/);
+    expect(setup.cnameTarget).toBe("customers.site-studio.dev");
+    expect(setup.records).toEqual([
+      { name: "_cf.example.com", value: "ownership" },
+      { name: "_acme.example.com", value: "certificate" },
+    ]);
+    expect(await run(r.getDomainSetup(created.id, _owner("owner-1")))).toEqual(setup);
 
+    active = true;
     const verified = await run(r.verifyDomain(created.id, _owner("owner-1")));
-    expect(verified.customDomain).toBe("example.com");
+    expect(verified.customDomain).toBe("www.example.com");
 
     const removed = await run(r.removeDomain(created.id, _owner("owner-1")));
     expect(removed.customDomain).toBeUndefined();
   });
 
   it("verify fails when the TXT record is missing", async () => {
+    const provider: CloudflareSaas = {
+      ..._domainProvider,
+      get: async (id) => ({
+        id,
+        hostname: "www.example.com",
+        status: "pending",
+        ssl: { status: "pending", validation_records: [] },
+      }),
+    };
     const r = makeSiteRepository(d1(db), {
-      verifyTxt: () => Promise.resolve(false),
+      cloudflareSaas: provider,
     });
     const created = await run(r.create({ name: "A", templateId: "t" }, _owner("owner-1")));
-    await run(r.setDomain(created.id, _owner("owner-1"), "example.com"));
+    await run(r.setDomain(created.id, _owner("owner-1"), "www.example.com"));
     await expect(run(r.verifyDomain(created.id, _owner("owner-1")))).rejects.toMatchObject({
       _tag: "DomainNotVerified",
     });
@@ -146,9 +202,21 @@ describe("SiteRepository", () => {
     const r = _repo();
     const a = await run(r.create({ name: "A", templateId: "t" }, _owner("owner-1")));
     const b = await run(r.create({ name: "B", templateId: "t" }, _owner("owner-1")));
-    await run(r.setDomain(a.id, _owner("owner-1"), "example.com"));
-    await expect(run(r.setDomain(b.id, _owner("owner-1"), "example.com"))).rejects.toMatchObject({
+    await run(r.setDomain(a.id, _owner("owner-1"), "www.example.com"));
+    await expect(
+      run(r.setDomain(b.id, _owner("owner-1"), "www.example.com")),
+    ).rejects.toMatchObject({
       _tag: "DomainInUse",
+    });
+  });
+
+  it("rejects bare apex domains in standard SaaS mode", async () => {
+    const r = _repo();
+    const created = await run(r.create({ name: "A", templateId: "t" }, _owner("owner-1")));
+    await expect(
+      run(r.setDomain(created.id, _owner("owner-1"), "example.com")),
+    ).rejects.toMatchObject({
+      _tag: "DomainUnsupported",
     });
   });
 });
