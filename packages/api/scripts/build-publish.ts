@@ -13,9 +13,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import * as Effect from "effect/Effect";
-import * as Layer from "effect/Layer";
 import { BuildRunner } from "../src/publish/BuildRunner.ts";
-import { makeDaytonaBuildRunner } from "../src/publish/daytona.ts";
+import { DaytonaBuildRunner } from "../src/publish/daytona.ts";
 import { decodeSiteJson } from "../src/site/site.ts";
 import { LocalBuildRunner } from "./build-runner/local.ts";
 
@@ -26,8 +25,7 @@ if (!sitePath) {
 }
 
 const kind = process.env.BUILD_RUNNER ?? "daytona";
-const runnerLayer =
-  kind === "local" ? LocalBuildRunner : Layer.effect(BuildRunner, makeDaytonaBuildRunner());
+const runnerLayer = kind === "local" ? LocalBuildRunner : DaytonaBuildRunner;
 
 const site = Effect.runSync(
   decodeSiteJson(readFileSync(resolve(sitePath), "utf8")).pipe(

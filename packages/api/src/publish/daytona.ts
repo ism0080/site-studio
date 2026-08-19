@@ -1,11 +1,12 @@
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
 import type { Site } from "../site/site.ts";
 import { encodeSiteDocument } from "../site/site.ts";
-import { BuildError, type BuildResult } from "./BuildRunner.ts";
+import { BuildError, BuildRunner, NoopBuildRunner, type BuildResult } from "./BuildRunner.ts";
 
 /**
  * workerd-safe Daytona build runner. The @daytona/sdk is Node-only (axios,
@@ -248,3 +249,19 @@ export const makeDaytonaBuildRunner = (deps: { fetch?: typeof fetch } = {}) =>
     const fetcher = deps.fetch ?? globalThis.fetch;
     return makeClient(env, fetcher);
   });
+
+/**
+ * BuildRunner layer backed by Daytona, falling back to the noop runner when no
+ * backend is configured. Consumers yield the contextual `BuildRunner` and let
+ * this layer's requirements (config) resolve at the composition root.
+ */
+export const DaytonaBuildRunner = Layer.effect(
+  BuildRunner,
+  makeDaytonaBuildRunner().pipe(
+    Effect.catch(() =>
+      Effect.gen(function* () {
+        return yield* BuildRunner;
+      }).pipe(Effect.provide(NoopBuildRunner)),
+    ),
+  ),
+);

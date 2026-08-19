@@ -2,7 +2,6 @@ import * as Cloudflare from "alchemy/Cloudflare";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import * as Path from "effect/Path";
 import * as Redacted from "effect/Redacted";
 import * as Http from "effect/unstable/http";
@@ -13,18 +12,18 @@ import { SitesBucket } from "./site/bucket.ts";
 import { Database } from "./site/database.ts";
 import { SiteApi } from "./site/siteApi.ts";
 import { publishSite } from "./site/publishSite.ts";
-import { makeSiteRepository, SiteRepository } from "./site/SiteRepository.ts";
-import { makeLeadRepository, LeadRepository } from "./leads/LeadRepository.ts";
-import { LeadNotifier, makeCloudflareNotifier, makeNoopNotifier } from "./leads/LeadNotifier.ts";
+import { SiteRepository, SiteRepositoryLayer } from "./site/SiteRepository.ts";
+import { LeadRepository, LeadRepositoryLayer } from "./leads/LeadRepository.ts";
+import { LeadNotifier, LeadNotifierLayer } from "./leads/LeadNotifier.ts";
 import { LeadRateLimiter, submitLead } from "./leads/submitLead.ts";
-import { SiteStorage, makeR2SiteStorage } from "./storage/SiteStorage.ts";
+import { SiteStorage, R2SiteStorageLayer } from "./storage/SiteStorage.ts";
 import { WebCrypto } from "./platform/WebCrypto.ts";
 import { BuildQueue, encodeBuildJob } from "./publish/BuildQueue.ts";
 import { BuildJobSink } from "./publish/BuildJobSink.ts";
 import { AUTH_PATH, CurrentUser, createAuth } from "./auth/auth.ts";
 import { requesterFor, type GlobalRole } from "./access/access.ts";
-import { makeMemberRepository, MemberRepository } from "./members/MemberRepository.ts";
-import { makeAdminRepository, AdminRepository } from "./admin/AdminRepository.ts";
+import { MemberRepository, MemberRepositoryLayer } from "./members/MemberRepository.ts";
+import { AdminRepository, AdminRepositoryLayer } from "./admin/AdminRepository.ts";
 import { Forbidden, SiteNotFound } from "./site/site.ts";
 
 const AuthEnv = {
@@ -84,22 +83,26 @@ export default Cloudflare.Worker(
 
     // Service implementations. These are the swap points: the interfaces are
     // the Context tags above, and each impl is built here in init and provided
-    // per-request to the router.
-    const siteRepo = makeSiteRepository(db);
-    const leadRepo = makeLeadRepository(db);
-    const memberRepo = makeMemberRepository(db);
-    const adminRepo = makeAdminRepository(db);
-    const siteStorage = makeR2SiteStorage(bucket);
-
-    // Lead notifications are best-effort and swappable. Cloudflare's
-    // send_email binding only reaches verified destination addresses, so the
-    // Cloudflare impl sends to a platform inbox when configured.
-    const leadsNotifyEmail = yield* Config.option(Config.string("LEADS_NOTIFY_EMAIL"));
-    const leadsFromEmail = yield* Config.option(Config.string("LEADS_FROM_EMAIL"));
-    const leadNotifier =
-      Option.isSome(leadsNotifyEmail) && Option.isSome(leadsFromEmail)
-        ? yield* makeCloudflareNotifier()
-        : makeNoopNotifier();
+    // per-request to the router. Each impl is produced by providing its owning
+    // layer, so requirements resolve at this composition root.
+    const siteRepo = yield* Effect.gen(function* () {
+      return yield* SiteRepository;
+    }).pipe(Effect.provide(SiteRepositoryLayer(db)));
+    const leadRepo = yield* Effect.gen(function* () {
+      return yield* LeadRepository;
+    }).pipe(Effect.provide(LeadRepositoryLayer(db)));
+    const memberRepo = yield* Effect.gen(function* () {
+      return yield* MemberRepository;
+    }).pipe(Effect.provide(MemberRepositoryLayer(db)));
+    const adminRepo = yield* Effect.gen(function* () {
+      return yield* AdminRepository;
+    }).pipe(Effect.provide(AdminRepositoryLayer(db)));
+    const siteStorage = yield* Effect.gen(function* () {
+      return yield* SiteStorage;
+    }).pipe(Effect.provide(R2SiteStorageLayer(bucket)));
+    const leadNotifier = yield* Effect.gen(function* () {
+      return yield* LeadNotifier;
+    }).pipe(Effect.provide(LeadNotifierLayer));
 
     const config = yield* Effect.all({
       auth: AuthConfig,

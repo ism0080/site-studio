@@ -1,6 +1,7 @@
 import * as Context from "effect/Context";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import type { Site } from "../site/site.ts";
 
 /**
@@ -46,3 +47,6 @@ export const makeNoopBuildRunner = (): BuildRunner["Service"] => ({
       ),
     ),
 });
+
+/** BuildRunner fallback layer for when no build backend is configured. */
+export const NoopBuildRunner = Layer.effect(BuildRunner, Effect.succeed(makeNoopBuildRunner()));

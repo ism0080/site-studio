@@ -4,6 +4,7 @@ import * as Context from "effect/Context";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import type { RuntimeContext } from "alchemy";
 import type { Lead } from "./leads.ts";
 
@@ -84,3 +85,20 @@ export const makeCloudflareNotifier = () =>
 export const NoopLeadNotifier = Layer.effect(LeadNotifier, Effect.succeed(makeNoopNotifier()));
 
 export const CloudflareLeadNotifier = Layer.effect(LeadNotifier, makeCloudflareNotifier());
+
+/**
+ * Picks the Cloudflare notifier when a notification destination is configured,
+ * otherwise falls back to the noop notifier. Requirements (config) resolve at
+ * the composition root.
+ */
+export const LeadNotifierLayer = Layer.effect(
+  LeadNotifier,
+  Effect.gen(function* () {
+    const notifyEmail = yield* Config.option(Config.string("LEADS_NOTIFY_EMAIL"));
+    const fromEmail = yield* Config.option(Config.string("LEADS_FROM_EMAIL"));
+    if (Option.isSome(notifyEmail) && Option.isSome(fromEmail)) {
+      return yield* makeCloudflareNotifier();
+    }
+    return makeNoopNotifier();
+  }),
+);
