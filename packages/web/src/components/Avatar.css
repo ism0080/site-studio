@@ -8,11 +8,12 @@
   font-weight: 700;
   display: grid;
   place-items: center;
-}
-[data-component="avatar"][data-variant="user"] {
-  border: 0;
-  width: 35px;
-  height: 35px;
-  background: var(--color-ink);
-  font-size: 11px;
+
+  &[data-variant="user"] {
+    border: 0;
+    width: 35px;
+    height: 35px;
+    background: var(--color-ink);
+    font-size: 11px;
+  }
 }

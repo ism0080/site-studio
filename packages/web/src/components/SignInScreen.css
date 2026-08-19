@@ -3,50 +3,56 @@
   display: grid;
   place-content: center;
   background: var(--color-bg-page);
-}
-[data-component="sign-in"] [data-slot="card"] {
-  background: var(--color-white);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-lg);
-  padding: var(--space-11) var(--space-12);
-  width: 340px;
-  text-align: center;
-  box-shadow: 0 12px 40px var(--color-border);
-}
-[data-component="sign-in"] [data-slot="card"] [data-component="brand"] {
-  margin-bottom: var(--space-9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-1-5);
-  color: var(--color-ink);
-  font-size: 20px;
-  padding: var(--space-0);
-}
-[data-component="sign-in"] [data-slot="card"] h1 {
-  font-size: 22px;
-  letter-spacing: -1px;
-  margin: var(--space-0) var(--space-0) var(--space-2);
-}
-[data-component="sign-in"] [data-slot="card"] p {
-  color: var(--color-text-muted);
-  font-size: 13px;
-  margin: var(--space-0) var(--space-0) var(--space-7);
-}
-[data-component="sign-in"] [data-slot="google-button"] {
-  width: 100%;
-  justify-content: center;
-  gap: var(--space-2-5);
-  padding: var(--space-3);
-}
-[data-component="sign-in"] [data-slot="google-mark"] {
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--color-white);
-  color: var(--color-accent);
-  font-weight: 800;
-  font-size: 12px;
+
+  [data-slot="card"] {
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-11) var(--space-12);
+    width: 340px;
+    text-align: center;
+    box-shadow: 0 12px 40px var(--color-border);
+
+    [data-component="brand"] {
+      margin-bottom: var(--space-9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-1-5);
+      color: var(--color-ink);
+      font-size: 20px;
+      padding: var(--space-0);
+    }
+
+    h1 {
+      font-size: 22px;
+      letter-spacing: -1px;
+      margin: var(--space-0) var(--space-0) var(--space-2);
+    }
+
+    p {
+      color: var(--color-text-muted);
+      font-size: 13px;
+      margin: var(--space-0) var(--space-0) var(--space-7);
+    }
+  }
+
+  [data-slot="google-button"] {
+    width: 100%;
+    justify-content: center;
+    gap: var(--space-2-5);
+    padding: var(--space-3);
+  }
+
+  [data-slot="google-mark"] {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--color-white);
+    color: var(--color-accent);
+    font-weight: 800;
+    font-size: 12px;
+  }
 }

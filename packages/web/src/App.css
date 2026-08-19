@@ -1,8 +1,9 @@
 [data-component="app"] {
   display: flex;
   min-height: 100vh;
-}
-[data-component="app"] [data-slot="main-content"] {
-  flex: 1;
-  min-width: 0;
+
+  [data-slot="main-content"] {
+    flex: 1;
+    min-width: 0;
+  }
 }

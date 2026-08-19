@@ -1,46 +1,55 @@
 [data-component="leads"] {
   padding: var(--space-9) var(--space-14);
   max-width: 900px;
-}
-[data-component="leads"] [data-slot="lead-list"] {
-  display: grid;
-  gap: var(--space-3);
-}
-[data-component="leads"] [data-slot="lead-card"] {
-  background: var(--color-white);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-lg);
-  padding: var(--space-4-5) var(--space-5);
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3-5);
-}
-[data-component="leads"] [data-slot="lead-body"] {
-  flex: 1;
-  min-width: 0;
-}
-[data-component="leads"] [data-slot="lead-head"] {
-  display: flex;
-  gap: var(--space-3);
-  align-items: baseline;
-}
-[data-component="leads"] [data-slot="lead-head"] strong {
-  font-size: 14px;
-}
-[data-component="leads"] [data-slot="lead-head"] a {
-  font-size: 12px;
-  color: var(--color-accent);
-  text-decoration: none;
-}
-[data-component="leads"] [data-slot="lead-body"] p {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  margin: var(--space-2-5) var(--space-0) var(--space-2);
-}
-[data-component="leads"] [data-slot="lead-body"] small {
-  color: var(--color-text-muted);
-  font-size: 10px;
-}
-[data-component="leads"] [data-slot="lead-card"] .section-btn.remove {
-  flex-shrink: 0;
+
+  [data-slot="lead-list"] {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  [data-slot="lead-card"] {
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-4-5) var(--space-5);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3-5);
+
+    .section-btn.remove {
+      flex-shrink: 0;
+    }
+  }
+
+  [data-slot="lead-body"] {
+    flex: 1;
+    min-width: 0;
+
+    p {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      margin: var(--space-2-5) var(--space-0) var(--space-2);
+    }
+
+    small {
+      color: var(--color-text-muted);
+      font-size: 10px;
+    }
+  }
+
+  [data-slot="lead-head"] {
+    display: flex;
+    gap: var(--space-3);
+    align-items: baseline;
+
+    strong {
+      font-size: 14px;
+    }
+
+    a {
+      font-size: 12px;
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+  }
 }
