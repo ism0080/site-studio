@@ -13,7 +13,7 @@ const HEADINGS = {
   admin: ["Admin", "Manage the agencies on your platform."],
 } satisfies Partial<Record<View, [string, string]>>;
 
-const OVERVIEW_SUBTITLE = "Here’s what’s happening with your sites.";
+const OVERVIEW_SUBTITLE = "Here’s what’s happening with your site.";
 
 export default function Header({
   active,
@@ -50,7 +50,7 @@ export default function Header({
     <header data-component="header">
       <div>
         <p data-slot="crumb">
-          {inEditor ? `My sites / ${site.business.name}` : "Workspace"}
+          {inEditor ? `My site / ${site.business.name}` : "Workspace"}
           {online === false && <span data-slot="crumb-offline"> · offline demo</span>}
         </p>
         <h1>{title}</h1>

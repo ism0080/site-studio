@@ -15,7 +15,7 @@ export default function Overview({ onEdit, site, sites }: OverviewProps) {
     <div data-component="overview">
       <section data-slot="stat-grid">
         <div data-slot="stat-card">
-          <span>Published sites</span>
+          <span>Published site</span>
           <strong>{publishedCount || (site.status === "published" ? 1 : 0)}</strong>
           <small>
             <b>↗</b> connected to API
@@ -35,7 +35,7 @@ export default function Overview({ onEdit, site, sites }: OverviewProps) {
 
       <section className="section-header">
         <div>
-          <p className="overline">Your sites</p>
+          <p className="overline">Your site</p>
           <h2>Keep building your presence</h2>
         </div>
         <button data-component="button" onClick={onEdit}>
