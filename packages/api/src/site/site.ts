@@ -163,6 +163,32 @@ export const PublishResult = Schema.Struct({
 });
 export type PublishResult = (typeof PublishResult)["Type"];
 
+/** A template's theme palette (the parts the editor surfaces as colour fields). */
+export const TemplateTheme = Schema.Struct({
+  bg: Schema.String,
+  accent: Schema.String,
+  ink: Schema.String,
+  surface: Schema.String,
+  border: Schema.String,
+  muted: Schema.String,
+});
+
+/**
+ * A site template as served to the editor: the metadata the gallery shows and
+ * the theme the editor derives its colour defaults from. Sourced from the
+ * site-template template registry (the single source of truth).
+ */
+export const TemplateInfo = Schema.Struct({
+  id: Schema.String,
+  name: Schema.String,
+  font: Schema.String,
+  category: Schema.String,
+  brand: Schema.String,
+  title: Schema.Array(Schema.String),
+  theme: TemplateTheme,
+});
+export type TemplateInfo = (typeof TemplateInfo)["Type"];
+
 /**
  * The build job could not be handed to the build queue. The site is already
  * marked published; retrying the publish re-enqueues the build.

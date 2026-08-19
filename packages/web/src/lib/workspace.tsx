@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { appMachine } from "./appMachine.ts";
 import { authClient } from "./auth.ts";
-import { postPreview } from "./preview.ts";
 import { setSiteLoadHandler } from "./routerBridge.ts";
 import { WorkspaceContext, type WorkspaceValue } from "./workspaceContext.ts";
 import {
@@ -51,7 +50,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       removeDomain: (id) => removeDomain.mutateAsync(id),
       inviteMember: (siteId, input) => inviteMember.mutateAsync({ siteId, input }),
       inviteAgency: (email) => inviteAgency.mutateAsync(email),
-      preview: (site) => postPreview(site),
     },
   });
 
@@ -98,7 +96,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       adminEmail: snapshot.context.adminEmail,
       adminBusy,
       adminError: snapshot.context.adminError,
-      previewRevision: snapshot.context.previewRevision,
       meRole: role,
       isFull,
       canEdit,
@@ -124,8 +121,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       adminInvite: () => send({ type: "ADMIN_INVITE" }),
     }),
     [
-      snapshot, send, role, isFull, canEdit, canPublish, canLeads, canManageMembers,
-      domainBusy, accessBusy, adminBusy,
+      snapshot,
+      send,
+      role,
+      isFull,
+      canEdit,
+      canPublish,
+      canLeads,
+      canManageMembers,
+      domainBusy,
+      accessBusy,
+      adminBusy,
     ],
   );
 

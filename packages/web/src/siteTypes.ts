@@ -21,6 +21,7 @@ import type {
   SiteAccess,
   SiteStatus,
   TestimonialsSection,
+  TemplateInfo,
 } from "@site-studio/api/contract";
 
 export type {
@@ -39,7 +40,7 @@ export type {
   SiteStatus,
 };
 
-export type { AboutSection, HeroSection, ServicesSection, TestimonialsSection };
+export type { AboutSection, HeroSection, ServicesSection, TemplateInfo, TestimonialsSection };
 
 export type { Section };
 
@@ -71,16 +72,7 @@ export interface SectionMeta {
 }
 
 /** A site template: id, name, palette, fonts, and demo brand/title for the gallery art. */
-export interface Template {
-  id: string;
-  name: string;
-  category: string;
-  palette: [string, string, string];
-  surface: string;
-  font: string;
-  brand: string;
-  title: string[];
-}
+export type Template = TemplateInfo;
 
 /** The top-level workspace view shown in the sidebar (overview/editor/templates/…). */
 export type View = "overview" | "editor" | "templates" | "leads" | "access" | "admin";

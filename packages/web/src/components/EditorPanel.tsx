@@ -1,6 +1,7 @@
 import "./EditorPanel.css";
+import { useQuery } from "@tanstack/react-query";
 import type { DomainSetup, SaveState, Site, StringSettingKey } from "../siteTypes.ts";
-import { siteTemplates, templateFonts } from "../data/site.ts";
+import { templateFonts } from "../data/site.ts";
 import {
   findPage,
   findSection,
@@ -12,6 +13,7 @@ import DomainSettings from "./DomainSettings.tsx";
 import SectionList from "./SectionList.tsx";
 import SectionTitle from "./SectionTitle.tsx";
 import { AboutFields, HeroFields, ServicesFields, TestimonialsFields } from "./SectionFields.tsx";
+import { templateQueries } from "../lib/apiQueries.ts";
 
 type ColorKey = Exclude<StringSettingKey, "font" | "border" | "muted">;
 
@@ -45,12 +47,13 @@ function ColorField({
 }
 
 function ThemeSettings({ site, onUpdate }: { site: Site; onUpdate: (site: Site) => void }) {
-  const template = siteTemplates.find((t) => t.id === site.templateId) ?? siteTemplates[0];
+  const { data: templates = [] } = useQuery(templateQueries.list());
+  const template = templates.find((t) => t.id === site.templateId);
   const fallback = {
-    accent: template.palette[1],
-    bg: template.palette[0],
-    ink: template.palette[2],
-    surface: template.surface,
+    accent: template?.theme.accent ?? site.settings.accent,
+    bg: template?.theme.bg ?? "#f7f7f3",
+    ink: template?.theme.ink ?? "#202320",
+    surface: template?.theme.surface ?? "#ffffff",
   };
 
   return (
@@ -92,7 +95,8 @@ function ThemeSettings({ site, onUpdate }: { site: Site; onUpdate: (site: Site) 
         />
       </div>
       <p data-slot="theme-hint">
-        Custom colours override the {template.name} palette. The font and accent already do.
+        Custom colours override the {template?.name ?? site.templateId} palette. The font and accent
+        already do.
       </p>
     </div>
   );

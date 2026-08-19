@@ -1,5 +1,5 @@
 import { OwnerId, SiteId } from "@site-studio/api/contract";
-import type { Site, Template } from "../siteTypes.ts";
+import type { Site } from "../siteTypes.ts";
 
 export const initialSite: Site = {
   id: SiteId.make("site_aurora_01"),
@@ -77,37 +77,11 @@ export const initialSite: Site = {
   ],
 };
 
-export const siteTemplates: Template[] = [
-  {
-    id: "editorial-studio",
-    name: "Editorial Studio",
-    category: "Bold & considered",
-    palette: ["#f7f7f3", "#e56645", "#202320"],
-    surface: "#ffffff",
-    font: "Manrope",
-    brand: "AURORA",
-    title: ["Make space", "for what", "matters."],
-  },
-  {
-    id: "warm-minimal",
-    name: "Warm Minimal",
-    category: "Calm & welcoming",
-    palette: ["#f2e9dc", "#a8764e", "#322d29"],
-    surface: "#faf5ea",
-    font: "Fraunces",
-    brand: "NORTH",
-    title: ["Good work,", "warmly."],
-  },
-  {
-    id: "clean-grid",
-    name: "Clean Grid",
-    category: "Clear & confident",
-    palette: ["#f6f8fa", "#4567db", "#18202b"],
-    surface: "#ffffff",
-    font: "Space Grotesk",
-    brand: "FORM /",
-    title: ["Make it", "clear."],
-  },
+export const templateFonts: string[] = [
+  "Manrope",
+  "Fraunces",
+  "Space Grotesk",
+  "Inter",
+  "DM Sans",
+  "Lora",
 ];
-
-export const templateFonts: string[] = ["Manrope", "Fraunces", "Space Grotesk", "Inter", "DM Sans", "Lora"];

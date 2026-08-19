@@ -5,10 +5,12 @@
   "type": "module",
   "exports": {
     ".": {
+      "types": "./src/render.tsx",
       "bun": "./src/render.tsx",
       "node": "./dist/render.mjs",
       "default": "./dist/render.mjs"
-    }
+    },
+    "./templates": "./src/templates.ts"
   },
   "scripts": {
     "build": "bun build ./src/render.tsx --outfile ./dist/render.mjs --external react --external react-dom --external react/jsx-runtime --external react/jsx-dev-runtime --format esm --target node",

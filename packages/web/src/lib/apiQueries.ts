@@ -17,6 +17,16 @@ export const meQueries = {
     }),
 };
 
+export const templateQueries = {
+  all: () => ["templates"] as const,
+  list: () =>
+    queryOptions({
+      queryKey: templateQueries.all(),
+      queryFn: siteApi.listTemplates,
+      staleTime: Infinity,
+    }),
+};
+
 export const siteQueries = {
   all: () => ["sites"] as const,
   lists: () => [...siteQueries.all(), "list"] as const,

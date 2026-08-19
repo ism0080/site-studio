@@ -9,6 +9,7 @@ import type {
   PublishResult,
   Site,
   SiteAccess,
+  Template,
 } from "../siteTypes.ts";
 import type { Site as ApiSite } from "@site-studio/api/contract";
 import { formatTimeAgo } from "./formatting.ts";
@@ -30,11 +31,11 @@ export const fromApiSite = (site: ApiSite): Site => ({
 /** App-facing API facade over the site-studio HTTP client, with editor-model mapping. */
 export const siteApi = {
   me: (): Promise<Me> => siteApiHttpClient.me(),
+  listTemplates: (): Promise<readonly Template[]> => siteApiHttpClient.listTemplates(),
   listSites: (): Promise<readonly Site[]> => siteApiHttpClient.listSites(),
   getSite: (id: string): Promise<Site> => siteApiHttpClient.getSite(id),
   getSiteAccess: (id: string): Promise<SiteAccess> => siteApiHttpClient.getSiteAccess(id),
-  createSite: (payload: CreateSitePayload): Promise<Site> =>
-    siteApiHttpClient.createSite(payload),
+  createSite: (payload: CreateSitePayload): Promise<Site> => siteApiHttpClient.createSite(payload),
   updateSite: (id: string, site: Site): Promise<Site> =>
     siteApiHttpClient.updateSite(id, toApiSite(site)),
   publishSite: (id: string): Promise<PublishResult> => siteApiHttpClient.publishSite(id),

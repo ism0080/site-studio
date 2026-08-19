@@ -22,6 +22,8 @@ export {
   SiteNotFound,
   SiteStatus,
   TestimonialsSection,
+  TemplateInfo,
+  TemplateTheme,
 } from "./site/site.ts";
 export { Lead, LeadId, LeadInput, LeadNotFound, TooManyRequests } from "./leads/leads.ts";
 export { Member, MemberInput, MemberNotFound } from "./members/members.ts";

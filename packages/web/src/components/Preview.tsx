@@ -1,22 +1,24 @@
 import "./Preview.css";
-import type { Device } from "../siteTypes.ts";
-import { PREVIEW_URL } from "../lib/preview.ts";
+import { useMemo } from "react";
+import { renderPage } from "@site-studio/site-template";
+import type { Device, Site } from "../siteTypes.ts";
+import { API_ORIGIN } from "../lib/siteApiHttpClient.ts";
 
-// Dev-only live preview. The app machine posts the current site document to
-// the vite dev server and bumps `revision` on every successful render; this
-// component just frames the result at the requested device width.
+// Live preview: renders the current site document through the very same
+// `renderPage` the publish pipeline uses, then frames that HTML in an iframe.
+// Because it renders in the browser, the preview stays live in production (no
+// dev-only vite middleware), and stays byte-for-byte what a publish would
+// produce — the iframe just isolates its styles/scripts from the editor chrome.
 
-export default function Preview({ device, revision }: { device: Device; revision: number }) {
+export default function Preview({ site, device }: { site: Site; device: Device }) {
+  const html = useMemo(() => {
+    const page = site.pages.find((p) => p.slug === "/") ?? site.pages[0];
+    return page ? renderPage(site, page, { apiBase: API_ORIGIN }) : "";
+  }, [site]);
+
   return (
     <div data-component="preview" data-device={device}>
-      {revision > 0 && (
-        <iframe
-          key={revision}
-          src={`${PREVIEW_URL}?v=${revision}`}
-          sandbox="allow-scripts"
-          title="Site preview"
-        />
-      )}
+      {html && <iframe srcDoc={html} sandbox="allow-scripts" title="Site preview" />}
     </div>
   );
 }

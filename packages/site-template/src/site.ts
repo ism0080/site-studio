@@ -15,7 +15,7 @@ export interface HeroProps {
 
 export interface ServicesProps {
   title: string;
-  items: Array<{ id: string; title: string; description: string }>;
+  items: ReadonlyArray<{ id: string; title: string; description: string }>;
 }
 
 export interface AboutProps {
@@ -26,14 +26,14 @@ export interface AboutProps {
 
 export interface TestimonialsProps {
   title: string;
-  items: Array<{ id: string; quote: string; author: string; role: string }>;
+  items: ReadonlyArray<{ id: string; quote: string; author: string; role: string }>;
 }
 
 export interface Page {
   id: string;
   slug: string;
   title: string;
-  sections: Section[];
+  sections: ReadonlyArray<Section>;
 }
 
 export interface Business {
@@ -73,7 +73,7 @@ export interface Site {
   status: SiteStatus;
   business: Business;
   settings: Settings;
-  pages: Page[];
+  pages: ReadonlyArray<Page>;
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;

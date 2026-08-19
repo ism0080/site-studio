@@ -15,10 +15,15 @@ import {
   PublishResult,
   Site,
   SiteNotFound,
+  TemplateInfo,
 } from "./site.ts";
 
 const SiteParams = Schema.Struct({
   id: Schema.String,
+});
+
+const listTemplates = HttpApi.HttpApiEndpoint.get("listTemplates", "/templates", {
+  success: Schema.Array(TemplateInfo),
 });
 
 const listSites = HttpApi.HttpApiEndpoint.get("list", "/", {
@@ -85,6 +90,7 @@ const removeDomain = HttpApi.HttpApiEndpoint.delete("removeDomain", "/:id/domain
 });
 
 export class SitesGroup extends HttpApi.HttpApiGroup.make("Sites")
+  .add(listTemplates)
   .add(listSites)
   .add(createSite)
   .add(getSite)

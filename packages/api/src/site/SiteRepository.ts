@@ -23,6 +23,7 @@ import type { Requester, SiteAccess } from "../access/access.ts";
 import { normalizeDomain } from "./objectKeys.ts";
 import { newVerificationToken, verifyTxtRecord } from "./dns.ts";
 import { nowIso } from "../platform/Time.ts";
+import { withDefaultSections } from "./templateDefaults.ts";
 
 type Db = Cloudflare.D1.QueryDatabaseClient;
 
@@ -114,7 +115,8 @@ export const makeSiteRepository = (
         .bind(id, ...accessibleBinds(requester))
         .first<{ document: string }>();
       if (row === null) return yield* new SiteNotFound({ id });
-      return yield* _parseSiteDocument(row.document);
+      const parsed = yield* _parseSiteDocument(row.document);
+      return withDefaultSections(parsed);
     }),
     access: Effect.fn("SiteRepository.access")(function* (id: string, requester: Requester) {
       return yield* resolveSiteAccess(db, id, requester);
@@ -169,7 +171,7 @@ export const makeSiteRepository = (
           site.updatedAt,
         )
         .run()
-        .pipe(Effect.as(site));
+        .pipe(Effect.as(withDefaultSections(site)));
     }),
     update: Effect.fn("SiteRepository.update")(function* (
       id: string,

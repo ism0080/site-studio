@@ -13,6 +13,7 @@ import { Database } from "./site/database.ts";
 import { SiteApi } from "./site/siteApi.ts";
 import { publishSite } from "./site/publishSite.ts";
 import { SiteRepository, SiteRepositoryLayer } from "./site/SiteRepository.ts";
+import { listTemplateInfo } from "./site/templateDefaults.ts";
 import { LeadRepository, LeadRepositoryLayer } from "./leads/LeadRepository.ts";
 import { LeadNotifier, LeadNotifierLayer } from "./leads/LeadNotifier.ts";
 import { LeadRateLimiter, submitLead } from "./leads/submitLead.ts";
@@ -145,6 +146,7 @@ export default Cloudflare.Worker(
 
     const sitesGroup = HttpApi.HttpApiBuilder.group(SiteApi, "Sites", (handlers) =>
       handlers
+        .handle("listTemplates", () => Effect.sync(listTemplateInfo))
         .handle("list", () =>
           CurrentUser.use((user) => SiteRepository.use((repo) => repo.list(requesterFor(user)))),
         )

@@ -18,8 +18,7 @@ function EditorView() {
   const { siteId } = useParams({ from: "/_auth/sites/$siteId" });
   const navigate = useNavigate({ from: "/sites/$siteId/editor" });
   const workspace = useWorkspace();
-  const { site, canEdit, isFull, domain, setup, domainError, domainBusy, previewRevision } =
-    workspace;
+  const { site, canEdit, isFull, domain, setup, domainError, domainBusy } = workspace;
 
   return (
     <Editor
@@ -27,7 +26,6 @@ function EditorView() {
       online
       saveState={workspace.saveState}
       device={device}
-      previewRevision={previewRevision}
       readOnly={!canEdit}
       fullAccess={isFull}
       onDevice={(next) => {

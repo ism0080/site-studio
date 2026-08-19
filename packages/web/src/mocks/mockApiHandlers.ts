@@ -13,6 +13,7 @@ import {
   type PublishResult,
   type SiteAccess,
 } from "@site-studio/api/contract";
+import { TEMPLATES } from "@site-studio/site-template/templates";
 import { mockMe, mockUser, seedAgencies, seedLeads, seedMembers, seedSites } from "./mockData.ts";
 
 const DomainInput = Schema.Struct({ domain: Schema.String });
@@ -52,6 +53,19 @@ export const mockApiHandlers: HttpHandler[] = [
   http.get("/api/me", () => HttpResponse.json(mockMe)),
 
   // --- Sites ----------------------------------------------------------------
+  http.get("/api/sites/templates", () =>
+    HttpResponse.json(
+      [...TEMPLATES.values()].map(({ id, name, font, category, brand, title, theme }) => ({
+        id,
+        name,
+        font,
+        category,
+        brand,
+        title,
+        theme,
+      })),
+    ),
+  ),
   http.get("/api/sites", () => HttpResponse.json(sites)),
   http.post("/api/sites", async ({ request }) => {
     const input = Schema.decodeUnknownSync(CreateSite)(await request.json());
@@ -65,7 +79,14 @@ export const mockApiHandlers: HttpHandler[] = [
       updatedAt: _now(),
       business: { name: input.name, category: "", location: "", email: "", phone: "", logo: "" },
       settings: { accent: "#4567db", font: "Manrope", showDirectory: true },
-      pages: [],
+      pages: [
+        {
+          id: `page_${Date.now()}`,
+          slug: "/",
+          title: "Homepage",
+          sections: TEMPLATES.get(input.templateId)?.defaultSections ?? [],
+        },
+      ],
     };
     sites.push(site);
     return HttpResponse.json(site, { status: 201 });

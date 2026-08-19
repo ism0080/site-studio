@@ -27,7 +27,6 @@ export interface WorkspaceValue {
   adminEmail: string;
   adminBusy: boolean;
   adminError: AppMachineContext["adminError"];
-  previewRevision: number;
   meRole?: string;
   isFull: boolean;
   canEdit: boolean;

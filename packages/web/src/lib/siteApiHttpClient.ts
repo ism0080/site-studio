@@ -1,13 +1,19 @@
 import { Effect } from "effect";
 import { FetchHttpClient } from "effect/unstable/http";
 import { HttpApiClient } from "effect/unstable/httpapi";
-import { SiteApi, type CreateSite, type MemberInput, type Site } from "@site-studio/api/contract";
+import {
+  SiteApi,
+  type CreateSite,
+  type MemberInput,
+  type Site,
+  type TemplateInfo,
+} from "@site-studio/api/contract";
 
 type ApiClient = HttpApiClient.ForApi<typeof SiteApi>;
 
 // The HttpApi group prefixes already include `/api/sites`/`/api/leads`, so the
 // client base is the API origin (empty = same-origin, proxied by Vite in dev).
-const API_ORIGIN = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
+export const API_ORIGIN = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
 
 let clientPromise: Promise<ApiClient> | undefined;
 
@@ -24,6 +30,7 @@ const _run = <A>(call: (c: ApiClient) => Effect.Effect<A, unknown, never>): Prom
 /** Raw HTTP client for the site-studio API contract (one method per endpoint). */
 export const siteApiHttpClient = {
   me: () => _run((c) => c.Me.me({})),
+  listTemplates: (): Promise<readonly TemplateInfo[]> => _run((c) => c.Sites.listTemplates({})),
   listSites: () => _run((c) => c.Sites.list({})),
   getSite: (id: string) => _run((c) => c.Sites.get({ params: { id } })),
   getSiteAccess: (id: string) => _run((c) => c.Sites.access({ params: { id } })),

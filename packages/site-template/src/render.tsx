@@ -418,6 +418,9 @@ function SiteDocument({ site, page, apiBase }: { site: Site; page: Page; apiBase
   const template = templateFor(site);
   const layout = template.layout;
   const font = settings.font || template.font;
+  // A brand-new site has no saved sections yet; render the template's default
+  // content so the published page (and the editor preview) is never blank.
+  const sections = page.sections.length > 0 ? page.sections : template.defaultSections;
 
   return (
     <html lang="en">
@@ -445,7 +448,7 @@ function SiteDocument({ site, page, apiBase }: { site: Site; page: Page; apiBase
           </a>
         </header>
         <main>
-          {page.sections.map((section) => (
+          {sections.map((section) => (
             <SectionSwitch key={section.id} section={section} layout={layout} />
           ))}
           <section id="contact">

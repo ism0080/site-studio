@@ -1,16 +1,17 @@
 import "./Templates.css";
+import { useQuery } from "@tanstack/react-query";
 import type { Template } from "../siteTypes.ts";
-import { siteTemplates } from "../data/site.ts";
+import { templateQueries } from "../lib/apiQueries.ts";
 
 const CATEGORIES = ["all", "Services", "Retail", "Creative"];
 
 function TemplateArt({ template }: { template: Template }) {
   return (
-    <div data-slot="art" style={{ background: template.palette[0] }}>
-      <div data-slot="art-brand" style={{ color: template.palette[2] }}>
+    <div data-slot="art" style={{ background: template.theme.bg }}>
+      <div data-slot="art-brand" style={{ color: template.theme.ink }}>
         {template.brand}
       </div>
-      <div data-slot="art-title" style={{ color: template.palette[2] }}>
+      <div data-slot="art-title" style={{ color: template.theme.ink }}>
         {template.title.map((line) => (
           <span key={line}>
             {line}
@@ -18,7 +19,7 @@ function TemplateArt({ template }: { template: Template }) {
           </span>
         ))}
       </div>
-      <div data-slot="art-block" style={{ background: template.palette[1] }} />
+      <div data-slot="art-block" style={{ background: template.theme.accent }} />
     </div>
   );
 }
@@ -32,21 +33,15 @@ export default function Templates({
   onCategoryChange: (category: string) => void;
   onSelect: (template: Template) => void;
 }) {
-  const visible =
-    category === "all"
-      ? siteTemplates
-      : siteTemplates.filter((t) => t.category === category);
+  const { data: templates = [] } = useQuery(templateQueries.list());
+  const visible = category === "all" ? templates : templates.filter((t) => t.category === category);
 
   return (
     <div data-component="templates">
       <div data-slot="toolbar">
         <div data-slot="filter-pills">
           {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              aria-pressed={category === cat}
-              onClick={() => onCategoryChange(cat)}
-            >
+            <button key={cat} aria-pressed={category === cat} onClick={() => onCategoryChange(cat)}>
               {cat === "all" ? "All templates" : cat}
             </button>
           ))}
