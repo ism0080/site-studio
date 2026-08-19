@@ -21,6 +21,7 @@ import pipeMaxArgumentsRule from "./rules/pipe-max-arguments.ts";
 import preferEffectMatchRule from "./rules/prefer-effect-match.ts";
 import preferOptionFromNullableRule from "./rules/prefer-option-from-nullable.ts";
 import requireContextServiceInServicesRule from "./rules/require-context-service-in-services.ts";
+import { noServiceConstructorImportsRule } from "./rules/no-service-constructor-imports.ts";
 
 /** Effect-specific Oxlint rules that enforce Effect-first capabilities, layers, and error handling. */
 const effectPlugin = eslintCompatPlugin({
@@ -47,6 +48,7 @@ const effectPlugin = eslintCompatPlugin({
     "prefer-effect-match": preferEffectMatchRule,
     "prefer-option-from-nullable": preferOptionFromNullableRule,
     "require-context-service-in-services": requireContextServiceInServicesRule,
+    "no-service-constructor-imports": noServiceConstructorImportsRule,
   },
 });
 

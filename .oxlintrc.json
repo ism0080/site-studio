@@ -76,7 +76,8 @@
         "effect/pipe-max-arguments": "warn",
         "effect/prefer-effect-match": "error",
         "effect/prefer-option-from-nullable": "warn",
-        "effect/require-context-service-in-services": "error"
+        "effect/require-context-service-in-services": "error",
+        "effect/no-service-constructor-imports": "error"
       }
     },
     {
