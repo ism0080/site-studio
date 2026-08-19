@@ -23,15 +23,15 @@ export default function SectionList({
       {page.sections.map((block, i) => {
         const meta = SECTION_TYPES[block.type];
         return (
-          <div className="section-card" key={block.id}>
-            <div className="drag" aria-hidden="true">
+          <div data-slot="section-card" key={block.id}>
+            <div data-slot="drag" aria-hidden="true">
               ⠿
             </div>
-            <div className="section-card-body">
+            <div data-slot="section-card-body">
               <strong>{meta ? meta.label : block.type}</strong>
               <small>{SECTION_TYPES[block.type].sub(block.props)}</small>
             </div>
-            <div className="section-actions">
+            <div data-slot="section-actions">
               <button
                 type="button"
                 className="section-btn"
@@ -64,11 +64,11 @@ export default function SectionList({
       })}
 
       {addable.map(([type, meta]) => (
-        <div className="section-card muted-card" key={type}>
-          <div className="drag" aria-hidden="true">
+        <div data-slot="section-card" data-slot-variant="muted" key={type}>
+          <div data-slot="drag" aria-hidden="true">
             +
           </div>
-          <div className="section-card-body">
+          <div data-slot="section-card-body">
             <strong>{meta.label}</strong>
             <small>{meta.hint}</small>
           </div>

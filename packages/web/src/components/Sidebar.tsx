@@ -46,27 +46,27 @@ export default function Sidebar({
   return (
     <aside data-component="sidebar">
       <Brand />
-      <div className="workspace-label">Workspace</div>
+      <div data-slot="workspace-label">Workspace</div>
       <nav>
         {items.map(([id, label, Icon]) => (
           <button
-            className="nav-item"
-            data-active={active === id ? "" : undefined}
+            data-slot="nav-item"
+            data-active={active === id ? "true" : undefined}
             key={id}
             onClick={() => onChange(id)}
           >
             <Icon size={18} />
             <span>{label}</span>
-            {id === "leads" && <span className="nav-badge">3</span>}
+            {id === "leads" && <span data-slot="nav-badge">3</span>}
           </button>
         ))}
       </nav>
-      <div className="sidebar-bottom">
-        <button className="nav-item">
+      <div data-slot="sidebar-bottom">
+        <button data-slot="nav-item">
           <GearIcon name="settings" />
           <span>Settings</span>
         </button>
-        <div className="profile">
+        <div data-slot="profile">
           <Avatar name={user?.name} />
           <div>
             <strong>{user?.name}</strong>

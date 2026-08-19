@@ -26,7 +26,7 @@ export default function DomainSettings({
 }) {
   if (online !== true) {
     return (
-      <div className="field-group">
+      <div data-component="domain-settings" className="field-group">
         <label>Custom domain</label>
         <p className="domain-hint">Connect the API to attach your own domain.</p>
       </div>
@@ -36,10 +36,10 @@ export default function DomainSettings({
   const active = site.customDomain;
 
   return (
-    <div className="field-group">
+    <div data-component="domain-settings" className="field-group">
       <label>Custom domain</label>
       {active && (
-        <div className="domain-active">
+        <div data-slot="active">
           <span className="status-pill">
             <i /> {active}
           </span>
@@ -54,7 +54,7 @@ export default function DomainSettings({
         </div>
       )}
       {!active && !setup && (
-        <div className="domain-row">
+        <div data-slot="row">
           <input
             placeholder="example.com"
             value={domain}
@@ -66,9 +66,9 @@ export default function DomainSettings({
         </div>
       )}
       {setup && (
-        <div className="domain-records">
+        <div data-slot="records">
           <p className="domain-hint">Add this TXT record at your DNS provider, then verify.</p>
-          <div className="record">
+          <div data-slot="record">
             <code>{setup.txtName}</code>
             <code>{setup.txtValue}</code>
           </div>

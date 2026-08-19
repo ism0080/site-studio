@@ -42,17 +42,17 @@ export default function Header({
   return (
     <header data-component="header">
       <div>
-        <p className="crumb">
+        <p data-slot="crumb">
           {inEditor ? `My sites / ${site.business.name}` : "Workspace"}
-          {online === false && <span className="crumb-offline"> · offline demo</span>}
+          {online === false && <span data-slot="crumb-offline"> · offline demo</span>}
         </p>
         <h1>{title}</h1>
-        <p className="header-subtitle">{subtitle}</p>
+        <p data-slot="subtitle">{subtitle}</p>
       </div>
-      <div className="header-actions">
+      <div data-slot="actions">
         {sites.length > 1 && (
           <select
-            className="site-switcher"
+            data-slot="site-switcher"
             value={site.id}
             onChange={(e) => onSelectSite(e.target.value)}
             aria-label="Switch site"
@@ -71,7 +71,8 @@ export default function Header({
         )}
         {inEditor && canPublish && (
           <button
-            className="dark-button publish-button"
+            className="dark-button"
+            data-slot="publish-button"
             onClick={onPublish}
             disabled={publishing || online === false}
           >

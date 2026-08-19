@@ -5,26 +5,26 @@
   display: flex;
   flex-direction: column;
 }
-.panel-heading {
+[data-component="editor-panel"] [data-slot="panel-heading"] {
   padding: var(--space-7) var(--space-6) var(--space-6);
   border-bottom: 1px solid var(--color-border-subtle);
   display: flex;
   justify-content: space-between;
   align-items: start;
 }
-.panel-heading h2 {
+[data-component="editor-panel"] [data-slot="panel-heading"] h2 {
   margin: var(--space-2) var(--space-0) var(--space-0);
   font-size: 18px;
 }
-.panel-heading .overline {
+[data-component="editor-panel"] [data-slot="panel-heading"] .overline {
   margin: var(--space-0);
   color: var(--color-accent);
 }
-.panel-scroll {
+[data-component="editor-panel"] [data-slot="panel-scroll"] {
   padding: var(--space-6) var(--space-6);
   overflow: auto;
 }
-.color-input {
+[data-component="editor-panel"] [data-slot="color-input"] {
   display: flex;
   align-items: center;
   border: 1px solid var(--color-border-input);
@@ -34,23 +34,23 @@
   gap: var(--space-2);
   background: var(--color-bg-input);
 }
-.color-input input {
+[data-component="editor-panel"] [data-slot="color-input"] input {
   width: 21px;
   height: 21px;
   border: 0;
   padding: var(--space-0);
 }
-.color-input span {
+[data-component="editor-panel"] [data-slot="color-input"] span {
   font-family: "DM Mono";
   font-size: 9px;
   color: var(--color-text-muted);
 }
-.content-divider {
+[data-component="editor-panel"] [data-slot="content-divider"] {
   height: 1px;
   background: var(--color-border-subtle);
   margin: var(--space-1) var(--space-0) var(--space-5);
 }
-.section-card {
+[data-component="editor-panel"] [data-slot="section-card"] {
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-md);
   padding: var(--space-3) var(--space-2-5);
@@ -59,43 +59,35 @@
   gap: var(--space-2-5);
   margin-bottom: var(--space-2);
 }
-.drag {
+[data-component="editor-panel"] [data-slot="section-card"] [data-slot="drag"] {
   color: var(--color-text-disabled);
   font-size: 17px;
 }
-.section-card strong {
+[data-component="editor-panel"] [data-slot="section-card"] strong {
   font-size: 11px;
   display: block;
 }
-.section-card small {
+[data-component="editor-panel"] [data-slot="section-card"] small {
   font-size: 10px;
   color: var(--color-text-faint);
 }
-.section-check {
-  margin-left: auto;
-  color: var(--color-success);
-  font-size: 13px;
-}
-.muted-card {
+[data-component="editor-panel"] [data-slot="section-card"][data-slot-variant="muted"] {
   color: var(--color-text-muted);
 }
-.service-fields textarea {
-  margin-top: var(--space-1-5);
+[data-component="editor-panel"] [data-slot="section-card"][data-slot-variant="muted"] [data-slot="drag"] {
+  color: var(--color-text-disabled);
 }
-.section-card-body {
+[data-component="editor-panel"] [data-slot="section-card-body"] {
   flex: 1;
   min-width: 0;
 }
-.section-actions {
+[data-component="editor-panel"] [data-slot="section-actions"] {
   display: flex;
   gap: var(--space-1);
   align-items: center;
   margin-left: auto;
 }
-.muted-card .drag {
-  color: var(--color-text-disabled);
-}
-.font-select {
+[data-component="editor-panel"] [data-slot="font-select"] {
   width: 100%;
   border: 1px solid var(--color-border-input);
   border-radius: var(--border-radius-md);
@@ -105,13 +97,13 @@
   font-size: 12px;
   outline: none;
 }
-.theme-hint {
+[data-component="editor-panel"] [data-slot="theme-hint"] {
   font-size: 10px;
   color: var(--color-text-muted);
   margin: var(--space-0) var(--space-0) var(--space-5);
   line-height: 1.5;
 }
-.readonly-hint {
+[data-component="editor-panel"] [data-slot="readonly-hint"] {
   font-size: 11px;
   color: var(--color-text-muted);
   background: var(--color-bg-subtle);
@@ -121,12 +113,12 @@
   margin: var(--space-0) var(--space-0) var(--space-4-5);
   line-height: 1.5;
 }
-.editor-fields {
+[data-component="editor-panel"] [data-slot="editor-fields"] {
   border: 0;
   padding: var(--space-0);
   margin: var(--space-0);
   min-width: 0;
 }
-.editor-fields:disabled {
+[data-component="editor-panel"] [data-slot="editor-fields"]:disabled {
   opacity: 0.75;
 }

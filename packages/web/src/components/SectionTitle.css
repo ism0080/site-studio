@@ -1,4 +1,4 @@
-.section-title {
+[data-component="section-title"] {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -6,7 +6,7 @@
   font-weight: 700;
   margin-bottom: var(--space-3);
 }
-.section-title button {
+[data-component="section-title"] button {
   border: 0;
   background: none;
   color: var(--color-accent);

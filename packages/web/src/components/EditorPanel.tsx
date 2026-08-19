@@ -36,7 +36,7 @@ function ColorField({
   return (
     <div className="field-group">
       <label>{label}</label>
-      <div className="color-input">
+      <div data-slot="color-input">
         <input type="color" value={value} onChange={(e) => onChange(e.target.value)} />
         <span>{value}</span>
       </div>
@@ -54,11 +54,11 @@ function ThemeSettings({ site, onUpdate }: { site: Site; onUpdate: (site: Site) 
   };
 
   return (
-    <div className="theme-settings">
+    <div data-slot="theme-settings">
       <div className="field-group">
         <label>Font</label>
         <select
-          className="font-select"
+          data-slot="font-select"
           value={site.settings.font}
           onChange={(e) => onUpdate(updateSetting(site, "font", e.target.value))}
         >
@@ -91,7 +91,7 @@ function ThemeSettings({ site, onUpdate }: { site: Site; onUpdate: (site: Site) 
           onChange={_colorChange(site, "surface", onUpdate)}
         />
       </div>
-      <p className="theme-hint">
+      <p data-slot="theme-hint">
         Custom colours override the {template.name} palette. The font and accent already do.
       </p>
     </div>
@@ -220,7 +220,7 @@ export default function EditorPanel({
 
   return (
     <aside data-component="editor-panel">
-      <div className="panel-heading">
+      <div data-slot="panel-heading">
         <div>
           <p className="overline">Site editor</p>
           <h2>Homepage</h2>
@@ -230,28 +230,28 @@ export default function EditorPanel({
         </span>
       </div>
 
-      <div className="panel-scroll">
+      <div data-slot="panel-scroll">
         {readOnly && (
-          <p className="readonly-hint">
+          <p data-slot="readonly-hint">
             You have view-only access to this site — your manager decides when changes can be made.
           </p>
         )}
-        <fieldset className="editor-fields" disabled={readOnly}>
+        <fieldset data-slot="editor-fields" disabled={readOnly}>
           <SectionTitle>Business</SectionTitle>
           <BusinessFields site={site} onUpdate={onUpdate} />
 
-          <div className="content-divider" />
+          <div data-slot="content-divider" />
 
           <SectionTitle>Theme</SectionTitle>
           <ThemeSettings site={site} onUpdate={onUpdate} />
 
-          <div className="content-divider" />
+          <div data-slot="content-divider" />
 
           {hero && (
             <>
               <SectionTitle>Hero</SectionTitle>
               <HeroFields site={site} onUpdate={onUpdate} hero={hero} page={page} />
-              <div className="content-divider" />
+              <div data-slot="content-divider" />
             </>
           )}
 
@@ -259,7 +259,7 @@ export default function EditorPanel({
             <>
               <SectionTitle>Services</SectionTitle>
               <ServicesFields site={site} onUpdate={onUpdate} services={services} page={page} />
-              <div className="content-divider" />
+              <div data-slot="content-divider" />
             </>
           )}
 
@@ -267,7 +267,7 @@ export default function EditorPanel({
             <>
               <SectionTitle>About</SectionTitle>
               <AboutFields site={site} onUpdate={onUpdate} about={about} page={page} />
-              <div className="content-divider" />
+              <div data-slot="content-divider" />
             </>
           )}
 
@@ -280,7 +280,7 @@ export default function EditorPanel({
                 testimonials={testimonials}
                 page={page}
               />
-              <div className="content-divider" />
+              <div data-slot="content-divider" />
             </>
           )}
 
@@ -288,12 +288,12 @@ export default function EditorPanel({
 
           {manager && (
             <>
-              <div className="content-divider" />
+              <div data-slot="content-divider" />
 
               <SectionTitle>Extras</SectionTitle>
               <AnalyticsField site={site} onUpdate={onUpdate} />
 
-              <div className="content-divider" />
+              <div data-slot="content-divider" />
 
               <DomainSettings
                 site={site}

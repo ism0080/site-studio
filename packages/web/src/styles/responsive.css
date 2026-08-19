@@ -7,24 +7,24 @@
   [data-component="brand"] {
     padding-left: var(--space-2-5);
   }
-  [data-component="brand"] > span:last-child,
-  .workspace-label,
-  .nav-item span,
-  .profile div:not([data-component="avatar"]),
-  .profile > svg {
+  [data-component="brand"] [data-slot="text"],
+  [data-component="sidebar"] [data-slot="workspace-label"],
+  [data-component="sidebar"] [data-slot="nav-item"] span,
+  [data-component="sidebar"] [data-slot="profile"] div:not([data-component="avatar"]),
+  [data-component="sidebar"] [data-slot="profile"] > svg {
     display: none;
   }
-  .nav-item {
+  [data-component="sidebar"] [data-slot="nav-item"] {
     justify-content: center;
     padding: var(--space-3);
   }
-  .nav-badge {
+  [data-component="sidebar"] [data-slot="nav-badge"] {
     display: block;
     position: absolute;
     margin: var(--space-0) var(--space-0) var(--space-6) var(--space-6);
     padding: var(--space-0-5) var(--space-1-5);
   }
-  .profile {
+  [data-component="sidebar"] [data-slot="profile"] {
     justify-content: center;
     padding-left: var(--space-0);
     padding-right: var(--space-0);
@@ -51,7 +51,7 @@
   [data-component="header"] h1 {
     font-size: 21px;
   }
-  .header-actions {
+  [data-component="header"] [data-slot="actions"] {
     gap: var(--space-1-5);
   }
   .icon-button {
@@ -61,7 +61,7 @@
   [data-component="templates"] {
     padding: var(--space-6) var(--space-5);
   }
-  .stat-grid {
+  [data-component="overview"] [data-slot="stat-grid"] {
     grid-template-columns: 1fr;
   }
   .section-header {
@@ -71,24 +71,20 @@
   .section-header .dark-button {
     margin-top: var(--space-4-5);
   }
-  .site-list-card {
+  [data-component="overview"] [data-slot="site-list-card"] {
     display: block;
   }
-  .site-preview-thumb {
-    width: 100%;
-    height: 160px;
-  }
-  .site-info {
+  [data-component="overview"] [data-slot="site-info"] {
     padding: var(--space-5);
   }
-  .site-meta {
+  [data-component="overview"] [data-slot="site-meta"] {
     gap: var(--space-2-5);
     flex-wrap: wrap;
   }
-  .tip-card {
+  [data-component="overview"] [data-slot="tip-card"] {
     align-items: start;
   }
-  .tip-card button {
+  [data-component="overview"] [data-slot="tip-card"] button {
     display: none;
   }
   [data-component="editor-panel"] {
@@ -98,30 +94,30 @@
     height: calc(100vh - 122px);
     box-shadow: 10px 0 25px var(--color-shadow);
   }
-  .preview-area {
+  [data-component="editor"] [data-slot="preview-area"] {
     width: 100%;
   }
-  .preview-toolbar {
+  [data-component="editor"] [data-slot="preview-toolbar"] {
     padding: var(--space-0) var(--space-3-5);
   }
-  .preview-toolbar .muted,
-  .toolbar-divider {
+  [data-component="editor"] [data-slot="preview-toolbar"] .muted,
+  [data-component="editor"] [data-slot="toolbar-divider"] {
     display: none;
   }
   [data-component="preview"] {
     padding: var(--space-5) var(--space-3);
   }
-  .template-grid {
+  [data-component="templates"] [data-slot="grid"] {
     grid-template-columns: 1fr;
   }
-  .template-toolbar {
+  [data-component="templates"] [data-slot="toolbar"] {
     display: block;
   }
-  .filter-pills {
+  [data-component="templates"] [data-slot="filter-pills"] {
     overflow: auto;
     margin-bottom: var(--space-4);
   }
-  .filter-pills button {
+  [data-component="templates"] [data-slot="filter-pills"] button {
     white-space: nowrap;
   }
   [data-component="templates"] {

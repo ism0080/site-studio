@@ -2,14 +2,14 @@
   height: calc(100vh - 154px);
   display: flex;
 }
-.preview-area {
+[data-component="editor"] [data-slot="preview-area"] {
   flex: 1;
   background: var(--color-bg-canvas);
   min-width: 0;
   display: flex;
   flex-direction: column;
 }
-.preview-toolbar {
+[data-component="editor"] [data-slot="preview-toolbar"] {
   height: 57px;
   background: var(--color-bg-toolbar);
   border-bottom: 1px solid var(--color-border);
@@ -20,21 +20,18 @@
   color: var(--color-text-muted);
   font-size: 10px;
 }
-.muted {
-  color: var(--color-text-disabled);
-}
-.toolbar-divider {
+[data-component="editor"] [data-slot="toolbar-divider"] {
   height: 13px;
   border-left: 1px solid var(--color-border);
   margin: var(--space-0) var(--space-2-5);
 }
-.device-toggle {
+[data-component="editor"] [data-slot="device-toggle"] {
   background: var(--color-bg-toggle);
   border-radius: var(--border-radius-md);
   padding: var(--space-0-75);
   display: flex;
 }
-.device-toggle button {
+[data-component="editor"] [data-slot="device-toggle"] button {
   border: 0;
   background: transparent;
   color: var(--color-text-muted);
@@ -42,7 +39,7 @@
   padding: var(--space-1-5) var(--space-2-5);
   border-radius: var(--border-radius-sm);
 }
-.device-toggle button[aria-pressed="true"] {
+[data-component="editor"] [data-slot="device-toggle"] button[aria-pressed="true"] {
   background: var(--color-white);
   color: var(--color-text);
   box-shadow: 0 1px 3px var(--color-border);

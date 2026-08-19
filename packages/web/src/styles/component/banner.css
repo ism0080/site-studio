@@ -1,0 +1,25 @@
+[data-component="banner"] {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2-5) var(--space-4-5);
+  font-size: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+[data-component="banner"][data-kind="success"] {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+[data-component="banner"][data-kind="error"] {
+  background: var(--color-danger-bg);
+  color: var(--color-danger-active);
+}
+[data-component="banner"] [data-slot="close"] {
+  border: 0;
+  background: none;
+  font-size: 16px;
+  color: inherit;
+  line-height: 1;
+  padding: var(--space-0-5) var(--space-1-5);
+}

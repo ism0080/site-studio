@@ -4,11 +4,11 @@ import { templates } from "../data/site.ts";
 
 function TemplateArt({ template }: { template: Template }) {
   return (
-    <div className="template-art" style={{ background: template.palette[0] }}>
-      <div className="art-brand" style={{ color: template.palette[2] }}>
+    <div data-slot="art" style={{ background: template.palette[0] }}>
+      <div data-slot="art-brand" style={{ color: template.palette[2] }}>
         {template.brand}
       </div>
-      <div className="art-title" style={{ color: template.palette[2] }}>
+      <div data-slot="art-title" style={{ color: template.palette[2] }}>
         {template.title.map((line) => (
           <span key={line}>
             {line}
@@ -16,7 +16,7 @@ function TemplateArt({ template }: { template: Template }) {
           </span>
         ))}
       </div>
-      <div className="art-block" style={{ background: template.palette[1] }} />
+      <div data-slot="art-block" style={{ background: template.palette[1] }} />
     </div>
   );
 }
@@ -24,8 +24,8 @@ function TemplateArt({ template }: { template: Template }) {
 export default function Templates({ onSelect }: { onSelect: (template: Template) => void }) {
   return (
     <div data-component="templates">
-      <div className="template-toolbar">
-        <div className="filter-pills">
+      <div data-slot="toolbar">
+        <div data-slot="filter-pills">
           <button aria-pressed="true">All templates</button>
           <button aria-pressed="false">Services</button>
           <button aria-pressed="false">Retail</button>
@@ -35,11 +35,11 @@ export default function Templates({ onSelect }: { onSelect: (template: Template)
           Sort by <span>Featured⌄</span>
         </button>
       </div>
-      <div className="template-grid">
+      <div data-slot="grid">
         {templates.map((template) => (
-          <button className="template-card" key={template.id} onClick={() => onSelect(template)}>
+          <button data-slot="card" key={template.id} onClick={() => onSelect(template)}>
             <TemplateArt template={template} />
-            <div className="template-card-footer">
+            <div data-slot="card-footer">
               <div>
                 <strong>{template.name}</strong>
                 <small>{template.category}</small>

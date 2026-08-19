@@ -13,20 +13,20 @@ export default function Overview({ onEdit, site, sites }: OverviewProps) {
   const publishedCount = sites.filter((s) => s.status === "published").length;
   return (
     <div data-component="overview">
-      <section className="stat-grid">
-        <div className="stat-card">
+      <section data-slot="stat-grid">
+        <div data-slot="stat-card">
           <span>Published sites</span>
           <strong>{publishedCount || (site.status === "published" ? 1 : 0)}</strong>
           <small>
             <b>↗</b> connected to API
           </small>
         </div>
-        <div className="stat-card">
+        <div data-slot="stat-card">
           <span>Site visits</span>
           <strong>—</strong>
           <small>coming with analytics</small>
         </div>
-        <div className="stat-card">
+        <div data-slot="stat-card">
           <span>New leads</span>
           <strong>—</strong>
           <small>coming soon</small>
@@ -43,9 +43,9 @@ export default function Overview({ onEdit, site, sites }: OverviewProps) {
         </button>
       </section>
 
-      <div className="site-list-card">
-        <div className="site-info">
-          <div className="site-info-title">
+      <div data-slot="site-list-card">
+        <div data-slot="site-info">
+          <div data-slot="site-info-title">
             <div>
               <h3>{site.business.name}</h3>
               <p>{site.customDomain || "no custom domain yet"}</p>
@@ -54,7 +54,7 @@ export default function Overview({ onEdit, site, sites }: OverviewProps) {
               <i /> {buildStatusLabel(site)}
             </span>
           </div>
-          <div className="site-meta">
+          <div data-slot="site-meta">
             <span>Edited {site.lastSaved}</span>
             <span>Editorial Studio</span>
             <button data-component="button" onClick={onEdit}>
@@ -64,8 +64,8 @@ export default function Overview({ onEdit, site, sites }: OverviewProps) {
         </div>
       </div>
 
-      <div className="tip-card">
-        <div className="tip-icon">✦</div>
+      <div data-slot="tip-card">
+        <div data-slot="tip-icon">✦</div>
         <div>
           <strong>Make your first impression count</strong>
           <p>Add a profile photo and your best work to help visitors get to know your business.</p>

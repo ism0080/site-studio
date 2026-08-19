@@ -2,9 +2,15 @@
 @import "./token/font.css";
 @import "./token/space.css";
 
+@import "./component/action.css";
+@import "./component/banner.css";
 @import "./component/button.css";
+@import "./component/empty-page.css";
+@import "./component/field.css";
+@import "./component/hint.css";
+@import "./component/section-header.css";
+@import "./component/status.css";
 
 @import "./reset.css";
 @import "./base.css";
-@import "./primitives.css";
 @import "./responsive.css";

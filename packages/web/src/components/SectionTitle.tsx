@@ -9,7 +9,7 @@ export default function SectionTitle({
   action?: ReactNode;
 }) {
   return (
-    <div className="section-title">
+    <div data-component="section-title">
       <span>{children}</span>
       {action}
     </div>

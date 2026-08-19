@@ -13,6 +13,6 @@
   height: 100%;
   box-shadow: 0 8px 35px var(--color-shadow);
 }
-[data-device="mobile"] iframe {
+[data-component="preview"][data-device="mobile"] iframe {
   width: 390px;
 }

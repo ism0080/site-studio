@@ -58,13 +58,13 @@ export default function Editor({
         readOnly={readOnly}
         manager={manager}
       />
-      <div className="preview-area">
-        <div className="preview-toolbar">
+      <div data-slot="preview-area">
+        <div data-slot="preview-toolbar">
           <div>
-            <span className="live-dot" /> Live preview <span className="toolbar-divider" />{" "}
+            <span className="live-dot" /> Live preview <span data-slot="toolbar-divider" />{" "}
             <span className="muted">Changes save automatically</span>
           </div>
-          <div className="device-toggle">
+          <div data-slot="device-toggle">
             <button aria-pressed={device === "desktop"} onClick={() => onDevice("desktop")}>
               Desktop
             </button>

@@ -1,0 +1,26 @@
+.status-pill {
+  height: max-content;
+  color: var(--color-success);
+  background: var(--color-success-bg);
+  border-radius: var(--border-radius-full);
+  padding: var(--space-1-5) var(--space-2-5);
+  font-size: 10px;
+}
+.status-pill i,
+.saved i,
+.live-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+  margin-right: var(--space-1-5);
+}
+.saved {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  padding-top: var(--space-1-5);
+}
+.muted {
+  color: var(--color-text-disabled);
+}

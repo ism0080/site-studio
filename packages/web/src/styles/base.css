@@ -7,9 +7,9 @@ body {
   font-family: var(--font-sans);
 }
 
-.workspace-label,
+[data-component="sidebar"] [data-slot="workspace-label"],
 .overline,
-.crumb,
+[data-component="header"] [data-slot="crumb"],
 .eyebrow {
   font-family: "DM Mono", monospace;
   text-transform: uppercase;

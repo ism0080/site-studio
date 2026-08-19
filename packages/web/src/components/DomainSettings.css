@@ -1,9 +1,9 @@
-.domain-row {
+[data-component="domain-settings"] [data-slot="row"] {
   display: flex;
   gap: var(--space-2);
   align-items: center;
 }
-.domain-row input {
+[data-component="domain-settings"] [data-slot="row"] input {
   flex: 1;
   border: 1px solid var(--color-border-input);
   border-radius: var(--border-radius-md);
@@ -12,16 +12,16 @@
   outline: none;
   background: var(--color-bg-input);
 }
-.domain-active {
+[data-component="domain-settings"] [data-slot="active"] {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-2);
 }
-.domain-records {
+[data-component="domain-settings"] [data-slot="records"] {
   margin-top: var(--space-1-5);
 }
-.domain-records .record {
+[data-component="domain-settings"] [data-slot="record"] {
   display: grid;
   gap: var(--space-1-5);
   background: var(--color-bg-subtle);
@@ -30,19 +30,9 @@
   padding: var(--space-2-5);
   margin: var(--space-2-5) var(--space-0);
 }
-.domain-records code {
+[data-component="domain-settings"] [data-slot="record"] code {
   font-family: "DM Mono", monospace;
   font-size: 9px;
   color: var(--color-text-secondary);
   word-break: break-all;
-}
-.domain-hint {
-  font-size: 10px;
-  color: var(--color-text-muted);
-  margin: var(--space-0) var(--space-0) var(--space-1-5);
-}
-.domain-error {
-  font-size: 10px;
-  color: var(--color-danger);
-  margin: var(--space-2) var(--space-0) var(--space-0);
 }

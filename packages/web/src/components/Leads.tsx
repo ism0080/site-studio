@@ -33,8 +33,8 @@ export default function Leads({
 
   if (!site.id || !online) {
     return (
-      <div className="empty-page">
-        <div className="empty-icon">
+      <div data-component="empty-page">
+        <div data-slot="icon">
           <UsersIcon size={28} />
         </div>
         <h2>Your leads, in one place</h2>
@@ -59,14 +59,14 @@ export default function Leads({
       </div>
 
       {errorMessage && (
-        <div className="conn-banner" data-kind="error">
+        <div data-component="banner" data-kind="error">
           <span>{errorMessage}</span>
         </div>
       )}
 
       {leads.length === 0 && !isFetching ? (
-        <div className="empty-page empty-leads">
-          <div className="empty-icon">
+        <div data-component="empty-page">
+          <div data-slot="icon">
             <UsersIcon size={28} />
           </div>
           <h2>No leads yet</h2>
@@ -76,11 +76,11 @@ export default function Leads({
           </button>
         </div>
       ) : (
-        <div className="lead-list">
+        <div data-slot="lead-list">
           {leads.map((lead) => (
-            <div className="lead-card" key={lead.id}>
-              <div className="lead-body">
-                <div className="lead-head">
+            <div data-slot="lead-card" key={lead.id}>
+              <div data-slot="lead-body">
+                <div data-slot="lead-head">
                   <strong>{lead.name}</strong>
                   <a href={`mailto:${lead.email}`}>{lead.email}</a>
                 </div>

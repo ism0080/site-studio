@@ -2,7 +2,7 @@
   display: flex;
   min-height: 100vh;
 }
-.main-content {
+[data-component="app"] [data-slot="main-content"] {
   flex: 1;
   min-width: 0;
 }

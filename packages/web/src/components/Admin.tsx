@@ -41,12 +41,12 @@ export default function Admin({
         </button>
       </div>
 
-      <section className="access-card">
+      <section data-slot="card">
         <h3>Invite an agency</h3>
         <p className="domain-hint">
           Agencies manage client sites and can invite their clients to edit and publish.
         </p>
-        <div className="invite-row">
+        <div data-slot="invite-row">
           <input
             type="email"
             placeholder="agency@studio.co"
@@ -64,15 +64,15 @@ export default function Admin({
         {errorMessage && <p className="domain-error">{errorMessage}</p>}
       </section>
 
-      <section className="access-card">
+      <section data-slot="card">
         <h3>Agencies</h3>
         {agencies.length === 0 && !isFetching ? (
           <p className="domain-hint">No agencies yet — invite one above.</p>
         ) : (
-          <div className="member-list">
+          <div data-slot="member-list">
             {agencies.map((agency) => (
-              <div className="member-row" key={agency.email}>
-                <div className="member-identity">
+              <div data-slot="member-row" key={agency.email}>
+                <div data-slot="member-identity">
                   <strong>{agency.email}</strong>
                   {agency.pending && <span className="status-pill">Invited</span>}
                 </div>

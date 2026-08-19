@@ -1,67 +1,12 @@
-.conn-banner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2-5) var(--space-4-5);
-  font-size: 12px;
-  border-bottom: 1px solid var(--color-border);
-}
-.conn-banner[data-kind="success"] {
-  background: var(--color-success-bg);
-  color: var(--color-success-text);
-}
-.conn-banner[data-kind="error"] {
-  background: var(--color-danger-bg);
-  color: var(--color-danger-active);
-}
-.banner-close {
-  border: 0;
-  background: none;
-  font-size: 16px;
-  color: inherit;
-  line-height: 1;
-  padding: var(--space-0-5) var(--space-1-5);
-}
-.empty-page {
-  min-height: calc(100vh - 154px);
-  display: grid;
-  place-content: center;
-  text-align: center;
-  justify-items: center;
-}
-.empty-icon {
-  width: 59px;
-  height: 59px;
-  border-radius: 50%;
-  background: var(--color-bg-wash);
-  color: var(--color-accent);
-  display: grid;
-  place-items: center;
-}
-.empty-page h2 {
-  font-size: 22px;
-  margin: var(--space-5) var(--space-0) var(--space-2);
-}
-.empty-page p {
-  color: var(--color-text-muted);
-  font-size: 12px;
-  max-width: 320px;
-  line-height: 1.6;
-  margin: var(--space-0) var(--space-0) var(--space-6);
-}
 [data-component="leads"] {
   padding: var(--space-9) var(--space-14);
   max-width: 900px;
 }
-[data-component="leads"] .section-header {
-  margin-top: var(--space-0);
-}
-.lead-list {
+[data-component="leads"] [data-slot="lead-list"] {
   display: grid;
   gap: var(--space-3);
 }
-.lead-card {
+[data-component="leads"] [data-slot="lead-card"] {
   background: var(--color-white);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-lg);
@@ -70,36 +15,32 @@
   align-items: flex-start;
   gap: var(--space-3-5);
 }
-.lead-body {
+[data-component="leads"] [data-slot="lead-body"] {
   flex: 1;
   min-width: 0;
 }
-.lead-head {
+[data-component="leads"] [data-slot="lead-head"] {
   display: flex;
   gap: var(--space-3);
   align-items: baseline;
 }
-.lead-head strong {
+[data-component="leads"] [data-slot="lead-head"] strong {
   font-size: 14px;
 }
-.lead-head a {
+[data-component="leads"] [data-slot="lead-head"] a {
   font-size: 12px;
   color: var(--color-accent);
   text-decoration: none;
 }
-.lead-body p {
+[data-component="leads"] [data-slot="lead-body"] p {
   font-size: 13px;
   color: var(--color-text-secondary);
   margin: var(--space-2-5) var(--space-0) var(--space-2);
 }
-.lead-body small {
+[data-component="leads"] [data-slot="lead-body"] small {
   color: var(--color-text-muted);
   font-size: 10px;
 }
-.lead-card .section-btn.remove {
+[data-component="leads"] [data-slot="lead-card"] .section-btn.remove {
   flex-shrink: 0;
-}
-.empty-leads {
-  min-height: auto;
-  padding: var(--space-16) var(--space-0);
 }

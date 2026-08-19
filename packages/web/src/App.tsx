@@ -130,11 +130,11 @@ export default function App() {
         canManageMembers={canManageMembers}
         isAdmin={role === "admin"}
       />
-      <main className="main-content">
+      <main data-slot="main-content">
         {banner && (
-          <div className="conn-banner" data-kind={banner.kind}>
+          <div data-component="banner" data-kind={banner.kind}>
             <span>{banner.message}</span>
-            <button className="banner-close" onClick={() => send({ type: "DISMISS_BANNER" })}>
+            <button data-slot="close" onClick={() => send({ type: "DISMISS_BANNER" })}>
               <XIcon size={32} />
             </button>
           </div>

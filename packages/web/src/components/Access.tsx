@@ -17,14 +17,14 @@ function MemberRow({ siteId, member }: { siteId: string; member: Member }) {
   const busy = updateMember.isPending || removeMember.isPending;
 
   return (
-    <div className="member-row">
-      <div className="member-identity">
+    <div data-slot="member-row">
+      <div data-slot="member-identity">
         <strong>{member.email}</strong>
         {member.pending && <span className="status-pill">Invited</span>}
       </div>
-      <div className="member-toggles">
+      <div data-slot="member-toggles">
         {TOGGLE_LABELS.map(([key, label]) => (
-          <label className="toggle" key={key}>
+          <label data-slot="toggle" key={key}>
             <input
               type="checkbox"
               checked={member[key]}
@@ -102,12 +102,12 @@ export default function Access({
         </button>
       </div>
 
-      <section className="access-card">
+      <section data-slot="card">
         <h3>Invite a client</h3>
         <p className="domain-hint">
           Add their email and choose what they can do on their own site.
         </p>
-        <div className="invite-row">
+        <div data-slot="invite-row">
           <input
             type="email"
             placeholder="client@example.com"
@@ -122,9 +122,9 @@ export default function Access({
             {busy ? "Inviting…" : "Invite"}
           </button>
         </div>
-        <div className="member-toggles">
+        <div data-slot="member-toggles">
           {TOGGLE_LABELS.map(([key, label]) => (
-            <label className="toggle" key={key}>
+            <label data-slot="toggle" key={key}>
               <input
                 type="checkbox"
                 checked={toggles[key]}
@@ -138,12 +138,12 @@ export default function Access({
         {errorMessage && <p className="domain-error">{errorMessage}</p>}
       </section>
 
-      <section className="access-card">
+      <section data-slot="card">
         <h3>Clients with access</h3>
         {members.length === 0 && !isFetching ? (
           <p className="domain-hint">No clients yet — invite one above.</p>
         ) : (
-          <div className="member-list">
+          <div data-slot="member-list">
             {members.map((member) => (
               <MemberRow key={member.email} siteId={site.id} member={member} />
             ))}

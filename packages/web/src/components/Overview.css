@@ -2,36 +2,36 @@
   padding: var(--space-9) var(--space-14);
   max-width: 1200px;
 }
-.stat-grid {
+[data-component="overview"] [data-slot="stat-grid"] {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--space-4);
 }
-.stat-card {
+[data-component="overview"] [data-slot="stat-card"] {
   background: var(--color-white);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-lg);
   padding: var(--space-5) var(--space-5) var(--space-4-5);
 }
-.stat-card span {
+[data-component="overview"] [data-slot="stat-card"] span {
   font-size: 12px;
   color: var(--color-text-muted);
 }
-.stat-card strong {
+[data-component="overview"] [data-slot="stat-card"] strong {
   display: block;
   font-size: 32px;
   letter-spacing: -1.5px;
   margin: var(--space-3-5) var(--space-0) var(--space-2-5);
 }
-.stat-card small {
+[data-component="overview"] [data-slot="stat-card"] small {
   color: var(--color-text-faint);
   font-size: 10px;
 }
-.stat-card b {
+[data-component="overview"] [data-slot="stat-card"] b {
   color: var(--color-success);
   font-weight: 600;
 }
-.site-list-card {
+[data-component="overview"] [data-slot="site-list-card"] {
   display: flex;
   background: var(--color-white);
   border: 1px solid var(--color-border);
@@ -39,67 +39,24 @@
   overflow: hidden;
   min-height: 180px;
 }
-.site-preview-thumb {
-  width: 39%;
-  background: var(--color-bg-wash);
-  padding: var(--space-5) var(--space-5);
-  color: var(--color-text);
-}
-.thumb-header {
-  font-family: "DM Mono";
-  font-size: 8px;
-  display: flex;
-  justify-content: space-between;
-}
-.thumb-header span {
-  font-family: Manrope;
-  font-size: 7px;
-  color: var(--color-text-muted);
-}
-.thumb-body {
-  padding: var(--space-8) var(--space-4);
-  position: relative;
-}
-.thumb-body small {
-  font-family: "DM Mono";
-  font-size: 6px;
-  color: var(--color-accent-dark);
-  text-transform: uppercase;
-}
-.thumb-body b {
-  font-size: 21px;
-  line-height: 1.03;
-  letter-spacing: -1.3px;
-  display: block;
-  margin-top: var(--space-2-5);
-  max-width: 150px;
-}
-.thumb-body i {
-  position: absolute;
-  width: 43px;
-  height: 58px;
-  background: var(--color-accent-light);
-  right: var(--space-4);
-  bottom: var(--space-0);
-}
-.site-info {
+[data-component="overview"] [data-slot="site-info"] {
   padding: var(--space-7) var(--space-8);
   flex: 1;
 }
-.site-info-title {
+[data-component="overview"] [data-slot="site-info-title"] {
   display: flex;
   justify-content: space-between;
 }
-.site-info h3 {
+[data-component="overview"] [data-slot="site-info"] h3 {
   font-size: 17px;
   margin: var(--space-0) var(--space-0) var(--space-1-5);
 }
-.site-info p {
+[data-component="overview"] [data-slot="site-info"] p {
   margin: var(--space-0);
   color: var(--color-text-muted);
   font-size: 11px;
 }
-.site-meta {
+[data-component="overview"] [data-slot="site-meta"] {
   border-top: 1px solid var(--color-border-subtle);
   margin-top: var(--space-8);
   padding-top: var(--space-4-5);
@@ -109,7 +66,7 @@
   gap: var(--space-7);
   align-items: center;
 }
-.site-meta button {
+[data-component="overview"] [data-slot="site-meta"] button {
   margin-left: auto;
   background: none;
   border: 0;
@@ -118,7 +75,7 @@
   display: flex;
   gap: var(--space-2);
 }
-.tip-card {
+[data-component="overview"] [data-slot="tip-card"] {
   background: var(--color-accent-wash);
   margin-top: var(--space-4-5);
   border-radius: var(--border-radius-lg);
@@ -127,19 +84,19 @@
   align-items: center;
   gap: var(--space-3-5);
 }
-.tip-icon {
+[data-component="overview"] [data-slot="tip-icon"] {
   color: var(--color-accent);
   font-size: 20px;
 }
-.tip-card strong {
+[data-component="overview"] [data-slot="tip-card"] strong {
   font-size: 12px;
 }
-.tip-card p {
+[data-component="overview"] [data-slot="tip-card"] p {
   font-size: 11px;
   color: var(--color-text-muted);
   margin: var(--space-1-5) var(--space-0) var(--space-0);
 }
-.tip-card button {
+[data-component="overview"] [data-slot="tip-card"] button {
   margin-left: auto;
   border: 0;
   background: none;
