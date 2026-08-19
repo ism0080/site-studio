@@ -152,9 +152,9 @@ export const makeSiteRepository = (
 ): SiteRepositoryService => {
   const cloudflareSaas = deps.cloudflareSaas;
   const cnameTarget = deps.cnameTarget ?? "customers.site-studio.dev";
-  const providerError = (error: unknown) =>
-    error instanceof CloudflareSaasError
-      ? error
+  const providerError = (cause: unknown) =>
+    cause instanceof CloudflareSaasError
+      ? cause
       : new CloudflareSaasError({ message: "Cloudflare custom hostname request failed" });
   return {
     list: Effect.fn("SiteRepository.list")(function* (requester: Requester) {

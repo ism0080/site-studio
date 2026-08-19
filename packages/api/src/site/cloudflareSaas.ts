@@ -1,4 +1,11 @@
+import * as Context from "effect/Context";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
+import { FetchHttpClient } from "effect/unstable/http";
+import * as HttpClient from "effect/unstable/http/HttpClient";
+import * as HttpClientRequest from "effect/unstable/http/HttpClientRequest";
+import * as HttpClientResponse from "effect/unstable/http/HttpClientResponse";
 import { CloudflareSaasError } from "./site.ts";
 
 const Verification = Schema.Struct({
@@ -45,44 +52,63 @@ export const makeCloudflareSaas = (config: {
 }): CloudflareSaas => {
   const endpoint = `https://api.cloudflare.com/client/v4/zones/${config.zoneId}/custom_hostnames`;
 
-  const request = async (
-    input: RequestInfo | URL,
-    init: RequestInit,
-  ): Promise<CloudflareHostname> => {
-    const response = await fetch(input, {
-      ...init,
-      headers: {
-        authorization: `Bearer ${config.apiToken}`,
-        "content-type": "application/json",
-        ...init.headers,
-      },
-    });
-    const parsed = await Schema.decodeUnknownPromise(CloudflareResponse)(await response.json());
-    if (!response.ok || !parsed.success || parsed.result === null) {
-      throw new CloudflareSaasError({
-        message: `Cloudflare custom hostname request failed (${response.status})`,
-      });
-    }
-    return parsed.result;
-  };
+  const withAuth = HttpClientRequest.setHeaders({
+    authorization: `Bearer ${config.apiToken}`,
+    "content-type": "application/json",
+  });
 
-  return {
-    create: (hostname) =>
-      request(endpoint, {
-        method: "POST",
-        body: JSON.stringify({ hostname, ssl: { method: "txt", type: "dv" } }),
-      }),
-    get: (id) => request(`${endpoint}/${encodeURIComponent(id)}`, { method: "GET" }),
-    remove: async (id) => {
-      const response = await fetch(`${endpoint}/${encodeURIComponent(id)}`, {
-        method: "DELETE",
-        headers: { authorization: `Bearer ${config.apiToken}` },
-      });
-      if (!response.ok) {
-        throw new CloudflareSaasError({
+  const execute = (request: HttpClientRequest.HttpClientRequest) =>
+    Effect.gen(function* () {
+      const response = yield* HttpClient.execute(request);
+      const parsed = yield* HttpClientResponse.schemaJson(
+        Schema.Struct({ body: CloudflareResponse }),
+      )(response);
+      if (!parsed.body.success || parsed.body.result === null) {
+        return yield* new CloudflareSaasError({
+          message: `Cloudflare custom hostname request failed (${response.status})`,
+        });
+      }
+      return parsed.body.result;
+    }).pipe(Effect.provide(FetchHttpClient.layer), Effect.runPromise);
+
+  const remove = (request: HttpClientRequest.HttpClientRequest) =>
+    Effect.gen(function* () {
+      const response = yield* HttpClient.execute(request);
+      if (response.status < 200 || response.status >= 300) {
+        return yield* new CloudflareSaasError({
           message: `Cloudflare custom hostname removal failed (${response.status})`,
         });
       }
-    },
+    }).pipe(Effect.provide(FetchHttpClient.layer), Effect.runPromise);
+
+  return {
+    create: (hostname) =>
+      execute(
+        HttpClientRequest.post(endpoint).pipe(
+          withAuth,
+          HttpClientRequest.bodyJsonUnsafe({ hostname, ssl: { method: "txt", type: "dv" } }),
+        ),
+      ),
+    get: (id) =>
+      execute(HttpClientRequest.get(`${endpoint}/${encodeURIComponent(id)}`).pipe(withAuth)),
+    remove: (id) =>
+      remove(
+        HttpClientRequest.delete(`${endpoint}/${encodeURIComponent(id)}`).pipe(
+          HttpClientRequest.setHeaders({ authorization: `Bearer ${config.apiToken}` }),
+        ),
+      ),
   };
 };
+
+export class CloudflareSaasService extends Context.Service<CloudflareSaasService, CloudflareSaas>()(
+  "@app/CloudflareSaas",
+) {}
+
+export const CloudflareSaasLayer = (config: {
+  readonly zoneId: string;
+  readonly apiToken: string;
+}) =>
+  Layer.effect(
+    CloudflareSaasService,
+    Effect.sync(() => makeCloudflareSaas(config)),
+  );

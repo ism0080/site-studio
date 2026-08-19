@@ -26,7 +26,7 @@ import { requesterFor, type GlobalRole } from "./access/access.ts";
 import { MemberRepository, MemberRepositoryLayer } from "./members/MemberRepository.ts";
 import { AdminRepository, AdminRepositoryLayer } from "./admin/AdminRepository.ts";
 import { Forbidden, SiteNotFound } from "./site/site.ts";
-import { makeCloudflareSaas } from "./site/cloudflareSaas.ts";
+import { CloudflareSaasLayer, CloudflareSaasService } from "./site/cloudflareSaas.ts";
 
 const AuthEnv = {
   authSecret: Config.redacted("AUTH_SECRET").pipe(
@@ -96,23 +96,22 @@ export default Cloudflare.Worker(
     // the Context tags above, and each impl is built here in init and provided
     // per-request to the router. Each impl is produced by providing its owning
     // layer, so requirements resolve at this composition root.
-    const cloudflareSaas = yield* Effect.map(
-      Effect.all(CloudflareSaasEnv).pipe(Effect.orDie),
-      (config) => ({
-        client: makeCloudflareSaas({
-          zoneId: config.zoneId,
-          apiToken: Redacted.value(config.apiToken),
+    const cloudflareConfig = yield* Effect.all(CloudflareSaasEnv).pipe(Effect.orDie);
+    const cloudflareSaas = yield* CloudflareSaasService.pipe(
+      Effect.provide(
+        CloudflareSaasLayer({
+          zoneId: cloudflareConfig.zoneId,
+          apiToken: Redacted.value(cloudflareConfig.apiToken),
         }),
-        cnameTarget: config.cnameTarget,
-      }),
+      ),
     );
     const siteRepo = yield* Effect.gen(function* () {
       return yield* SiteRepository;
     }).pipe(
       Effect.provide(
         SiteRepositoryLayer(db, {
-          cloudflareSaas: cloudflareSaas.client,
-          cnameTarget: cloudflareSaas.cnameTarget,
+          cloudflareSaas,
+          cnameTarget: cloudflareConfig.cnameTarget,
         }),
       ),
     );
