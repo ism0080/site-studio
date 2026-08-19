@@ -43,4 +43,5 @@ body {
   --border-radius-sm: 0.1875rem;
   --border-radius-md: 0.3125rem;
   --border-radius-lg: 0.5rem;
+  --border-radius-full: 999px;
 }

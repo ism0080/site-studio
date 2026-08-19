@@ -1,49 +1,49 @@
 [data-component="templates"] {
-  padding: 37px 52px;
+  padding: var(--space-9) var(--space-14);
   max-width: 1200px;
 }
 .template-toolbar {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 31px;
+  margin-bottom: var(--space-8);
 }
 .filter-pills {
   display: flex;
-  gap: 5px;
+  gap: var(--space-1-5);
 }
 .filter-pills button {
   border: 0;
   background: transparent;
-  color: #92968e;
-  padding: 8px 12px;
+  color: var(--color-text-muted);
+  padding: var(--space-2) var(--space-3);
   font-size: 11px;
 }
 .filter-pills button[aria-pressed="true"] {
-  background: #232622;
-  color: #fff;
-  border-radius: 4px;
+  background: var(--color-ink);
+  color: var(--color-white);
+  border-radius: var(--border-radius-md);
 }
 .template-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
+  gap: var(--space-4-5);
 }
 .template-card {
-  padding: 0;
-  background: #fff;
-  border: 1px solid #e1e3dc;
-  border-radius: 7px;
+  padding: var(--space-0);
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
   text-align: left;
   overflow: hidden;
-  color: #2e322d;
+  color: var(--color-text);
 }
 .template-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 7px 20px #dddeda;
+  box-shadow: 0 7px 20px var(--color-border);
 }
 .template-art {
   height: 320px;
-  padding: 22px 25px;
+  padding: var(--space-6) var(--space-6);
   position: relative;
   overflow: hidden;
 }
@@ -56,7 +56,7 @@
   font-size: 32px;
   line-height: 0.95;
   letter-spacing: -2px;
-  margin-top: 62px;
+  margin-top: var(--space-16);
   position: relative;
   z-index: 1;
 }
@@ -68,7 +68,7 @@
   bottom: 0;
 }
 .template-card-footer {
-  padding: 16px 18px;
+  padding: var(--space-4) var(--space-4-5);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -82,10 +82,10 @@
 }
 .template-card-footer small {
   font-size: 10px;
-  color: #979b92;
-  margin-top: 4px;
+  color: var(--color-text-faint);
+  margin-top: var(--space-1);
 }
 .template-card-footer > span {
   font-size: 10px;
-  color: #e56645;
+  color: var(--color-accent);
 }

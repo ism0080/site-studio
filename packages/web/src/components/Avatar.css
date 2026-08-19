@@ -2,8 +2,8 @@
   width: 29px;
   height: 29px;
   border-radius: 50%;
-  background: #d4a77e;
-  color: #fff;
+  background: var(--color-accent-tint);
+  color: var(--color-white);
   font-size: 10px;
   font-weight: 700;
   display: grid;
@@ -13,6 +13,6 @@
   border: 0;
   width: 35px;
   height: 35px;
-  background: #252a25;
+  background: var(--color-ink);
   font-size: 11px;
 }

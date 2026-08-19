@@ -1,91 +1,71 @@
 :root {
   --color-white: #ffffff;
-  --color-black: #000000;
 
-  /* Default light theme colors */
+  /* Brand */
+  --color-ink: #232622;
+  --color-accent: #e56645;
+  --color-accent-dark: #dd6245;
+  --color-accent-hover: var(--color-accent-dark);
+  --color-accent-active: #c04426;
+  --color-accent-light: #dd8062;
+  --color-accent-tint: #d4a77e;
+  --color-accent-wash: #f0ede5;
+
+  /* Surfaces */
   --color-bg: #ffffff;
-  --color-bg-surface: #f5f5f7;
-  --color-bg-elevated: #ffffff;
+  --color-bg-input: #fbfcf9;
+  --color-bg-subtle: #f4f5f0;
+  --color-bg-wash: #eceee7;
+  --color-bg-toolbar: #f6f6f2;
+  --color-bg-toggle: #e7e9e2;
+  --color-bg-canvas: #e9eae5;
+  --color-bg-page: #f7f7f3;
 
-  --color-text: #1d1d1f;
-  --color-text-secondary: #424245;
-  --color-text-muted: #6e6e73;
-  --color-text-disabled: #86868b;
+  /* Text */
+  --color-text: #343832;
+  --color-text-secondary: #4a4e47;
+  --color-text-muted: #777b73;
+  --color-text-faint: #969a91;
+  --color-text-disabled: #b4b8af;
 
-  --color-accent: #007aff;
-  --color-accent-hover: #0056b3;
-  --color-accent-active: #004085;
+  /* Borders */
+  --color-border: #e2e3dd;
+  --color-border-subtle: #ebebe6;
+  --color-border-input: #dcdfd7;
+  --color-border-strong: #dedfd8;
+  --color-border-hover: #c9ccc3;
 
-  --color-success: #30d158;
-  --color-warning: #ff9f0a;
-  --color-danger: #ff3b30;
+  /* Status */
+  --color-success: #4c9b72;
+  --color-success-text: #37684a;
+  --color-success-bg: #eef7f0;
 
-  --color-border: #d2d2d7;
-  --color-border-muted: #e5e5ea;
-
-  /* Button colors */
-  --color-primary: var(--color-accent);
-  --color-primary-hover: var(--color-accent-hover);
-  --color-primary-active: var(--color-accent-active);
-  --color-primary-text: #ffffff;
-
-  --color-danger: #ff3b30;
-  --color-danger-hover: #d70015;
-  --color-danger-active: #a50011;
+  --color-danger: #c05b5b;
+  --color-danger-hover: #a84c4c;
+  --color-danger-active: #8a3d3d;
   --color-danger-text: #ffffff;
+  --color-danger-bg: #fbecec;
 
   --color-warning: #ff9f0a;
   --color-warning-hover: #cc7f08;
   --color-warning-active: #995f06;
   --color-warning-text: #000000;
 
-  /* Surface colors */
-  --color-surface: var(--color-bg-surface);
-  --color-surface-hover: var(--color-bg-elevated);
-  --color-surface-border: var(--color-border);
-}
+  /* Sidebar */
+  --color-sidebar: #202320;
+  --color-sidebar-hover: #30332f;
+  --color-sidebar-border: #3b3e39;
+  --color-sidebar-text: #dddcd4;
+  --color-sidebar-text-strong: #f6f5ed;
+  --color-sidebar-text-muted: #9c9e96;
+  --color-sidebar-text-faint: #7f817b;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #0c0c0e;
-    --color-bg-surface: #161618;
-    --color-bg-elevated: #1c1c1f;
+  /* Shadows */
+  --color-shadow: #c9cbc4;
 
-    --color-text: #ffffff;
-    --color-text-secondary: #c7c7cc;
-    --color-text-muted: #a1a1a6;
-    --color-text-disabled: #68686f;
-
-    --color-accent: #007aff;
-    --color-accent-hover: #0056b3;
-    --color-accent-active: #004085;
-
-    --color-success: #30d158;
-    --color-warning: #ff9f0a;
-    --color-danger: #ff453a;
-
-    --color-border: #38383a;
-    --color-border-muted: #2c2c2e;
-
-    /* Button colors */
-    --color-primary: var(--color-accent);
-    --color-primary-hover: var(--color-accent-hover);
-    --color-primary-active: var(--color-accent-active);
-    --color-primary-text: #ffffff;
-
-    --color-danger: #ff453a;
-    --color-danger-hover: #d70015;
-    --color-danger-active: #a50011;
-    --color-danger-text: #ffffff;
-
-    --color-warning: #ff9f0a;
-    --color-warning-hover: #cc7f08;
-    --color-warning-active: #995f06;
-    --color-warning-text: #000000;
-
-    /* Surface colors */
-    --color-surface: var(--color-bg-surface);
-    --color-surface-hover: var(--color-bg-elevated);
-    --color-surface-border: var(--color-border);
-  }
+  /* Buttons */
+  --color-primary: var(--color-accent);
+  --color-primary-hover: var(--color-accent-hover);
+  --color-primary-active: var(--color-accent-active);
+  --color-primary-text: var(--color-white);
 }

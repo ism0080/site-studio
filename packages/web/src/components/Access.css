@@ -1,57 +1,57 @@
 [data-component="access"],
 [data-component="admin"] {
-  padding-bottom: 60px;
+  padding-bottom: var(--space-16);
 }
 .access-card {
-  background: #fff;
-  border: 1px solid #e6e7e1;
-  border-radius: 10px;
-  padding: 20px 22px;
-  margin-bottom: 20px;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-5);
   max-width: 640px;
 }
 .access-card h3 {
   font-size: 13px;
-  margin: 0 0 4px;
+  margin: var(--space-0) var(--space-0) var(--space-1);
 }
 .invite-row {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
-  margin-top: 12px;
+  margin-top: var(--space-3);
 }
 .invite-row input {
   flex: 1;
-  border: 1px solid #dcdfd7;
-  border-radius: 4px;
-  padding: 10px 11px;
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-2-5) var(--space-3);
   font-size: 12px;
   outline: none;
-  background: #fbfcf9;
+  background: var(--color-bg-input);
 }
 .invite-row input:focus {
-  border-color: #e56645;
+  border-color: var(--color-accent);
 }
 .member-list {
-  margin-top: 10px;
+  margin-top: var(--space-2-5);
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .member-row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 10px 12px;
-  border: 1px solid #e6e7e1;
-  border-radius: 7px;
-  background: #fbfcf9;
+  gap: var(--space-3-5);
+  padding: var(--space-2-5) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  background: var(--color-bg-input);
 }
 .member-identity {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .member-identity strong {
   font-size: 12px;
@@ -65,18 +65,18 @@
 .member-toggles {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-3-5);
 }
 .member-toggles .toggle {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-1-5);
   font-size: 11px;
-  color: #4a4e47;
+  color: var(--color-text-secondary);
   cursor: pointer;
 }
 .member-toggles .toggle input {
-  accent-color: #e56645;
+  accent-color: var(--color-accent);
   cursor: pointer;
 }
 .member-row .section-btn.remove {

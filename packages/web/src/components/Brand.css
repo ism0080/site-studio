@@ -2,14 +2,14 @@
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.7px;
-  padding: 0 15px 50px;
-  color: #f6f5ed;
+  padding: var(--space-0) var(--space-4) var(--space-12);
+  color: var(--color-sidebar-text-strong);
 }
 [data-component="brand"] [data-part="mark"] {
-  color: #e56645;
+  color: var(--color-accent);
   font-size: 23px;
-  margin-right: 8px;
+  margin-right: var(--space-2);
 }
 [data-component="brand"] [data-part="dot"] {
-  color: #e56645;
+  color: var(--color-accent);
 }

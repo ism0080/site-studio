@@ -4,14 +4,14 @@
   display: flex;
   justify-content: center;
   overflow: auto;
-  padding: 31px 36px;
+  padding: var(--space-8) var(--space-9);
 }
 [data-component="preview"] iframe {
   border: 0;
-  background: #fff;
+  background: var(--color-white);
   width: min(100%, 850px);
   height: 100%;
-  box-shadow: 0 8px 35px #c9cbc4;
+  box-shadow: 0 8px 35px var(--color-shadow);
 }
 [data-device="mobile"] iframe {
   width: 390px;
