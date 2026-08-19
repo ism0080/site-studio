@@ -1,6 +1,7 @@
 import type { Page, Site } from "../types.ts";
 import { SECTION_ORDER, SECTION_TYPES } from "../data/sections.ts";
 import { addSection, findSection, moveSection, removeSection } from "../lib/siteUpdates.ts";
+import SectionTitle from "./SectionTitle.tsx";
 
 export default function SectionList({
   site,
@@ -17,9 +18,7 @@ export default function SectionList({
 
   return (
     <>
-      <div className="section-title">
-        <span>Homepage sections</span>
-      </div>
+      <SectionTitle>Homepage sections</SectionTitle>
 
       {page.sections.map((block, i) => {
         const meta = SECTION_TYPES[block.type];

@@ -1,3 +1,4 @@
+import "./Access.css";
 import { useQuery } from "@tanstack/react-query";
 import { errorMessage as errorMessageFrom } from "../lib/api.ts";
 import { agencyQueries, useRemoveAgency } from "../lib/queries.ts";
@@ -29,7 +30,7 @@ export default function Admin({
   const errorMessage = error ? errorMessageFrom(error) : null;
 
   return (
-    <div className="admin-page">
+    <div data-component="admin">
       <div className="section-header">
         <div>
           <p className="overline">Admin</p>

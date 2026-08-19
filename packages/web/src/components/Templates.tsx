@@ -1,3 +1,4 @@
+import "./Templates.css";
 import type { Template } from "../types.ts";
 import { templates } from "../data/site.ts";
 
@@ -22,13 +23,13 @@ function TemplateArt({ template }: { template: Template }) {
 
 export default function Templates({ onSelect }: { onSelect: (template: Template) => void }) {
   return (
-    <div className="templates-page">
+    <div data-component="templates">
       <div className="template-toolbar">
         <div className="filter-pills">
-          <button className="selected">All templates</button>
-          <button>Services</button>
-          <button>Retail</button>
-          <button>Creative</button>
+          <button aria-pressed="true">All templates</button>
+          <button aria-pressed="false">Services</button>
+          <button aria-pressed="false">Retail</button>
+          <button aria-pressed="false">Creative</button>
         </div>
         <button className="light-button">
           Sort by <span>Featured⌄</span>

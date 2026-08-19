@@ -1,3 +1,4 @@
+import "./Overview.css";
 import type { Site } from "../types.ts";
 import Icon from "./Icon.tsx";
 import { buildStatusLabel } from "../lib/api.ts";
@@ -15,7 +16,7 @@ export default function Overview({
   const hero = findSection(findPage(site), "hero");
   const publishedCount = sites.filter((s) => s.status === "published").length;
   return (
-    <div className="overview">
+    <div data-component="overview">
       <section className="stat-grid">
         <div className="stat-card">
           <span>Published sites</span>

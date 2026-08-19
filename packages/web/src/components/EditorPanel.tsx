@@ -1,3 +1,4 @@
+import "./EditorPanel.css";
 import type { DomainSetup, SaveState, Site, StringSettingKey } from "../types.ts";
 import { FONTS, templates } from "../data/site.ts";
 import {
@@ -9,6 +10,7 @@ import {
 } from "../lib/siteUpdates.ts";
 import DomainSettings from "./DomainSettings.tsx";
 import SectionList from "./SectionList.tsx";
+import SectionTitle from "./SectionTitle.tsx";
 import { AboutFields, HeroFields, ServicesFields, TestimonialsFields } from "./SectionFields.tsx";
 
 type ColorKey = Exclude<StringSettingKey, "font" | "border" | "muted">;
@@ -217,7 +219,7 @@ export default function EditorPanel({
     saveState === "saving" ? "Saving…" : saveState === "error" ? "Save failed" : "Saved";
 
   return (
-    <aside className="editor-panel">
+    <aside data-component="editor-panel">
       <div className="panel-heading">
         <div>
           <p className="overline">Site editor</p>
@@ -235,25 +237,19 @@ export default function EditorPanel({
           </p>
         )}
         <fieldset className="editor-fields" disabled={readOnly}>
-          <div className="section-title">
-            <span>Business</span>
-          </div>
+          <SectionTitle>Business</SectionTitle>
           <BusinessFields site={site} onUpdate={onUpdate} />
 
           <div className="content-divider" />
 
-          <div className="section-title">
-            <span>Theme</span>
-          </div>
+          <SectionTitle>Theme</SectionTitle>
           <ThemeSettings site={site} onUpdate={onUpdate} />
 
           <div className="content-divider" />
 
           {hero && (
             <>
-              <div className="section-title">
-                <span>Hero</span>
-              </div>
+              <SectionTitle>Hero</SectionTitle>
               <HeroFields site={site} onUpdate={onUpdate} hero={hero} page={page} />
               <div className="content-divider" />
             </>
@@ -261,9 +257,7 @@ export default function EditorPanel({
 
           {services && (
             <>
-              <div className="section-title">
-                <span>Services</span>
-              </div>
+              <SectionTitle>Services</SectionTitle>
               <ServicesFields site={site} onUpdate={onUpdate} services={services} page={page} />
               <div className="content-divider" />
             </>
@@ -271,9 +265,7 @@ export default function EditorPanel({
 
           {about && (
             <>
-              <div className="section-title">
-                <span>About</span>
-              </div>
+              <SectionTitle>About</SectionTitle>
               <AboutFields site={site} onUpdate={onUpdate} about={about} page={page} />
               <div className="content-divider" />
             </>
@@ -281,9 +273,7 @@ export default function EditorPanel({
 
           {testimonials && (
             <>
-              <div className="section-title">
-                <span>Testimonials</span>
-              </div>
+              <SectionTitle>Testimonials</SectionTitle>
               <TestimonialsFields
                 site={site}
                 onUpdate={onUpdate}
@@ -300,9 +290,7 @@ export default function EditorPanel({
             <>
               <div className="content-divider" />
 
-              <div className="section-title">
-                <span>Extras</span>
-              </div>
+              <SectionTitle>Extras</SectionTitle>
               <AnalyticsField site={site} onUpdate={onUpdate} />
 
               <div className="content-divider" />

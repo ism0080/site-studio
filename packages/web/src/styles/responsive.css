@@ -1,0 +1,136 @@
+@media (max-width: 900px) {
+  [data-component="sidebar"] {
+    width: 68px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  [data-component="brand"] {
+    padding-left: 10px;
+  }
+  [data-component="brand"] > span:last-child,
+  .workspace-label,
+  .nav-item span,
+  .profile div:not([data-component="avatar"]),
+  .profile > svg {
+    display: none;
+  }
+  .nav-item {
+    justify-content: center;
+    padding: 12px;
+  }
+  .nav-badge {
+    display: block;
+    position: absolute;
+    margin: 0 0 22px 22px;
+    padding: 2px 5px;
+  }
+  .profile {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  [data-component="header"] {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+  [data-component="overview"],
+  [data-component="templates"] {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+  [data-component="editor-panel"] {
+    width: 300px;
+  }
+  .public-site {
+    min-width: 590px;
+  }
+}
+@media (max-width: 650px) {
+  [data-component="header"] {
+    height: auto;
+    padding: 24px 20px;
+    align-items: start;
+  }
+[data-component="header"] h1 {
+    font-size: 21px;
+  }
+  .header-actions {
+    gap: 5px;
+  }
+  .icon-button {
+    display: none;
+  }
+  [data-component="overview"],
+  [data-component="templates"] {
+    padding: 24px 20px;
+  }
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+  .section-header {
+    display: block;
+    margin-top: 35px;
+  }
+  .section-header .dark-button {
+    margin-top: 17px;
+  }
+  .site-list-card {
+    display: block;
+  }
+  .site-preview-thumb {
+    width: 100%;
+    height: 160px;
+  }
+  .site-info {
+    padding: 20px;
+  }
+  .site-meta {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .tip-card {
+    align-items: start;
+  }
+  .tip-card button {
+    display: none;
+  }
+  [data-component="editor-panel"] {
+    position: absolute;
+    z-index: 2;
+    width: calc(100% - 68px);
+    height: calc(100vh - 122px);
+    box-shadow: 10px 0 25px #c8cac3;
+  }
+  .preview-area {
+    width: 100%;
+  }
+  .preview-toolbar {
+    padding: 0 14px;
+  }
+  .preview-toolbar .muted,
+  .toolbar-divider {
+    display: none;
+  }
+  [data-component="preview"] {
+    padding: 20px 12px;
+  }
+  .public-site {
+    min-width: 590px;
+  }
+  .template-grid {
+    grid-template-columns: 1fr;
+  }
+  .template-toolbar {
+    display: block;
+  }
+  .filter-pills {
+    overflow: auto;
+    margin-bottom: 15px;
+  }
+  .filter-pills button {
+    white-space: nowrap;
+  }
+  [data-component="templates"] {
+    overflow: hidden;
+  }
+}

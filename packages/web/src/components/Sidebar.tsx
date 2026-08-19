@@ -1,6 +1,9 @@
+import "./Sidebar.css";
 import type { User } from "better-auth";
 import type { View } from "../types.ts";
 import Icon, { type IconName } from "./Icon.tsx";
+import Brand from "./Brand.tsx";
+import Avatar from "./Avatar.tsx";
 
 export default function Sidebar({
   active,
@@ -29,18 +32,14 @@ export default function Sidebar({
   if (isAdmin) items.push(["admin", "Admin", "shield"]);
 
   return (
-    <aside className="sidebar">
-      <div className="brand">
-        <span className="brand-mark">✳</span>
-        <span>
-          site<span className="brand-dot">.</span>studio
-        </span>
-      </div>
+    <aside data-component="sidebar">
+      <Brand />
       <div className="workspace-label">Workspace</div>
       <nav>
         {items.map(([id, label, icon]) => (
           <button
-            className={`nav-item ${active === id ? "active" : ""}`}
+            className="nav-item"
+            data-active={active === id ? "" : undefined}
             key={id}
             onClick={() => onChange(id)}
           >
@@ -56,14 +55,7 @@ export default function Sidebar({
           <span>Settings</span>
         </button>
         <div className="profile">
-          <div className="avatar">
-            {(user?.name ?? "")
-              .split(/\s+/)
-              .filter(Boolean)
-              .slice(0, 2)
-              .map((part) => part[0]?.toUpperCase())
-              .join("")}
-          </div>
+          <Avatar name={user?.name} />
           <div>
             <strong>{user?.name}</strong>
             <small>{user?.email}</small>

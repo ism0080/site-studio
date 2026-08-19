@@ -1,0 +1,132 @@
+[data-component="editor-panel"] {
+  width: 347px;
+  background: #fff;
+  border-right: 1px solid #e2e3dd;
+  display: flex;
+  flex-direction: column;
+}
+.panel-heading {
+  padding: 27px 25px 23px;
+  border-bottom: 1px solid #ebebe6;
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+}
+.panel-heading h2 {
+  margin: 8px 0 0;
+  font-size: 18px;
+}
+.panel-heading .overline {
+  margin: 0;
+  color: #e56645;
+}
+.panel-scroll {
+  padding: 24px 25px;
+  overflow: auto;
+}
+.color-input {
+  display: flex;
+  align-items: center;
+  border: 1px solid #dcdfd7;
+  border-radius: 4px;
+  height: 36px;
+  padding: 4px 8px;
+  gap: 8px;
+  background: #fbfcf9;
+}
+.color-input input {
+  width: 21px;
+  height: 21px;
+  border: 0;
+  padding: 0;
+}
+.color-input span {
+  font-family: "DM Mono";
+  font-size: 9px;
+  color: #777b73;
+}
+.content-divider {
+  height: 1px;
+  background: #ebebe6;
+  margin: 4px 0 21px;
+}
+.section-card {
+  border: 1px solid #e2e4dd;
+  border-radius: 5px;
+  padding: 12px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.drag {
+  color: #b4b8af;
+  font-size: 17px;
+}
+.section-card strong {
+  font-size: 11px;
+  display: block;
+}
+.section-card small {
+  font-size: 10px;
+  color: #969a91;
+}
+.section-check {
+  margin-left: auto;
+  color: #63a077;
+  font-size: 13px;
+}
+.muted-card {
+  color: #9fa39a;
+}
+.service-fields textarea {
+  margin-top: 6px;
+}
+.section-card-body {
+  flex: 1;
+  min-width: 0;
+}
+.section-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-left: auto;
+}
+.muted-card .drag {
+  color: #b4b8af;
+}
+.font-select {
+  width: 100%;
+  border: 1px solid #dcdfd7;
+  border-radius: 4px;
+  padding: 10px 11px;
+  color: #343832;
+  background: #fbfcf9;
+  font-size: 12px;
+  outline: none;
+}
+.theme-hint {
+  font-size: 10px;
+  color: #92968e;
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+.readonly-hint {
+  font-size: 11px;
+  color: #777b73;
+  background: #f4f5f0;
+  border: 1px solid #e2e3dd;
+  border-radius: 5px;
+  padding: 10px 12px;
+  margin: 0 0 18px;
+  line-height: 1.5;
+}
+.editor-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.editor-fields:disabled {
+  opacity: 0.75;
+}

@@ -1,0 +1,91 @@
+[data-component="templates"] {
+  padding: 37px 52px;
+  max-width: 1200px;
+}
+.template-toolbar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 31px;
+}
+.filter-pills {
+  display: flex;
+  gap: 5px;
+}
+.filter-pills button {
+  border: 0;
+  background: transparent;
+  color: #92968e;
+  padding: 8px 12px;
+  font-size: 11px;
+}
+.filter-pills button[aria-pressed="true"] {
+  background: #232622;
+  color: #fff;
+  border-radius: 4px;
+}
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+.template-card {
+  padding: 0;
+  background: #fff;
+  border: 1px solid #e1e3dc;
+  border-radius: 7px;
+  text-align: left;
+  overflow: hidden;
+  color: #2e322d;
+}
+.template-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 20px #dddeda;
+}
+.template-art {
+  height: 320px;
+  padding: 22px 25px;
+  position: relative;
+  overflow: hidden;
+}
+.art-brand {
+  font-family: "DM Mono";
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+.art-title {
+  font-size: 32px;
+  line-height: 0.95;
+  letter-spacing: -2px;
+  margin-top: 62px;
+  position: relative;
+  z-index: 1;
+}
+.art-block {
+  position: absolute;
+  width: 130px;
+  height: 176px;
+  right: 0;
+  bottom: 0;
+}
+.template-card-footer {
+  padding: 16px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.template-card-footer strong,
+.template-card-footer small {
+  display: block;
+}
+.template-card-footer strong {
+  font-size: 12px;
+}
+.template-card-footer small {
+  font-size: 10px;
+  color: #979b92;
+  margin-top: 4px;
+}
+.template-card-footer > span {
+  font-size: 10px;
+  color: #e56645;
+}

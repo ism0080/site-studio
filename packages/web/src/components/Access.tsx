@@ -1,3 +1,4 @@
+import "./Access.css";
 import { useQuery } from "@tanstack/react-query";
 import type { Member, Site } from "../types.ts";
 import type { AccessToggles } from "../lib/appMachine.ts";
@@ -90,7 +91,7 @@ export default function Access({
   const errorMessage = error ? errorMessageFrom(error) : null;
 
   return (
-    <div className="access-page">
+    <div data-component="access">
       <div className="section-header">
         <div>
           <p className="overline">Access</p>

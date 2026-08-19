@@ -1,3 +1,4 @@
+import "./Leads.css";
 import { useQuery } from "@tanstack/react-query";
 import type { Site } from "../types.ts";
 import Icon from "./Icon.tsx";
@@ -46,7 +47,7 @@ export default function Leads({
   }
 
   return (
-    <div className="leads-page">
+    <div data-component="leads">
       <div className="section-header">
         <div>
           <p className="overline">Leads</p>
@@ -58,7 +59,7 @@ export default function Leads({
       </div>
 
       {errorMessage && (
-        <div className="conn-banner error">
+        <div className="conn-banner" data-kind="error">
           <span>{errorMessage}</span>
         </div>
       )}

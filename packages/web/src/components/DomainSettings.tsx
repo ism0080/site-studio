@@ -1,3 +1,4 @@
+import "./DomainSettings.css";
 import type { DomainSetup, Site } from "../types.ts";
 
 export default function DomainSettings({

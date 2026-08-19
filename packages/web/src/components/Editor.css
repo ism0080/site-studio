@@ -1,0 +1,49 @@
+[data-component="editor"] {
+  height: calc(100vh - 154px);
+  display: flex;
+}
+.preview-area {
+  flex: 1;
+  background: #e9eae5;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.preview-toolbar {
+  height: 57px;
+  background: #f6f6f2;
+  border-bottom: 1px solid #dbddd6;
+  padding: 0 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #596057;
+  font-size: 10px;
+}
+.muted {
+  color: #a1a49e;
+}
+.toolbar-divider {
+  height: 13px;
+  border-left: 1px solid #d6d8d1;
+  margin: 0 10px;
+}
+.device-toggle {
+  background: #e7e9e2;
+  border-radius: 4px;
+  padding: 3px;
+  display: flex;
+}
+.device-toggle button {
+  border: 0;
+  background: transparent;
+  color: #8b8f87;
+  font-size: 10px;
+  padding: 6px 10px;
+  border-radius: 3px;
+}
+.device-toggle button[aria-pressed="true"] {
+  background: white;
+  color: #31352f;
+  box-shadow: 0 1px 3px #d7d9d1;
+}

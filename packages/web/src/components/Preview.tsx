@@ -1,3 +1,4 @@
+import "./Preview.css";
 import { Fragment } from "react";
 import type { CSSProperties } from "react";
 import type {
@@ -97,7 +98,7 @@ export default function Preview({ site, device }: { site: Site; device: Device }
   // which lives outside CSSProperties' known-property index signature.
   const accentStyle = { "--accent": site.settings.accent } as CSSProperties;
   return (
-    <div className={`preview-canvas ${device}`}>
+    <div data-component="preview" data-device={device}>
       <div className="public-site" style={accentStyle}>
         <div className="site-topbar">
           <span>{site.business.category}</span>

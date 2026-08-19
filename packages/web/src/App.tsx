@@ -1,3 +1,4 @@
+import "./App.css";
 import { useMachine } from "@xstate/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -108,14 +109,14 @@ export default function App() {
       : active;
 
   if (authLoading) {
-    return <div className="auth-screen">Loading…</div>;
+    return <div data-component="sign-in">Loading…</div>;
   }
   if (!user) {
     return <SignInScreen onSignIn={() => send({ type: "SIGN_IN" })} />;
   }
 
   return (
-    <div className="app-shell">
+    <div data-component="app">
       <Sidebar
         active={active}
         onChange={(next) => send({ type: "SET_VIEW", view: next })}
@@ -127,7 +128,7 @@ export default function App() {
       />
       <main className="main-content">
         {banner && (
-          <div className={`conn-banner ${banner.kind}`}>
+          <div className="conn-banner" data-kind={banner.kind}>
             <span>{banner.message}</span>
             <button className="banner-close" onClick={() => send({ type: "DISMISS_BANNER" })}>
               ×

@@ -1,0 +1,52 @@
+[data-component="sign-in"] {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  background: #f7f7f3;
+}
+.auth-card {
+  background: #fff;
+  border: 1px solid #e3e4de;
+  border-radius: 12px;
+  padding: 44px 48px;
+  width: 340px;
+  text-align: center;
+  box-shadow: 0 12px 40px #e2e3dd;
+}
+.auth-card [data-component="brand"] {
+  margin-bottom: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #232622;
+  font-size: 20px;
+  padding: 0;
+}
+.auth-card h1 {
+  font-size: 22px;
+  letter-spacing: -1px;
+  margin: 0 0 8px;
+}
+.auth-card p {
+  color: #8d9088;
+  font-size: 13px;
+  margin: 0 0 26px;
+}
+.google-button {
+  width: 100%;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+}
+.google-mark {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  color: #e56645;
+  font-weight: 800;
+  font-size: 12px;
+}

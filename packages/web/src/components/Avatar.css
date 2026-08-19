@@ -1,0 +1,18 @@
+[data-component="avatar"] {
+  width: 29px;
+  height: 29px;
+  border-radius: 50%;
+  background: #d4a77e;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+[data-component="avatar"][data-variant="user"] {
+  border: 0;
+  width: 35px;
+  height: 35px;
+  background: #252a25;
+  font-size: 11px;
+}

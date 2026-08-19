@@ -1,6 +1,8 @@
+import "./Header.css";
 import type { User } from "better-auth";
 import type { Site, View } from "../types.ts";
 import Icon from "./Icon.tsx";
+import Avatar from "./Avatar.tsx";
 import { buildStatusLabel } from "../lib/api.ts";
 
 const HEADINGS = {
@@ -38,7 +40,7 @@ export default function Header({
   const [title, subtitle] = HEADINGS[active] || HEADINGS.overview;
   const inEditor = active === "editor";
   return (
-    <header className="top-header">
+    <header data-component="header">
       <div>
         <p className="crumb">
           {inEditor ? `My sites / ${site.business.name}` : "Workspace"}
@@ -77,14 +79,7 @@ export default function Header({
             {publishing ? "Publishing…" : `Publish · ${buildStatusLabel(site)}`}
           </button>
         )}
-        <button className="user-avatar" title={user?.email}>
-          {(user?.name ?? "")
-            .split(/\s+/)
-            .filter(Boolean)
-            .slice(0, 2)
-            .map((part) => part[0]?.toUpperCase())
-            .join("")}
-        </button>
+        <Avatar variant="user" name={user?.name} title={user?.email} />
       </div>
     </header>
   );

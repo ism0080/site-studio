@@ -1,0 +1,8 @@
+[data-component="app"] {
+  display: flex;
+  min-height: 100vh;
+}
+.main-content {
+  flex: 1;
+  min-width: 0;
+}

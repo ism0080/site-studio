@@ -1,0 +1,15 @@
+[data-component="brand"] {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.7px;
+  padding: 0 15px 50px;
+  color: #f6f5ed;
+}
+[data-component="brand"] [data-part="mark"] {
+  color: #e56645;
+  font-size: 23px;
+  margin-right: 8px;
+}
+[data-component="brand"] [data-part="dot"] {
+  color: #e56645;
+}

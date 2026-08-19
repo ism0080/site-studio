@@ -1,3 +1,4 @@
+import "./Editor.css";
 import type { Device, DomainSetup, SaveState, Site } from "../types.ts";
 import EditorPanel from "./EditorPanel.tsx";
 import Preview from "./Preview.tsx";
@@ -38,7 +39,7 @@ export default function Editor({
   onDomainRemove: () => void;
 }) {
   return (
-    <div className="editor-layout">
+    <div data-component="editor">
       <EditorPanel
         site={site}
         online={online}
@@ -63,13 +64,13 @@ export default function Editor({
           </div>
           <div className="device-toggle">
             <button
-              className={device === "desktop" ? "active" : ""}
+              aria-pressed={device === "desktop"}
               onClick={() => onDevice("desktop")}
             >
               Desktop
             </button>
             <button
-              className={device === "mobile" ? "active" : ""}
+              aria-pressed={device === "mobile"}
               onClick={() => onDevice("mobile")}
             >
               Mobile
