@@ -21,3 +21,6 @@ skills-lock.json
 # Logs / OS
 *.log
 .DS_Store
+
+docs/
+brand.md

@@ -4,6 +4,7 @@ import type { RouterContext } from "../router.ts";
 import { RouteError, RouteNotFound } from "../components/RouteState.tsx";
 import { useWorkspace } from "../lib/workspaceContext.ts";
 import "../components/SignInScreen.css";
+import { XIcon } from "@phosphor-icons/react";
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: AppShell,
@@ -22,19 +23,17 @@ function AppShell() {
   }
 
   return (
-    <div data-component="app">
-      <main data-slot="main-content">
-        {workspace.banner && (
-          <div data-component="banner" data-kind={workspace.banner.kind}>
-            <span>{workspace.banner.message}</span>
-            <button data-slot="close" onClick={workspace.dismissBanner}>
-              ✕
-            </button>
-          </div>
-        )}
-        <Outlet />
-      </main>
-    </div>
+    <>
+      {workspace.banner && (
+        <div data-component="banner" data-kind={workspace.banner.kind}>
+          <span>{workspace.banner.message}</span>
+          <button data-slot="close" onClick={workspace.dismissBanner}>
+            <XIcon size={16} />
+          </button>
+        </div>
+      )}
+      <Outlet />
+    </>
   );
 }
 

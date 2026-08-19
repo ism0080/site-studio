@@ -1,13 +1,12 @@
 import "./Sidebar.css";
+import { Link } from "@tanstack/react-router";
 import type { User } from "better-auth";
-import type { View } from "../siteTypes.ts";
+import type { Icon } from "@phosphor-icons/react";
 import Brand from "./Brand.tsx";
 import Avatar from "./Avatar.tsx";
 import {
   SignOutIcon,
-  GearIcon,
   GaugeIcon,
-  type Icon,
   PenIcon,
   StackSimpleIcon,
   UsersIcon,
@@ -16,56 +15,56 @@ import {
 } from "@phosphor-icons/react";
 
 interface SidebarProps {
-  active: View;
-  onChange: (view: View) => void;
-  user: User;
+  siteId: string;
+  user: User | null;
   onSignOut: () => void;
   canLeads: boolean;
   canManageMembers: boolean;
   isAdmin: boolean;
 }
 
+/** The workspace navigation rail, with type-safe links to each view. */
 export default function Sidebar({
-  active,
-  onChange,
+  siteId,
   user,
   onSignOut,
   canLeads,
   canManageMembers,
   isAdmin,
 }: SidebarProps) {
-  const items: Array<[View, string, Icon]> = [
-    ["overview", "Overview", GaugeIcon],
-    ["editor", "Site editor", PenIcon],
-    ["templates", "Templates", StackSimpleIcon],
+  const items: Array<{ to: string; label: string; Icon: Icon; exact: boolean }> = [
+    { to: "/sites/$siteId", label: "Overview", Icon: GaugeIcon, exact: true },
+    { to: "/sites/$siteId/editor", label: "Site editor", Icon: PenIcon, exact: true },
+    { to: "/sites/$siteId/templates", label: "Templates", Icon: StackSimpleIcon, exact: false },
   ];
-  if (canLeads) items.push(["leads", "Leads", UsersIcon]);
-  if (canManageMembers) items.push(["access", "Access", ShareIcon]);
-  if (isAdmin) items.push(["admin", "Admin", ShieldIcon]);
+  if (canLeads)
+    items.push({ to: "/sites/$siteId/leads", label: "Leads", Icon: UsersIcon, exact: false });
+  if (canManageMembers)
+    items.push({ to: "/sites/$siteId/access", label: "Access", Icon: ShareIcon, exact: false });
+  if (isAdmin)
+    items.push({ to: "/sites/$siteId/admin", label: "Admin", Icon: ShieldIcon, exact: false });
 
   return (
     <aside data-component="sidebar">
       <Brand />
       <div data-slot="workspace-label">Workspace</div>
       <nav>
-        {items.map(([id, label, Icon]) => (
-          <button
+        {items.map(({ to, label, Icon, exact }) => (
+          <Link
+            key={to}
+            to={to}
+            params={{ siteId }}
             data-slot="nav-item"
-            data-active={active === id ? "true" : undefined}
-            key={id}
-            onClick={() => onChange(id)}
+            activeOptions={{ exact }}
+            activeProps={{ "data-active": "true" }}
           >
             <Icon size={18} />
             <span>{label}</span>
-            {id === "leads" && <span data-slot="nav-badge">3</span>}
-          </button>
+            {label === "Leads" && <span data-slot="nav-badge">3</span>}
+          </Link>
         ))}
       </nav>
       <div data-slot="sidebar-bottom">
-        <button data-slot="nav-item">
-          <GearIcon name="settings" />
-          <span>Settings</span>
-        </button>
         <div data-slot="profile">
           <Avatar name={user?.name} />
           <div>

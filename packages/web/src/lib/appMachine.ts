@@ -87,7 +87,7 @@ const _loadSiteActor = fromPromise<
   { api: AppApi; id: string }
 >(({ input }) =>
   Promise.all([input.api.fetchSite(input.id), input.api.getDomainSetup(input.id)]).then(
-    ([site, setup]) => ({ site, setup }),
+    ([site, domainSetup]) => ({ site, setup: domainSetup }),
   ),
 );
 
