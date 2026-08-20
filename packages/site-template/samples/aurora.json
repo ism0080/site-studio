@@ -4,12 +4,12 @@
   "templateId": "editorial-studio",
   "status": "published",
   "business": {
-    "name": "Aurora Studio",
-    "category": "Independent creative studio",
-    "location": "Portland, Oregon",
-    "email": "hello@aurorastudio.co",
-    "phone": "(503) 555-0148",
-    "logo": "AURORA"
+    "name": "Kōwhai Craft Collective",
+    "category": "Artisan craft collective",
+    "location": "Wanaka, New Zealand",
+    "email": "hello@kowhaicraft.co.nz",
+    "phone": "03 443 1234",
+    "logo": "KŌWHAI"
   },
   "settings": {
     "accent": "#e56645",
@@ -27,11 +27,11 @@
           "id": "block_hero_01",
           "type": "hero",
           "props": {
-            "eyebrow": "Thoughtful work, beautifully made",
-            "headline": "Make space for what matters.",
-            "description": "A small, independent studio helping people and brands bring their best ideas into focus.",
-            "primaryCta": "Start a conversation",
-            "secondaryCta": "Explore our work",
+            "eyebrow": "Handmade ceramic wares & textiles",
+            "headline": "Beautiful things made slowly by hand.",
+            "description": "A collaborative showcase of independent New Zealand potters, weavers, and artists based in the heart of Wanaka.",
+            "primaryCta": "Explore the collection",
+            "secondaryCta": "Visit our gallery",
             "image": "https://images.unsplash.com/photo-1523726491678-bf852e717f6a?auto=format&fit=crop&w=1000&q=85"
           }
         },
@@ -39,22 +39,22 @@
           "id": "block_services_01",
           "type": "services",
           "props": {
-            "title": "How we can help",
+            "title": "What we curate",
             "items": [
               {
                 "id": "service_01",
-                "title": "Brand direction",
-                "description": "Clarity, character, and a visual language that feels like you."
+                "title": "Studio pottery",
+                "description": "Tactile, functional stoneware and porcelain thrown by hand in local studios."
               },
               {
                 "id": "service_02",
-                "title": "Digital experiences",
-                "description": "Websites and tools that make good ideas easier to find."
+                "title": "Woven textiles",
+                "description": "Throws, cushions, and linen dyed with natural botanicals and hand-woven."
               },
               {
                 "id": "service_03",
-                "title": "Ongoing support",
-                "description": "A thoughtful partner for the next chapter, whenever it arrives."
+                "title": "Artisan workshops",
+                "description": "Hands-on weekend classes teaching pottery, clay sculpting, and traditional weaving."
               }
             ]
           }
@@ -63,28 +63,28 @@
           "id": "block_about_01",
           "type": "about",
           "props": {
-            "eyebrow": "A little about us",
-            "title": "A considered approach to better work.",
-            "body": "We believe the most useful things are made with care. Our process is collaborative, clear, and shaped around the people we work with."
+            "eyebrow": "About the collective",
+            "title": "Connecting local makers with people who care.",
+            "body": "We believe the objects in our homes should carry stories. Kōwhai Craft Collective brings together independent South Island artists who share a deep respect for natural materials, sustainable practices, and timeless craft."
           }
         },
         {
           "id": "block_testimonials_01",
           "type": "testimonials",
           "props": {
-            "title": "Kind words from clients",
+            "title": "From our supporters",
             "items": [
               {
                 "id": "t_01",
-                "quote": "Working with this team was a genuine delight.",
-                "author": "Maya Chen",
-                "role": "Founder, Field Notes"
+                "quote": "A stunning collection of unique pieces. I've bought several mugs and a gorgeous linen throw that I cherish.",
+                "author": "Sophia Morris",
+                "role": "Wanaka Local"
               },
               {
                 "id": "t_02",
-                "quote": "Clear, kind, and incredibly skilled throughout.",
-                "author": "Jon Bell",
-                "role": "Creative Director"
+                "quote": "It is wonderful to have a space that truly values and supports independent New Zealand artisans.",
+                "author": "David Taylor",
+                "role": "Studio Potter & Member"
               }
             ]
           }

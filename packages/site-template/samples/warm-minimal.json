@@ -4,12 +4,12 @@
   "templateId": "warm-minimal",
   "status": "published",
   "business": {
-    "name": "North & Co",
-    "category": "Independent creative studio",
-    "location": "Portland, Oregon",
-    "email": "hello@aurorastudio.co",
-    "phone": "(503) 555-0148",
-    "logo": "NORTH"
+    "name": "Aroha Bakery",
+    "category": "Artisan bakery & cafe",
+    "location": "Raglan, New Zealand",
+    "email": "hello@arohabakery.co.nz",
+    "phone": "07 825 1234",
+    "logo": "AROHA"
   },
   "settings": {
     "accent": "#a8764e",
@@ -30,34 +30,34 @@
           "id": "block_hero_01",
           "type": "hero",
           "props": {
-            "eyebrow": "Thoughtful work, beautifully made",
-            "headline": "Make space for what matters.",
-            "description": "A small, independent studio helping people and brands bring their best ideas into focus.",
-            "primaryCta": "Start a conversation",
-            "secondaryCta": "Explore our work",
-            "image": "https://images.unsplash.com/photo-1523726491678-bf852e717f6a?auto=format&fit=crop&w=1000&q=85"
+            "eyebrow": "Sourdough, pastries & hot coffee",
+            "headline": "Baked fresh in Raglan every morning.",
+            "description": "A local, independent bakery dedicated to traditional long-fermentation sourdough, flaky pastries, and great organic coffee.",
+            "primaryCta": "See today's bake",
+            "secondaryCta": "Find our shop",
+            "image": "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1000&q=85"
           }
         },
         {
           "id": "block_services_01",
           "type": "services",
           "props": {
-            "title": "How we can help",
+            "title": "From our ovens to you",
             "items": [
               {
                 "id": "service_01",
-                "title": "Brand direction",
-                "description": "Clarity, character, and a visual language that feels like you."
+                "title": "Artisan sourdough",
+                "description": "Naturally leavened loaves baked daily using organic New Zealand flour."
               },
               {
                 "id": "service_02",
-                "title": "Digital experiences",
-                "description": "Websites and tools that make good ideas easier to find."
+                "title": "Daily pastries",
+                "description": "Flaky croissants, sweet tarts, and seasonal brioche made fresh in-house."
               },
               {
                 "id": "service_03",
-                "title": "Ongoing support",
-                "description": "A thoughtful partner for the next chapter, whenever it arrives."
+                "title": "Hot filter & espresso",
+                "description": "Expertly brewed coffee using beans sourced from local boutique roasters."
               }
             ]
           }
@@ -66,28 +66,28 @@
           "id": "block_about_01",
           "type": "about",
           "props": {
-            "eyebrow": "A little about us",
-            "title": "A considered approach to better work.",
-            "body": "We believe the most useful things are made with care. Our process is collaborative, clear, and shaped around the people we work with."
+            "eyebrow": "Our story",
+            "title": "Made with care, served with love.",
+            "body": "We started Aroha Bakery with a simple goal: to bring the joy of real, slow-fermented bread to our Raglan community. Every loaf is shaped by hand and baked with patience using locally sourced ingredients."
           }
         },
         {
           "id": "block_testimonials_01",
           "type": "testimonials",
           "props": {
-            "title": "Kind words from clients",
+            "title": "Kind words from the community",
             "items": [
               {
                 "id": "t_01",
-                "quote": "Working with this team was a genuine delight.",
-                "author": "Maya Chen",
-                "role": "Founder, Field Notes"
+                "quote": "The best sourdough in the country, hands down. Get in early before the almond croissants sell out!",
+                "author": "Liam Wright",
+                "role": "Raglan Local"
               },
               {
                 "id": "t_02",
-                "quote": "Clear, kind, and incredibly skilled throughout.",
-                "author": "Jon Bell",
-                "role": "Creative Director"
+                "quote": "A beautiful, warm atmosphere and the friendliest staff. It has become our daily morning ritual.",
+                "author": "Emma Davis",
+                "role": "Regular Visitor"
               }
             ]
           }

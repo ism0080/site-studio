@@ -4,12 +4,12 @@
   "templateId": "clean-grid",
   "status": "published",
   "business": {
-    "name": "Form Digital",
-    "category": "Independent creative studio",
-    "location": "Portland, Oregon",
-    "email": "hello@aurorastudio.co",
-    "phone": "(503) 555-0148",
-    "logo": "FORM /"
+    "name": "Tasman Plumbing & Gas",
+    "category": "Plumbing & gas services",
+    "location": "Nelson, New Zealand",
+    "email": "info@tasmanplumbing.co.nz",
+    "phone": "027 555 1234",
+    "logo": "TASMAN"
   },
   "settings": {
     "accent": "#4567db",
@@ -30,34 +30,34 @@
           "id": "block_hero_01",
           "type": "hero",
           "props": {
-            "eyebrow": "Thoughtful work, beautifully made",
-            "headline": "Make space for what matters.",
-            "description": "A small, independent studio helping people and brands bring their best ideas into focus.",
-            "primaryCta": "Start a conversation",
-            "secondaryCta": "Explore our work",
-            "image": "https://images.unsplash.com/photo-1523726491678-bf852e717f6a?auto=format&fit=crop&w=1000&q=85"
+            "eyebrow": "Reliable & local plumbing services",
+            "headline": "Plumbing done right, the first time.",
+            "description": "From blocked drains and leaky taps to full home renovations, we provide honest, professional plumbing across the Nelson and Tasman region.",
+            "primaryCta": "Request a booking",
+            "secondaryCta": "Call 027 555 1234",
+            "image": "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=1000&q=85"
           }
         },
         {
           "id": "block_services_01",
           "type": "services",
           "props": {
-            "title": "How we can help",
+            "title": "Our plumbing services",
             "items": [
               {
                 "id": "service_01",
-                "title": "Brand direction",
-                "description": "Clarity, character, and a visual language that feels like you."
+                "title": "Residential plumbing",
+                "description": "Maintenance, repairs, leaky pipe fixes, and kitchen or bathroom plumbing renovations."
               },
               {
                 "id": "service_02",
-                "title": "Digital experiences",
-                "description": "Websites and tools that make good ideas easier to find."
+                "title": "Gas fitting & heating",
+                "description": "Safe installation and servicing of gas hobs, water heaters, and home heating systems."
               },
               {
                 "id": "service_03",
-                "title": "Ongoing support",
-                "description": "A thoughtful partner for the next chapter, whenever it arrives."
+                "title": "24/7 emergency service",
+                "description": "Unexpected leaks or hot water issues? Call us anytime for urgent plumbing support."
               }
             ]
           }
@@ -66,28 +66,28 @@
           "id": "block_about_01",
           "type": "about",
           "props": {
-            "eyebrow": "A little about us",
-            "title": "A considered approach to better work.",
-            "body": "We believe the most useful things are made with care. Our process is collaborative, clear, and shaped around the people we work with."
+            "eyebrow": "About Tasman Plumbing",
+            "title": "Your trusted local plumbers.",
+            "body": "We are a fully licensed team with over 15 years of experience serving Nelson and Tasman homes. We pride ourselves on being on time, leaving a clean workspace, and giving you an honest upfront price."
           }
         },
         {
           "id": "block_testimonials_01",
           "type": "testimonials",
           "props": {
-            "title": "Kind words from clients",
+            "title": "What our local customers say",
             "items": [
               {
                 "id": "t_01",
-                "quote": "Working with this team was a genuine delight.",
-                "author": "Maya Chen",
-                "role": "Founder, Field Notes"
+                "quote": "Fast, friendly, and fixed our hot water cylinder within hours of calling. Highly recommended!",
+                "author": "Sarah Jenkins",
+                "role": "Homeowner, Stoke"
               },
               {
                 "id": "t_02",
-                "quote": "Clear, kind, and incredibly skilled throughout.",
-                "author": "Jon Bell",
-                "role": "Creative Director"
+                "quote": "The team did an amazing job on our bathroom renovation. Honest pricing and fantastic communication.",
+                "author": "Mark Thompson",
+                "role": "Property Manager, Richmond"
               }
             ]
           }
