@@ -203,7 +203,12 @@ export function removeSection(site: Site, pageId: string, sectionId: string): Si
   };
 }
 
-export function moveSection(site: Site, pageId: string, sectionId: string, direction: number): Site {
+export function moveSection(
+  site: Site,
+  pageId: string,
+  sectionId: string,
+  direction: number,
+): Site {
   return {
     ...site,
     pages: _mapPage(site, pageId, (page) => {

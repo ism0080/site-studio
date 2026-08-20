@@ -261,10 +261,7 @@ function BlockSection({
       id={section.type}
       title={label}
       action={
-        <span
-          data-slot="block-actions"
-          onClick={(e) => e.preventDefault()}
-        >
+        <span data-slot="block-actions" onClick={(e) => e.preventDefault()}>
           <button
             type="button"
             className="section-btn"
@@ -340,13 +337,7 @@ function AddBlock({
 }
 
 /** Compact save indicator with a retry affordance when the last save failed. */
-function SaveStatus({
-  saveState,
-  onRetry,
-}: {
-  saveState: SaveState;
-  onRetry: () => void;
-}) {
+function SaveStatus({ saveState, onRetry }: { saveState: SaveState; onRetry: () => void }) {
   if (saveState === "error") {
     return (
       <button type="button" className="saved" data-slot="save-error" onClick={onRetry}>

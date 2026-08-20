@@ -28,11 +28,7 @@ export default function Overview({ site }: { site: Site }) {
           <h2>Keep building your presence</h2>
         </div>
         <div>
-          <Link
-            to="/sites/$siteId/editor"
-            params={{ siteId }}
-            data-component="button"
-          >
+          <Link to="/sites/$siteId/editor" params={{ siteId }} data-component="button">
             Open editor <ArrowRightIcon data-slot="icon" />
           </Link>
           <div data-slot="site-meta">

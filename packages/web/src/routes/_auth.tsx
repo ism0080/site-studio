@@ -1,10 +1,4 @@
-import {
-  createFileRoute,
-  Outlet,
-  useMatch,
-  useMatches,
-  useNavigate,
-} from "@tanstack/react-router";
+import { createFileRoute, Outlet, useMatch, useMatches, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 
 import { useWorkspace } from "../lib/workspaceContext.ts";

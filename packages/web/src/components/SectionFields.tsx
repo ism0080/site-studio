@@ -262,7 +262,14 @@ export function TestimonialsFields({
               placeholder="Their kind words…"
               onChange={(e) =>
                 onUpdate(
-                  updateSectionItem(site, page.id, testimonials.id, item.id, "quote", e.target.value),
+                  updateSectionItem(
+                    site,
+                    page.id,
+                    testimonials.id,
+                    item.id,
+                    "quote",
+                    e.target.value,
+                  ),
                 )
               }
             />

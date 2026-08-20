@@ -42,9 +42,7 @@ export default function Header({
   const period = hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
   const greeting = (user.name ?? "there").trim().split(/\s+/)[0];
   const [title, subtitle] =
-    active === "overview"
-      ? [`Good ${period}, ${greeting}`, OVERVIEW_SUBTITLE]
-      : HEADINGS[active];
+    active === "overview" ? [`Good ${period}, ${greeting}`, OVERVIEW_SUBTITLE] : HEADINGS[active];
   const inEditor = active === "editor";
   return (
     <header data-component="header">
