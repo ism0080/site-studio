@@ -45,6 +45,7 @@
   --color-danger-active: #8a3d3d;
   --color-danger-text: #ffffff;
   --color-danger-bg: #fbecec;
+  --color-danger-strong: #b42318;
 
   --color-warning: #ff9f0a;
   --color-warning-hover: #cc7f08;
@@ -68,4 +69,15 @@
   --color-primary-hover: var(--color-accent-hover);
   --color-primary-active: var(--color-accent-active);
   --color-primary-text: var(--color-white);
+
+  /* Template previews */
+  --color-template-editorial-bg: #f7f7f3;
+  --color-template-editorial-ink: #202320;
+  --color-template-editorial-accent: #e56645;
+  --color-template-warm-bg: #f2e9dc;
+  --color-template-warm-ink: #322d29;
+  --color-template-warm-accent: #a8764e;
+  --color-template-grid-bg: #f6f8fa;
+  --color-template-grid-ink: #18202b;
+  --color-template-grid-accent: #4567db;
 }

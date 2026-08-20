@@ -55,8 +55,35 @@
     overflow: hidden;
   }
 
+  [data-slot="art"][data-template="editorial-studio"] {
+    background: var(--color-template-editorial-bg);
+    color: var(--color-template-editorial-ink);
+
+    [data-slot="art-block"] {
+      background: var(--color-template-editorial-accent);
+    }
+  }
+
+  [data-slot="art"][data-template="warm-minimal"] {
+    background: var(--color-template-warm-bg);
+    color: var(--color-template-warm-ink);
+
+    [data-slot="art-block"] {
+      background: var(--color-template-warm-accent);
+    }
+  }
+
+  [data-slot="art"][data-template="clean-grid"] {
+    background: var(--color-template-grid-bg);
+    color: var(--color-template-grid-ink);
+
+    [data-slot="art-block"] {
+      background: var(--color-template-grid-accent);
+    }
+  }
+
   [data-slot="art-brand"] {
-    font-family: "DM Mono";
+    font-family: var(--font-mono);
     font-size: 9px;
     letter-spacing: 1px;
   }

@@ -95,6 +95,7 @@
         "xstate/no-single-use-xstate-actions": "error",
         "xstate/no-single-use-xstate-guards": "error",
         "xstate/require-xstate-event-satisfies": "error",
+        "react-ui/no-inline-styles": "error",
         "react-ui/no-react-component-inner-functions": "error",
         "react-ui/no-react-non-component-function-exports": "error",
         "react-ui/no-react-state-hooks": "error"

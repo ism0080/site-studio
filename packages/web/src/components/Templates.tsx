@@ -1,17 +1,14 @@
 import "./Templates.css";
 import { useQuery } from "@tanstack/react-query";
+import { TEMPLATE_CATEGORIES } from "@site-studio/site-template/templates";
 import type { Template } from "../siteTypes.ts";
 import { templateQueries } from "../lib/apiQueries.ts";
 
-const CATEGORIES = ["all", "Services", "Retail", "Creative"];
-
 function TemplateArt({ template }: { template: Template }) {
   return (
-    <div data-slot="art" style={{ background: template.theme.bg }}>
-      <div data-slot="art-brand" style={{ color: template.theme.ink }}>
-        {template.brand}
-      </div>
-      <div data-slot="art-title" style={{ color: template.theme.ink }}>
+    <div data-slot="art" data-template={template.id}>
+      <div data-slot="art-brand">{template.brand}</div>
+      <div data-slot="art-title">
         {template.title.map((line) => (
           <span key={line}>
             {line}
@@ -19,7 +16,7 @@ function TemplateArt({ template }: { template: Template }) {
           </span>
         ))}
       </div>
-      <div data-slot="art-block" style={{ background: template.theme.accent }} />
+      <div data-slot="art-block" />
     </div>
   );
 }
@@ -40,7 +37,7 @@ export default function Templates({
     <div data-component="templates">
       <div data-slot="toolbar">
         <div data-slot="filter-pills">
-          {CATEGORIES.map((cat) => (
+          {TEMPLATE_CATEGORIES.map((cat) => (
             <button key={cat} aria-pressed={category === cat} onClick={() => onCategoryChange(cat)}>
               {cat === "all" ? "All templates" : cat}
             </button>

@@ -36,7 +36,7 @@
     margin: var(--space-2-5) var(--space-0);
 
     code {
-      font-family: "DM Mono", monospace;
+      font-family: var(--font-mono);
       font-size: 9px;
       color: var(--color-text-secondary);
       word-break: break-all;

@@ -170,7 +170,7 @@
     }
 
     span {
-      font-family: "DM Mono";
+      font-family: var(--font-mono);
       font-size: 11px;
       color: var(--color-text-muted);
     }

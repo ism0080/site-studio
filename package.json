@@ -16,7 +16,8 @@
     "check:web": "bun run --filter @site-studio/web typecheck",
     "test": "bun run --filter @site-studio/api test",
     "test:api": "bun run --filter @site-studio/api smoke",
-    "lint": "oxlint",
+    "lint": "bun run lint:component-css && oxlint",
+    "lint:component-css": "bun tools/validate-component-css-nesting.ts",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check"
   },

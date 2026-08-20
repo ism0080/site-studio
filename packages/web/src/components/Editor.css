@@ -39,12 +39,12 @@
 
   [data-slot="template-change-link"] {
     margin-left: var(--space-1);
-    color: var(--color-primary, #4567db);
+    color: var(--color-primary);
     text-decoration: none;
     font-weight: 500;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
 
     &:hover {
       text-decoration: underline;

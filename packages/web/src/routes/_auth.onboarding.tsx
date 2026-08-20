@@ -91,8 +91,8 @@ function Onboarding() {
       <main data-slot="onboarding-main">
         <div data-slot="progress">
           <span>Step {step} of 4</span>
-          <div>
-            <i style={{ width: `${step * 25}%` }} />
+          <div data-step={step}>
+            <i />
           </div>
         </div>
         {step === 1 && (
@@ -265,13 +265,10 @@ function TemplateStep({
               data-selected={selected === template.id}
               onClick={() => onSelect(template)}
             >
-              <div
-                data-slot="template-art"
-                style={{ background: template.theme.bg, color: template.theme.ink }}
-              >
+              <div data-slot="template-art" data-template={template.id}>
                 <b>{template.brand}</b>
                 <strong>{template.title.join(" ")}</strong>
-                <i style={{ background: template.theme.accent }} />
+                <i />
               </div>
               <span>
                 <strong>{template.name}</strong>
