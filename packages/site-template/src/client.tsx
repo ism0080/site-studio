@@ -60,3 +60,19 @@ window.addEventListener("message", (event) => {
     apply(event.data as PreviewData);
   }
 });
+
+// Intercept all link clicks to prevent the iframe from navigating and loading the editor.
+document.addEventListener("click", (event) => {
+  // SAFETY: Any clicked DOM target is an instance of HTMLElement.
+  const target = event.target as HTMLElement | null;
+  const anchor = target?.closest("a");
+  if (!anchor) return;
+
+  const href = anchor.getAttribute("href");
+  if (!href) return;
+
+  // Let local hash anchors scroll naturally; block other navigations.
+  if (!href.startsWith("#")) {
+    event.preventDefault();
+  }
+});
