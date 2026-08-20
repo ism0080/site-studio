@@ -37,7 +37,14 @@ const coastalCalm = defineTemplate({
   category: "Hospitality", // new categories flow through with no other edits
   brand: "TIDE",
   title: ["Slow mornings,", "by the", "sea."],
-  theme: { bg: "#eef3f4", accent: "#3d7d84", ink: "#1c2a2b", surface: "#ffffff", border: "#d6e2e3", muted: "#5f7274" },
+  theme: {
+    bg: "#eef3f4",
+    accent: "#3d7d84",
+    ink: "#1c2a2b",
+    surface: "#ffffff",
+    border: "#d6e2e3",
+    muted: "#5f7274",
+  },
   defaultSections: retailDefaultSections,
 });
 

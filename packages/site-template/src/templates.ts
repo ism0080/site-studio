@@ -63,17 +63,20 @@ const servicesDefaultSections: ReadonlyArray<Section> = [
         {
           id: "service_01",
           title: "Residential plumbing",
-          description: "Maintenance, repairs, leaky pipe fixes, and kitchen or bathroom plumbing renovations.",
+          description:
+            "Maintenance, repairs, leaky pipe fixes, and kitchen or bathroom plumbing renovations.",
         },
         {
           id: "service_02",
           title: "Gas fitting & heating",
-          description: "Safe installation and servicing of gas hobs, water heaters, and home heating systems.",
+          description:
+            "Safe installation and servicing of gas hobs, water heaters, and home heating systems.",
         },
         {
           id: "service_03",
           title: "24/7 emergency service",
-          description: "Unexpected leaks or hot water issues? Call us anytime for urgent plumbing support.",
+          description:
+            "Unexpected leaks or hot water issues? Call us anytime for urgent plumbing support.",
         },
       ],
     },
@@ -95,13 +98,15 @@ const servicesDefaultSections: ReadonlyArray<Section> = [
       items: [
         {
           id: "t_01",
-          quote: "Fast, friendly, and fixed our hot water cylinder within hours of calling. Highly recommended!",
+          quote:
+            "Fast, friendly, and fixed our hot water cylinder within hours of calling. Highly recommended!",
           author: "Sarah Jenkins",
           role: "Homeowner, Stoke",
         },
         {
           id: "t_02",
-          quote: "The team did an amazing job on our bathroom renovation. Honest pricing and fantastic communication.",
+          quote:
+            "The team did an amazing job on our bathroom renovation. Honest pricing and fantastic communication.",
           author: "Mark Thompson",
           role: "Property Manager, Richmond",
         },
@@ -166,13 +171,15 @@ const retailDefaultSections: ReadonlyArray<Section> = [
       items: [
         {
           id: "t_01",
-          quote: "The best sourdough in the country, hands down. Get in early before the almond croissants sell out!",
+          quote:
+            "The best sourdough in the country, hands down. Get in early before the almond croissants sell out!",
           author: "Liam Wright",
           role: "Raglan Local",
         },
         {
           id: "t_02",
-          quote: "A beautiful, warm atmosphere and the friendliest staff. It has become our daily morning ritual.",
+          quote:
+            "A beautiful, warm atmosphere and the friendliest staff. It has become our daily morning ritual.",
           author: "Emma Davis",
           role: "Regular Visitor",
         },
@@ -205,7 +212,8 @@ const creativeDefaultSections: ReadonlyArray<Section> = [
         {
           id: "service_01",
           title: "Studio pottery",
-          description: "Tactile, functional stoneware and porcelain thrown by hand in local studios.",
+          description:
+            "Tactile, functional stoneware and porcelain thrown by hand in local studios.",
         },
         {
           id: "service_02",
@@ -215,7 +223,8 @@ const creativeDefaultSections: ReadonlyArray<Section> = [
         {
           id: "service_03",
           title: "Artisan workshops",
-          description: "Hands-on weekend classes teaching pottery, clay sculpting, and traditional weaving.",
+          description:
+            "Hands-on weekend classes teaching pottery, clay sculpting, and traditional weaving.",
         },
       ],
     },
@@ -237,13 +246,15 @@ const creativeDefaultSections: ReadonlyArray<Section> = [
       items: [
         {
           id: "t_01",
-          quote: "A stunning collection of unique pieces. I've bought several mugs and a gorgeous linen throw that I cherish.",
+          quote:
+            "A stunning collection of unique pieces. I've bought several mugs and a gorgeous linen throw that I cherish.",
           author: "Sophia Morris",
           role: "Wanaka Local",
         },
         {
           id: "t_02",
-          quote: "It is wonderful to have a space that truly values and supports independent New Zealand artisans.",
+          quote:
+            "It is wonderful to have a space that truly values and supports independent New Zealand artisans.",
           author: "David Taylor",
           role: "Studio Potter & Member",
         },
@@ -317,11 +328,7 @@ const cleanGrid = defineTemplate({
  * registry, the derived category list, the API gallery, and the editor all read
  * from this one array, so there is no separate registration step to forget.
  */
-export const ALL_TEMPLATES: ReadonlyArray<SiteTemplate> = [
-  editorialStudio,
-  warmMinimal,
-  cleanGrid,
-];
+export const ALL_TEMPLATES: ReadonlyArray<SiteTemplate> = [editorialStudio, warmMinimal, cleanGrid];
 
 export const TEMPLATES = new Map<string, SiteTemplate>(
   ALL_TEMPLATES.map((template) => [template.id, template]),

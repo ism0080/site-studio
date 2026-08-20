@@ -10,6 +10,16 @@ import type {
 } from "./site.ts";
 import { templateFor, type TemplateLayout } from "./templates.ts";
 
+/**
+ * A no-op tagged template that joins its parts into a plain CSS string. It
+ * exists purely for authoring DX: with a `css` tag, editors (via the
+ * styled-components / lit-html plugins) give syntax highlighting, Emmet, and
+ * property autocomplete inside the `` css`...` `` literals below. It carries no
+ * runtime behaviour beyond string concatenation.
+ */
+const css = (strings: TemplateStringsArray, ...values: Array<string | number>): string =>
+  strings.reduce((out, part, i) => out + part + (i < values.length ? values[i] : ""), "");
+
 export interface RenderOptions {
   apiBase?: string;
 }
@@ -28,17 +38,17 @@ interface SectionProps<P> {
 // Each layout's section-class modifier and its CSS block live in these records
 // keyed by TemplateLayout. Adding a value to the union makes both records a
 // compile error until the new layout is wired here — the type is the checklist.
-const LAYOUT_MOD: Record<TemplateLayout, string> = {
+const LAYOUT_MOD = {
   editorial: "",
   warm: " warm",
   grid: " grid",
-};
+} satisfies Record<TemplateLayout, string>;
 
-const LAYOUT_CSS: Record<TemplateLayout, string> = {
+const LAYOUT_CSS = {
   editorial: "",
   warm: warmCss(),
   grid: gridCss(),
-};
+} satisfies Record<TemplateLayout, string>;
 
 const mod = (layout: TemplateLayout): string => LAYOUT_MOD[layout];
 
@@ -120,43 +130,100 @@ function themeCss(site: Site): string {
   const border = settings.border || template.theme.border;
   const muted = settings.muted || template.theme.muted;
 
-  return `
-  :root {
-    --accent: ${accent};
-    --font: ${font};
-    --surface: ${surface};
-    --border: ${border};
-    --muted: ${muted};
-    --ink: ${ink};
-    --bg: ${bg};
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: ${font}, system-ui, -apple-system, sans-serif;
-    line-height: 1.6;
-    color: var(--ink);
-    background: var(--bg);
-  }
-  main { max-width: 64rem; margin: 0 auto; padding: 0 1.5rem 6rem; }
-  section { padding: 3.5rem 0; }
-  header.site-header { display: flex; align-items: center; max-width: 64rem; margin: 0 auto; padding: 1.5rem; }
-  header.site-header .logo { font-weight: 800; letter-spacing: 0.08em; text-decoration: none; color: inherit; }
-  footer.site-footer { text-align: center; padding: 2rem 1rem 3rem; color: var(--muted); font-size: 0.9rem; }
-  .lead-form { display: grid; gap: 0.75rem; max-width: 26rem; margin-top: 1.5rem; }
-  .lead-form input, .lead-form textarea { font: inherit; padding: 0.7rem 0.9rem; border: 1px solid var(--border); border-radius: 0.5rem; background: var(--surface); }
-  .lead-form button { justify-self: start; border: 0; background: var(--accent); color: #fff; font: inherit; font-weight: 700; padding: 0.7rem 1.4rem; border-radius: 999px; cursor: pointer; }
-  .lead-status { font-size: 0.9rem; margin: 0; }
-  .template-warm main { max-width: 52rem; }
-  .template-grid main { max-width: 68rem; }
-  ${sectionCss(layout)}
+  return css`
+    :root {
+      --accent: ${accent};
+      --font: ${font};
+      --surface: ${surface};
+      --border: ${border};
+      --muted: ${muted};
+      --ink: ${ink};
+      --bg: ${bg};
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family:
+        ${font},
+        system-ui,
+        -apple-system,
+        sans-serif;
+      line-height: 1.6;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    main {
+      max-width: 64rem;
+      margin: 0 auto;
+      padding: 0 1.5rem 6rem;
+    }
+    section {
+      padding: 3.5rem 0;
+    }
+    header.site-header {
+      display: flex;
+      align-items: center;
+      max-width: 64rem;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+    header.site-header .logo {
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-decoration: none;
+      color: inherit;
+    }
+    footer.site-footer {
+      text-align: center;
+      padding: 2rem 1rem 3rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .lead-form {
+      display: grid;
+      gap: 0.75rem;
+      max-width: 26rem;
+      margin-top: 1.5rem;
+    }
+    .lead-form input,
+    .lead-form textarea {
+      font: inherit;
+      padding: 0.7rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      background: var(--surface);
+    }
+    .lead-form button {
+      justify-self: start;
+      border: 0;
+      background: var(--accent);
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      padding: 0.7rem 1.4rem;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .lead-status {
+      font-size: 0.9rem;
+      margin: 0;
+    }
+    .template-warm main {
+      max-width: 52rem;
+    }
+    .template-grid main {
+      max-width: 68rem;
+    }
+    ${sectionCss(layout)}
   `.trim();
 }
 
 // The uppercase eyebrow label and the bordered card surface each appear in two
 // sections; naming them keeps the shape in one place so a new section (or a
 // layout override) reuses the exact same rule instead of re-deriving it.
-const eyebrowRule = (scope: string, margin: string): string => `
+const eyebrowRule = (scope: string, margin: string): string => css`
   ${scope} .eyebrow {
     text-transform: uppercase;
     letter-spacing: 0.12em;
@@ -164,245 +231,247 @@ const eyebrowRule = (scope: string, margin: string): string => `
     font-size: 0.85rem;
     color: var(--accent);
     margin: ${margin};
-  }`;
+  }
+`;
 
-const cardSurface = (scope: string): string => `
+const cardSurface = (scope: string): string => css`
   ${scope} .card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 1rem;
     padding: 1.5rem;
-  }`;
+  }
+`;
 
 // Section styles are scoped under their root class (the repo's scoping
 // convention) instead of Astro's hashed attributes, so each section's bare
 // element selectors (h2, p, .grid, .card) cannot leak into its neighbours.
 function sectionCss(layout: TemplateLayout): string {
-  return `
-  .hero {
-    display: grid;
-    gap: 1rem;
-    max-width: 46rem;
-  }
-  ${eyebrowRule(".hero", "0")}
-  .hero h1 {
-    font-size: clamp(2.5rem, 6vw, 4rem);
-    line-height: 1.05;
-    letter-spacing: -0.02em;
-    margin: 0;
-  }
-  .hero .lede {
-    font-size: 1.15rem;
-    max-width: 36rem;
-    margin: 0;
-  }
-  .hero .cta-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-  .hero .cta-primary,
-  .hero .cta-secondary {
-    display: inline-block;
-    padding: 0.75rem 1.5rem;
-    border-radius: 999px;
-    text-decoration: none;
-    font-weight: 700;
-  }
-  .hero .cta-primary {
-    background: var(--accent);
-    color: #fff;
-  }
-  .hero .cta-secondary {
-    border: 1px solid currentColor;
-  }
-  .hero .hero-image {
-    width: 100%;
-    max-height: 28rem;
-    object-fit: cover;
-    border-radius: 1.25rem;
-    margin-top: 1.5rem;
-  }
+  return css`
+    .hero {
+      display: grid;
+      gap: 1rem;
+      max-width: 46rem;
+    }
+    ${eyebrowRule(".hero", "0")}
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin: 0;
+    }
+    .hero .lede {
+      font-size: 1.15rem;
+      max-width: 36rem;
+      margin: 0;
+    }
+    .hero .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .hero .cta-primary,
+    .hero .cta-secondary {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .hero .cta-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .hero .cta-secondary {
+      border: 1px solid currentColor;
+    }
+    .hero .hero-image {
+      width: 100%;
+      max-height: 28rem;
+      object-fit: cover;
+      border-radius: 1.25rem;
+      margin-top: 1.5rem;
+    }
 
-  .services h2 {
-    font-size: clamp(1.75rem, 4vw, 2.5rem);
-    letter-spacing: -0.02em;
-    margin: 0 0 1.5rem;
-  }
-  .services .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-    gap: 1rem;
-  }
-  ${cardSurface(".services")}
-  .services .card h3 {
-    margin: 0 0 0.5rem;
-    font-size: 1.1rem;
-  }
-  .services .card p {
-    margin: 0;
-  }
+    .services h2 {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      letter-spacing: -0.02em;
+      margin: 0 0 1.5rem;
+    }
+    .services .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+      gap: 1rem;
+    }
+    ${cardSurface(".services")}
+    .services .card h3 {
+      margin: 0 0 0.5rem;
+      font-size: 1.1rem;
+    }
+    .services .card p {
+      margin: 0;
+    }
 
-  .about {
-    max-width: 40rem;
-  }
-  ${eyebrowRule(".about", "0 0 0.5rem")}
-  .about h2 {
-    font-size: clamp(1.75rem, 4vw, 2.5rem);
-    letter-spacing: -0.02em;
-    margin: 0 0 1rem;
-  }
-  .about .body {
-    font-size: 1.1rem;
-    line-height: 1.7;
-    margin: 0;
-  }
+    .about {
+      max-width: 40rem;
+    }
+    ${eyebrowRule(".about", "0 0 0.5rem")}
+    .about h2 {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      letter-spacing: -0.02em;
+      margin: 0 0 1rem;
+    }
+    .about .body {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      margin: 0;
+    }
 
-  .testimonials h2 {
-    font-size: clamp(1.75rem, 4vw, 2.5rem);
-    letter-spacing: -0.02em;
-    margin: 0 0 1.5rem;
-  }
-  .testimonials .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-    gap: 1rem;
-  }
-  ${cardSurface(".testimonials")}
-  .testimonials .card {
-    margin: 0;
-  }
-  .testimonials .card .quote {
-    font-size: 1.05rem;
-    line-height: 1.6;
-    margin: 0 0 1rem;
-  }
-  .testimonials .card footer {
-    display: grid;
-    gap: 0.15rem;
-    font-size: 0.9rem;
-  }
-  .testimonials .author {
-    font-weight: 700;
-  }
-  .testimonials .role {
-    color: var(--muted);
-  }
+    .testimonials h2 {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      letter-spacing: -0.02em;
+      margin: 0 0 1.5rem;
+    }
+    .testimonials .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+      gap: 1rem;
+    }
+    ${cardSurface(".testimonials")}
+    .testimonials .card {
+      margin: 0;
+    }
+    .testimonials .card .quote {
+      font-size: 1.05rem;
+      line-height: 1.6;
+      margin: 0 0 1rem;
+    }
+    .testimonials .card footer {
+      display: grid;
+      gap: 0.15rem;
+      font-size: 0.9rem;
+    }
+    .testimonials .author {
+      font-weight: 700;
+    }
+    .testimonials .role {
+      color: var(--muted);
+    }
 
-  ${LAYOUT_CSS[layout]}
+    ${LAYOUT_CSS[layout]}
   `.trim();
 }
 
 function warmCss(): string {
-  return `
-  .hero.warm {
-    max-width: 40rem;
-    justify-items: center;
-    text-align: center;
-    margin: 0 auto;
-  }
-  .hero.warm h1 {
-    font-size: clamp(2.5rem, 7vw, 4.5rem);
-    font-weight: 500;
-    letter-spacing: -0.02em;
-  }
-  .hero.warm .lede {
-    max-width: 30rem;
-  }
-  .hero.warm .cta-row {
-    justify-content: center;
-  }
-  .hero.warm .hero-image {
-    max-height: 24rem;
-    border-radius: 2rem;
-  }
+  return css`
+    .hero.warm {
+      max-width: 40rem;
+      justify-items: center;
+      text-align: center;
+      margin: 0 auto;
+    }
+    .hero.warm h1 {
+      font-size: clamp(2.5rem, 7vw, 4.5rem);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+    }
+    .hero.warm .lede {
+      max-width: 30rem;
+    }
+    .hero.warm .cta-row {
+      justify-content: center;
+    }
+    .hero.warm .hero-image {
+      max-height: 24rem;
+      border-radius: 2rem;
+    }
 
-  .services.warm h2 {
-    text-align: center;
-  }
-  .services.warm .card {
-    border-radius: 1.5rem;
-    padding: 2rem;
-    text-align: center;
-  }
+    .services.warm h2 {
+      text-align: center;
+    }
+    .services.warm .card {
+      border-radius: 1.5rem;
+      padding: 2rem;
+      text-align: center;
+    }
 
-  .about.warm {
-    max-width: 34rem;
-    margin: 0 auto;
-    text-align: center;
-  }
+    .about.warm {
+      max-width: 34rem;
+      margin: 0 auto;
+      text-align: center;
+    }
 
-  .testimonials.warm h2 {
-    text-align: center;
-  }
-  .testimonials.warm .card {
-    border-radius: 1.5rem;
-    text-align: center;
-  }
-  .testimonials.warm .card footer {
-    justify-items: center;
-  }
+    .testimonials.warm h2 {
+      text-align: center;
+    }
+    .testimonials.warm .card {
+      border-radius: 1.5rem;
+      text-align: center;
+    }
+    .testimonials.warm .card footer {
+      justify-items: center;
+    }
   `.trim();
 }
 
 function gridCss(): string {
-  return `
-  .hero.grid {
-    max-width: 100%;
-    grid-template-columns: 1fr 1fr;
-    align-items: center;
-    gap: 3rem;
-  }
-  .hero.grid h1 {
-    font-size: clamp(2.5rem, 5vw, 3.5rem);
-    letter-spacing: -0.03em;
-  }
-  .hero.grid .hero-image {
-    max-height: 22rem;
-    border-radius: 0.75rem;
-    border: 1px solid var(--border);
-    margin-top: 0;
-  }
+  return css`
+    .hero.grid {
+      max-width: 100%;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 3rem;
+    }
+    .hero.grid h1 {
+      font-size: clamp(2.5rem, 5vw, 3.5rem);
+      letter-spacing: -0.03em;
+    }
+    .hero.grid .hero-image {
+      max-height: 22rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
+      margin-top: 0;
+    }
 
-  .services.grid h2 {
-    font-size: 1.25rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-  .services.grid .card {
-    background: transparent;
-    border-radius: 0;
-    border-width: 1px;
-  }
-  .services.grid .card h3 {
-    text-transform: uppercase;
-    font-size: 0.9rem;
-    letter-spacing: 0.05em;
-  }
+    .services.grid h2 {
+      font-size: 1.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .services.grid .card {
+      background: transparent;
+      border-radius: 0;
+      border-width: 1px;
+    }
+    .services.grid .card h3 {
+      text-transform: uppercase;
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+    }
 
-  .about.grid {
-    display: grid;
-    grid-template-columns: 1fr 1.4fr;
-    gap: 3rem;
-    max-width: 100%;
-    align-items: start;
-  }
-  .about.grid .eyebrow {
-    grid-column: 1 / -1;
-  }
-  .about.grid .body {
-    font-size: 1rem;
-  }
+    .about.grid {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 3rem;
+      max-width: 100%;
+      align-items: start;
+    }
+    .about.grid .eyebrow {
+      grid-column: 1 / -1;
+    }
+    .about.grid .body {
+      font-size: 1rem;
+    }
 
-  .testimonials.grid h2 {
-    font-size: 1.25rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-  .testimonials.grid .card {
-    background: transparent;
-    border-radius: 0;
-  }
+    .testimonials.grid h2 {
+      font-size: 1.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .testimonials.grid .card {
+      background: transparent;
+      border-radius: 0;
+    }
   `.trim();
 }
 
