@@ -28,9 +28,7 @@ export function HeroFields({
   return (
     <>
       <div className="field-group">
-        <label>
-          Eyebrow <span className="field-type">hero.eyebrow</span>
-        </label>
+        <label>Eyebrow</label>
         <input
           value={hero.props.eyebrow}
           onChange={(e) =>
@@ -39,9 +37,7 @@ export function HeroFields({
         />
       </div>
       <div className="field-group">
-        <label>
-          Headline <span className="field-type">hero.headline</span>
-        </label>
+        <label>Headline</label>
         <textarea
           rows={3}
           value={hero.props.headline}
@@ -51,9 +47,7 @@ export function HeroFields({
         />
       </div>
       <div className="field-group">
-        <label>
-          Short description <span className="field-type">hero.description</span>
-        </label>
+        <label>Short description</label>
         <textarea
           rows={3}
           value={hero.props.description}
@@ -83,9 +77,7 @@ export function HeroFields({
         </div>
       </div>
       <div className="field-group">
-        <label>
-          Hero image <span className="field-type">hero.image</span>
-        </label>
+        <label>Hero image</label>
         <input
           value={hero.props.image}
           onChange={(e) =>
@@ -122,42 +114,46 @@ export function ServicesFields({
         />
       </div>
       {services.props.items.map((item, i) => (
-        <div className="field-group service-fields" key={item.id}>
-          <label>
-            Service {i + 1} <span className="field-type">services.items</span>
-          </label>
-          <input
-            value={item.title}
-            onChange={(e) =>
-              onUpdate(
-                updateSectionItem(site, page.id, services.id, item.id, "title", e.target.value),
-              )
-            }
-          />
-          <textarea
-            rows={2}
-            value={item.description}
-            onChange={(e) =>
-              onUpdate(
-                updateSectionItem(
-                  site,
-                  page.id,
-                  services.id,
-                  item.id,
-                  "description",
-                  e.target.value,
-                ),
-              )
-            }
-          />
-          <button
-            type="button"
-            className="section-btn remove"
-            aria-label="Remove service"
-            onClick={() => onUpdate(removeSectionItem(site, page.id, services.id, item.id))}
-          >
-            ×
-          </button>
+        <div className="item-card" key={item.id}>
+          <div className="item-card-head">
+            <span className="item-card-label">Service {i + 1}</span>
+            <button
+              type="button"
+              className="section-btn remove"
+              aria-label={`Remove service ${i + 1}`}
+              onClick={() => onUpdate(removeSectionItem(site, page.id, services.id, item.id))}
+            >
+              ×
+            </button>
+          </div>
+          <div className="field-group">
+            <input
+              value={item.title}
+              placeholder="Service name"
+              onChange={(e) =>
+                onUpdate(
+                  updateSectionItem(site, page.id, services.id, item.id, "title", e.target.value),
+                )
+              }
+            />
+            <textarea
+              rows={2}
+              value={item.description}
+              placeholder="Describe what you offer."
+              onChange={(e) =>
+                onUpdate(
+                  updateSectionItem(
+                    site,
+                    page.id,
+                    services.id,
+                    item.id,
+                    "description",
+                    e.target.value,
+                  ),
+                )
+              }
+            />
+          </div>
         </div>
       ))}
       <button
@@ -247,61 +243,64 @@ export function TestimonialsFields({
         />
       </div>
       {testimonials.props.items.map((item, i) => (
-        <div className="field-group service-fields" key={item.id}>
-          <label>
-            Testimonial {i + 1} <span className="field-type">testimonials.items</span>
-          </label>
-          <textarea
-            rows={2}
-            value={item.quote}
-            onChange={(e) =>
-              onUpdate(
-                updateSectionItem(site, page.id, testimonials.id, item.id, "quote", e.target.value),
-              )
-            }
-          />
-          <div className="field-row">
-            <input
-              value={item.author}
-              onChange={(e) =>
-                onUpdate(
-                  updateSectionItem(
-                    site,
-                    page.id,
-                    testimonials.id,
-                    item.id,
-                    "author",
-                    e.target.value,
-                  ),
-                )
-              }
-              placeholder="Author"
-            />
-            <input
-              value={item.role}
-              onChange={(e) =>
-                onUpdate(
-                  updateSectionItem(
-                    site,
-                    page.id,
-                    testimonials.id,
-                    item.id,
-                    "role",
-                    e.target.value,
-                  ),
-                )
-              }
-              placeholder="Role"
-            />
+        <div className="item-card" key={item.id}>
+          <div className="item-card-head">
+            <span className="item-card-label">Testimonial {i + 1}</span>
+            <button
+              type="button"
+              className="section-btn remove"
+              aria-label={`Remove testimonial ${i + 1}`}
+              onClick={() => onUpdate(removeSectionItem(site, page.id, testimonials.id, item.id))}
+            >
+              ×
+            </button>
           </div>
-          <button
-            type="button"
-            className="section-btn remove"
-            aria-label="Remove testimonial"
-            onClick={() => onUpdate(removeSectionItem(site, page.id, testimonials.id, item.id))}
-          >
-            ×
-          </button>
+          <div className="field-group">
+            <textarea
+              rows={2}
+              value={item.quote}
+              placeholder="Their kind words…"
+              onChange={(e) =>
+                onUpdate(
+                  updateSectionItem(site, page.id, testimonials.id, item.id, "quote", e.target.value),
+                )
+              }
+            />
+            <div className="field-row">
+              <input
+                value={item.author}
+                onChange={(e) =>
+                  onUpdate(
+                    updateSectionItem(
+                      site,
+                      page.id,
+                      testimonials.id,
+                      item.id,
+                      "author",
+                      e.target.value,
+                    ),
+                  )
+                }
+                placeholder="Author"
+              />
+              <input
+                value={item.role}
+                onChange={(e) =>
+                  onUpdate(
+                    updateSectionItem(
+                      site,
+                      page.id,
+                      testimonials.id,
+                      item.id,
+                      "role",
+                      e.target.value,
+                    ),
+                  )
+                }
+                placeholder="Role"
+              />
+            </div>
+          </div>
         </div>
       ))}
       <button

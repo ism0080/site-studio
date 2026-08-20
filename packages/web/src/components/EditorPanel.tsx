@@ -1,17 +1,27 @@
 import "./EditorPanel.css";
+import { type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { DomainSetup, SaveState, Site, StringSettingKey } from "../siteTypes.ts";
+import type {
+  DomainSetup,
+  Page,
+  SaveState,
+  Section as SiteSection,
+  Site,
+  StringSettingKey,
+} from "../siteTypes.ts";
 import { templateFonts } from "../data/site.ts";
+import { SECTION_ORDER, SECTION_TYPES } from "../data/sections.ts";
 import {
+  addSection,
   findPage,
   findSection,
+  moveSection,
+  removeSection,
   updateAnalytics,
   updateBusiness,
   updateSetting,
 } from "../lib/siteUpdates.ts";
 import DomainSettings from "./DomainSettings.tsx";
-import SectionList from "./SectionList.tsx";
-import SectionTitle from "./SectionTitle.tsx";
 import { AboutFields, HeroFields, ServicesFields, TestimonialsFields } from "./SectionFields.tsx";
 import { templateQueries } from "../lib/apiQueries.ts";
 
@@ -149,9 +159,7 @@ function BusinessFields({ site, onUpdate }: { site: Site; onUpdate: (site: Site)
         </div>
       </div>
       <div className="field-group">
-        <label>
-          Logo <span className="field-type">business.logo</span>
-        </label>
+        <label>Logo</label>
         <input
           value={site.business.logo}
           onChange={(e) => onUpdate(updateBusiness(site, { logo: e.target.value }))}
@@ -179,6 +187,178 @@ function AnalyticsField({ site, onUpdate }: { site: Site; onUpdate: (site: Site)
         site.
       </p>
     </div>
+  );
+}
+
+/** A collapsible editor section with a heading that toggles its body. */
+function Section({
+  id,
+  title,
+  defaultOpen = true,
+  action,
+  children,
+}: {
+  id: string;
+  title: string;
+  defaultOpen?: boolean;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <details data-slot="editor-section" id={`section-${id}`} open={defaultOpen}>
+      <summary data-slot="section-toggle">
+        <span data-slot="section-chevron" aria-hidden>
+          ▸
+        </span>
+        <span data-slot="section-label">{title}</span>
+        {action && <span data-slot="section-header-actions">{action}</span>}
+      </summary>
+      <div data-slot="section-body">{children}</div>
+    </details>
+  );
+}
+
+/** Renders the edit fields for a single section, dispatched by its type. */
+function BlockFields({
+  site,
+  page,
+  section,
+  onUpdate,
+}: {
+  site: Site;
+  page: Page;
+  section: SiteSection;
+  onUpdate: (site: Site) => void;
+}) {
+  if (section.type === "hero")
+    return <HeroFields site={site} onUpdate={onUpdate} hero={section} page={page} />;
+  if (section.type === "services")
+    return <ServicesFields site={site} onUpdate={onUpdate} services={section} page={page} />;
+  if (section.type === "about")
+    return <AboutFields site={site} onUpdate={onUpdate} about={section} page={page} />;
+  return <TestimonialsFields site={site} onUpdate={onUpdate} testimonials={section} page={page} />;
+}
+
+/** One content block: a collapsible accordion with move/remove controls in its header. */
+function BlockSection({
+  site,
+  page,
+  section,
+  index,
+  count,
+  onUpdate,
+}: {
+  site: Site;
+  page: Page;
+  section: SiteSection;
+  index: number;
+  count: number;
+  onUpdate: (site: Site) => void;
+}) {
+  const label = SECTION_TYPES[section.type].label;
+  return (
+    <Section
+      id={section.type}
+      title={label}
+      action={
+        <span
+          data-slot="block-actions"
+          onClick={(e) => e.preventDefault()}
+        >
+          <button
+            type="button"
+            className="section-btn"
+            aria-label={`Move ${label} up`}
+            disabled={index === 0}
+            onClick={() => onUpdate(moveSection(site, page.id, section.id, -1))}
+          >
+            ↑
+          </button>
+          <button
+            type="button"
+            className="section-btn"
+            aria-label={`Move ${label} down`}
+            disabled={index === count - 1}
+            onClick={() => onUpdate(moveSection(site, page.id, section.id, 1))}
+          >
+            ↓
+          </button>
+          <button
+            type="button"
+            className="section-btn remove"
+            aria-label={`Remove ${label}`}
+            onClick={() => onUpdate(removeSection(site, page.id, section.id))}
+          >
+            ×
+          </button>
+        </span>
+      }
+    >
+      <BlockFields site={site} page={page} section={section} onUpdate={onUpdate} />
+    </Section>
+  );
+}
+
+/** Picker for adding section types that aren't yet on the page. */
+function AddBlock({
+  site,
+  page,
+  onUpdate,
+}: {
+  site: Site;
+  page: Page;
+  onUpdate: (site: Site) => void;
+}) {
+  const addable = SECTION_ORDER.filter((type) => !findSection(page, type));
+  if (addable.length === 0) return null;
+  return (
+    <div data-slot="add-block">
+      <p data-slot="add-block-label">Add a block</p>
+      {addable.map((type) => {
+        const meta = SECTION_TYPES[type];
+        return (
+          <div data-slot="section-card" data-slot-variant="muted" key={type}>
+            <div data-slot="drag" aria-hidden="true">
+              +
+            </div>
+            <div data-slot="section-card-body">
+              <strong>{meta.label}</strong>
+              <small>{meta.hint}</small>
+            </div>
+            <button
+              type="button"
+              className="add-small"
+              onClick={() => onUpdate(addSection(site, page.id, meta.create()))}
+            >
+              Add
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Compact save indicator with a retry affordance when the last save failed. */
+function SaveStatus({
+  saveState,
+  onRetry,
+}: {
+  saveState: SaveState;
+  onRetry: () => void;
+}) {
+  if (saveState === "error") {
+    return (
+      <button type="button" className="saved" data-slot="save-error" onClick={onRetry}>
+        <i /> Save failed — retry
+      </button>
+    );
+  }
+  const label = saveState === "saving" ? "Saving…" : "Saved";
+  return (
+    <span className="saved" data-slot={saveState === "saving" ? "save-busy" : undefined}>
+      <i /> {label}
+    </span>
   );
 }
 
@@ -214,13 +394,15 @@ export default function EditorPanel({
   fullAccess: boolean;
 }) {
   const page = findPage(site);
-  const hero = findSection(page, "hero");
-  const services = findSection(page, "services");
-  const about = findSection(page, "about");
-  const testimonials = findSection(page, "testimonials");
+  const blocks = page.sections;
 
-  const savedLabel =
-    saveState === "saving" ? "Saving…" : saveState === "error" ? "Save failed" : "Saved";
+  const nav: { id: string; label: string }[] = [
+    { id: "business", label: "Business" },
+    { id: "theme", label: "Theme" },
+    ...blocks.map((section) => ({ id: section.type, label: SECTION_TYPES[section.type].label })),
+    { id: "add-block", label: "Add" },
+    ...(fullAccess ? [{ id: "extras", label: "Extras" }] : []),
+  ];
 
   return (
     <aside data-component="editor-panel">
@@ -229,72 +411,52 @@ export default function EditorPanel({
           <p className="overline">Site editor</p>
           <h2>Homepage</h2>
         </div>
-        <span className="saved">
-          <i /> {savedLabel}
-        </span>
+        <SaveStatus saveState={saveState} onRetry={() => onUpdate(site)} />
       </div>
+
+      <nav data-slot="section-nav" aria-label="Jump to section">
+        {nav.map((item) => (
+          <a key={item.id} href={`#section-${item.id}`}>
+            {item.label}
+          </a>
+        ))}
+      </nav>
 
       <div data-slot="panel-scroll">
         {readOnly && (
           <p data-slot="readonly-hint">
+            <span data-slot="lock" aria-hidden>
+              🔒
+            </span>{" "}
             You have view-only access to this site — your manager decides when changes can be made.
           </p>
         )}
         <fieldset data-slot="editor-fields" disabled={readOnly}>
-          <SectionTitle>Business</SectionTitle>
-          <BusinessFields site={site} onUpdate={onUpdate} />
+          <Section id="business" title="Business">
+            <BusinessFields site={site} onUpdate={onUpdate} />
+          </Section>
 
-          <div data-slot="content-divider" />
+          <Section id="theme" title="Theme">
+            <ThemeSettings site={site} onUpdate={onUpdate} />
+          </Section>
 
-          <SectionTitle>Theme</SectionTitle>
-          <ThemeSettings site={site} onUpdate={onUpdate} />
+          {blocks.map((section, index) => (
+            <BlockSection
+              key={section.id}
+              site={site}
+              page={page}
+              section={section}
+              index={index}
+              count={blocks.length}
+              onUpdate={onUpdate}
+            />
+          ))}
 
-          <div data-slot="content-divider" />
-
-          {hero && (
-            <>
-              <SectionTitle>Hero</SectionTitle>
-              <HeroFields site={site} onUpdate={onUpdate} hero={hero} page={page} />
-              <div data-slot="content-divider" />
-            </>
-          )}
-
-          {services && (
-            <>
-              <SectionTitle>Services</SectionTitle>
-              <ServicesFields site={site} onUpdate={onUpdate} services={services} page={page} />
-              <div data-slot="content-divider" />
-            </>
-          )}
-
-          {about && (
-            <>
-              <SectionTitle>About</SectionTitle>
-              <AboutFields site={site} onUpdate={onUpdate} about={about} page={page} />
-              <div data-slot="content-divider" />
-            </>
-          )}
-
-          {testimonials && (
-            <>
-              <SectionTitle>Testimonials</SectionTitle>
-              <TestimonialsFields
-                site={site}
-                onUpdate={onUpdate}
-                testimonials={testimonials}
-                page={page}
-              />
-              <div data-slot="content-divider" />
-            </>
-          )}
-
-          <SectionList site={site} page={page} onUpdate={onUpdate} />
+          <div data-slot="add-block-anchor" id="section-add-block" />
+          <AddBlock site={site} page={page} onUpdate={onUpdate} />
 
           {fullAccess && (
-            <>
-              <div data-slot="content-divider" />
-
-              <SectionTitle>Extras</SectionTitle>
+            <Section id="extras" title="Extras" defaultOpen={false}>
               <AnalyticsField site={site} onUpdate={onUpdate} />
 
               <div data-slot="content-divider" />
@@ -311,7 +473,7 @@ export default function EditorPanel({
                 onVerify={onDomainVerify}
                 onRemove={onDomainRemove}
               />
-            </>
+            </Section>
           )}
         </fieldset>
       </div>

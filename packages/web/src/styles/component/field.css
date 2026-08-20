@@ -29,6 +29,27 @@
   display: flex;
   gap: var(--space-3);
 }
-.service-fields textarea {
+.item-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  background: var(--color-bg-subtle);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.item-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2-5);
+}
+.item-card-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+.item-card .field-group {
+  margin-bottom: var(--space-0);
+}
+.item-card textarea {
   margin-top: var(--space-1-5);
 }

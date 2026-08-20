@@ -65,11 +65,19 @@ export default function Editor({
             <span className="muted">Changes save automatically</span>
           </div>
           <div data-slot="device-toggle">
-            <button aria-pressed={device === "desktop"} onClick={() => onDevice("desktop")}>
-              Desktop
+            <button
+              aria-pressed={device === "desktop"}
+              aria-label="Desktop preview"
+              onClick={() => onDevice("desktop")}
+            >
+              <span aria-hidden>🖥</span> Desktop
             </button>
-            <button aria-pressed={device === "mobile"} onClick={() => onDevice("mobile")}>
-              Mobile
+            <button
+              aria-pressed={device === "mobile"}
+              aria-label="Mobile preview"
+              onClick={() => onDevice("mobile")}
+            >
+              <span aria-hidden>📱</span> Mobile
             </button>
           </div>
         </div>
