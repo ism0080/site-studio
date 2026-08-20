@@ -1,7 +1,11 @@
 import "./Editor.css";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import type { Device, DomainSetup, SaveState, Site } from "../siteTypes.ts";
+import { templateQueries } from "../lib/apiQueries.ts";
 import EditorPanel from "./EditorPanel.tsx";
 import Preview from "./Preview.tsx";
+import { ArrowUpRightIcon } from "@phosphor-icons/react";
 
 export default function Editor({
   site,
@@ -40,6 +44,9 @@ export default function Editor({
   onDomainVerify: () => void;
   onDomainRemove: () => void;
 }) {
+  const { data: templates = [] } = useQuery(templateQueries.list());
+  const template = templates.find((t) => t.id === site.templateId);
+
   return (
     <div data-component="editor">
       <EditorPanel
@@ -60,9 +67,25 @@ export default function Editor({
       />
       <div data-slot="preview-area">
         <div data-slot="preview-toolbar">
-          <div>
+          <div data-slot="preview-info">
             <span className="live-dot" /> Live preview <span data-slot="toolbar-divider" />{" "}
             <span className="muted">Changes save automatically</span>
+            {template && (
+              <>
+                <span data-slot="toolbar-divider" />
+                <span data-slot="preview-template">
+                  Template: <strong>{template.name}</strong>
+                  <Link
+                    to="/sites/$siteId/templates"
+                    params={{ siteId: site.id }}
+                    search={{ category: "all" }}
+                    data-slot="template-change-link"
+                  >
+                    Change <ArrowUpRightIcon size={12} />
+                  </Link>
+                </span>
+              </>
+            )}
           </div>
           <div data-slot="device-toggle">
             <button
