@@ -44,6 +44,8 @@ export type AppMachineContext = {
   user: User | null;
   authLoading: boolean;
   site: Site;
+  /** The site copy the live preview renders; lags `site` by the preview debounce. */
+  previewSite: Site;
   persisted: boolean;
   saveState: SaveState;
   publishing: boolean;
@@ -210,6 +212,7 @@ export const appMachine = setup({
     user: null,
     authLoading: true,
     site: initialSite,
+    previewSite: initialSite,
     persisted: false,
     saveState: "idle",
     publishing: false,
@@ -295,6 +298,7 @@ export const appMachine = setup({
                   target: "idle",
                   actions: assign({
                     site: ({ event }) => event.output.site,
+                    previewSite: ({ event }) => event.output.site,
                     setup: ({ event }) => event.output.setup,
                     persisted: true,
                     saveState: "idle",
@@ -309,6 +313,29 @@ export const appMachine = setup({
                         `Couldn't load site: ${readableErrorMessage(event.error)}`,
                       ),
                   }),
+                },
+              },
+            },
+          },
+        },
+        preview: {
+          initial: "idle",
+          states: {
+            idle: {
+              on: {
+                UPDATE: { target: "pending" },
+                SELECT_TEMPLATE: { target: "pending" },
+              },
+            },
+            pending: {
+              on: {
+                UPDATE: { target: "pending" },
+                SELECT_TEMPLATE: { target: "pending" },
+              },
+              after: {
+                400: {
+                  target: "idle",
+                  actions: assign({ previewSite: ({ context }) => context.site }),
                 },
               },
             },

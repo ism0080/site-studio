@@ -10,6 +10,8 @@ export interface WorkspaceValue {
   authLoading: boolean;
   /** The editor's working site copy (owned by the app machine). */
   site: AppMachineContext["site"];
+  /** Debounced site copy the live preview renders. */
+  previewSite: AppMachineContext["previewSite"];
   /** True once the site has a persisted backend record. */
   persisted: boolean;
   /** Auto-save indicator for the editor. */

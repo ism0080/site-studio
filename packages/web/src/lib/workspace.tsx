@@ -83,6 +83,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       user: snapshot.context.user,
       authLoading: snapshot.context.authLoading,
       site: snapshot.context.site,
+      previewSite: snapshot.context.previewSite,
       persisted: snapshot.context.persisted,
       saveState: snapshot.context.saveState,
       publishing: snapshot.context.publishing,

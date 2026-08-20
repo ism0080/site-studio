@@ -412,76 +412,60 @@ function SectionSwitch({
   }
 }
 
-function SiteDocument({ site, page, apiBase }: { site: Site; page: Page; apiBase: string }) {
+/** The `<body>` content of a rendered site page. Shared by the SSR publish
+ * path (`SiteDocument`) and the live editor preview (`client.tsx`), so the
+ * preview and the published output stay as close as possible. */
+export function PageBody({ site, page, apiBase }: { site: Site; page: Page; apiBase: string }) {
   const { business, settings } = site;
   const year = new Date().getFullYear();
   const template = templateFor(site);
   const layout = template.layout;
-  const font = settings.font || template.font;
   // A brand-new site has no saved sections yet; render the template's default
   // content so the published page (and the editor preview) is never blank.
   const sections = page.sections.length > 0 ? page.sections : template.defaultSections;
 
   return (
-    <html lang="en">
-      <head>
-        <meta charSet="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="description" content={business.category} />
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={business.name} />
-        <meta property="og:description" content={business.category} />
-        <link rel="canonical" href={`https://sites.site-studio.dev${page.slug}`} />
-        <title>{`${business.name}${page.title !== "Homepage" ? ` — ${page.title}` : ""}`}</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href={`https://fonts.googleapis.com/css2?family=${font.replaceAll(" ", "+")}:wght@400;600;800&display=swap`}
-          rel="stylesheet"
-        />
-        <style dangerouslySetInnerHTML={{ __html: themeCss(site) }} />
-      </head>
-      <body className={`template-${layout}`}>
-        <header className="site-header">
-          <a className="logo" href="/">
-            {business.logo}
-          </a>
-        </header>
-        <main>
-          {sections.map((section) => (
-            <SectionSwitch key={section.id} section={section} layout={layout} />
-          ))}
-          <section id="contact">
-            <h2>Get in touch</h2>
-            {business.email && (
-              <p>
-                <a href={`mailto:${business.email}`}>{business.email}</a>
-              </p>
-            )}
-            {business.phone && <p>{business.phone}</p>}
-            {business.location && <p>{business.location}</p>}
-            <form className="lead-form" data-api={apiBase} data-site={site.id}>
-              <input type="text" name="name" placeholder="Your name" required />
-              <input type="email" name="email" placeholder="Email" required />
-              <textarea name="message" placeholder="How can we help?" rows={3}></textarea>
-              <button type="submit">Send message</button>
-              <p className="lead-status" hidden></p>
-            </form>
-          </section>
-        </main>
-        <footer className="site-footer">
-          © {year} {business.name}
-        </footer>
-        {settings.analytics && (
-          <script
-            data-goatcounter={`https://${settings.analytics.siteId}.goatcounter.com/count`}
-            async
-            src="//gc.zgo.at/count.js"
-          />
-        )}
+    <>
+      <header className="site-header">
+        <a className="logo" href="/">
+          {business.logo}
+        </a>
+      </header>
+      <main>
+        {sections.map((section) => (
+          <SectionSwitch key={section.id} section={section} layout={layout} />
+        ))}
+        <section id="contact">
+          <h2>Get in touch</h2>
+          {business.email && (
+            <p>
+              <a href={`mailto:${business.email}`}>{business.email}</a>
+            </p>
+          )}
+          {business.phone && <p>{business.phone}</p>}
+          {business.location && <p>{business.location}</p>}
+          <form className="lead-form" data-api={apiBase} data-site={site.id}>
+            <input type="text" name="name" placeholder="Your name" required />
+            <input type="email" name="email" placeholder="Email" required />
+            <textarea name="message" placeholder="How can we help?" rows={3}></textarea>
+            <button type="submit">Send message</button>
+            <p className="lead-status" hidden></p>
+          </form>
+        </section>
+      </main>
+      <footer className="site-footer">
+        © {year} {business.name}
+      </footer>
+      {settings.analytics && (
         <script
-          dangerouslySetInnerHTML={{
-            __html: `
+          data-goatcounter={`https://${settings.analytics.siteId}.goatcounter.com/count`}
+          async
+          src="//gc.zgo.at/count.js"
+        />
+      )}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
 document.querySelectorAll(".lead-form").forEach((form) => {
   form.addEventListener("submit", async (e) => {
     e.preventDefault()
@@ -509,8 +493,48 @@ document.querySelectorAll(".lead-form").forEach((form) => {
   })
 })
 `,
-          }}
-        />
+        }}
+      />
+    </>
+  );
+}
+
+/** The `<head>` content that changes with the site (title, font, theme). */
+export function pageHead(site: Site, page: Page) {
+  const { business, settings } = site;
+  const template = templateFor(site);
+  const font = settings.font || template.font;
+  return {
+    title: `${business.name}${page.title !== "Homepage" ? ` — ${page.title}` : ""}`,
+    fontHref: `https://fonts.googleapis.com/css2?family=${font.replaceAll(" ", "+")}:wght@400;600;800&display=swap`,
+    themeCss: themeCss(site),
+  };
+}
+
+function SiteDocument({ site, page, apiBase }: { site: Site; page: Page; apiBase: string }) {
+  const { business } = site;
+  const template = templateFor(site);
+  const layout = template.layout;
+  const head = pageHead(site, page);
+
+  return (
+    <html lang="en">
+      <head>
+        <meta charSet="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content={business.category} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={business.name} />
+        <meta property="og:description" content={business.category} />
+        <link rel="canonical" href={`https://sites.site-studio.dev${page.slug}`} />
+        <title>{head.title}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href={head.fontHref} rel="stylesheet" />
+        <style dangerouslySetInnerHTML={{ __html: head.themeCss }} />
+      </head>
+      <body className={`template-${layout}`}>
+        <PageBody site={site} page={page} apiBase={apiBase} />
       </body>
     </html>
   );

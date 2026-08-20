@@ -10,10 +10,11 @@
       "node": "./dist/render.mjs",
       "default": "./dist/render.mjs"
     },
-    "./templates": "./src/templates.ts"
+    "./templates": "./src/templates.ts",
+    "./preview-client": "./dist/preview-client.js"
   },
   "scripts": {
-    "build": "bun build ./src/render.tsx --outfile ./dist/render.mjs --external react --external react-dom --external react/jsx-runtime --external react/jsx-dev-runtime --format esm --target node",
+    "build": "bun build ./src/render.tsx --outfile ./dist/render.mjs --external react --external react-dom --external react/jsx-runtime --external react/jsx-dev-runtime --format esm --target node && bun build ./src/client.tsx --outfile ./dist/preview-client.js --format iife --target browser",
     "render": "bun run scripts/render.mjs",
     "publish": "bun run scripts/publish.mjs",
     "typecheck": "tsc --noEmit"

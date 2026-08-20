@@ -5,6 +5,7 @@ import Preview from "./Preview.tsx";
 
 export default function Editor({
   site,
+  previewSite,
   online,
   saveState,
   device,
@@ -22,6 +23,7 @@ export default function Editor({
   onDomainRemove,
 }: {
   site: Site;
+  previewSite: Site;
   online: boolean | null;
   saveState: SaveState;
   device: Device;
@@ -71,7 +73,7 @@ export default function Editor({
             </button>
           </div>
         </div>
-        <Preview site={site} device={device} />
+        <Preview site={previewSite} device={device} />
       </div>
     </div>
   );

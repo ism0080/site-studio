@@ -23,6 +23,7 @@ function EditorView() {
   return (
     <Editor
       site={site}
+      previewSite={workspace.previewSite}
       online
       saveState={workspace.saveState}
       device={device}
