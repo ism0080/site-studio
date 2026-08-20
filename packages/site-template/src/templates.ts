@@ -27,6 +27,14 @@ export interface SiteTemplate {
   defaultSections: ReadonlyArray<Section>;
 }
 
+/**
+ * Authoring entry point for a template. An identity function today, it gives
+ * every template one place to gain dev-time validation later (e.g. asserting
+ * the font is a known Google font). Prefer this over a bare object literal so
+ * the authoring surface stays uniform.
+ */
+export const defineTemplate = (template: SiteTemplate): SiteTemplate => template;
+
 // The starting content for brand-new sites: what the editor (and the
 // published render) shows before the owner has saved any of their own.
 // Built to reflect real small New Zealand businesses (plumbing, bakery, and craft collective).
@@ -249,7 +257,7 @@ const creativeDefaultSections: ReadonlyArray<Section> = [
  * in the site document override the accent/font below (set by the editor);
  * the rest of the palette and the layout come from here.
  */
-const editorialStudio: SiteTemplate = {
+const editorialStudio = defineTemplate({
   id: "editorial-studio",
   name: "Editorial Studio",
   font: "Manrope",
@@ -266,8 +274,8 @@ const editorialStudio: SiteTemplate = {
     muted: "#6b7280",
   },
   defaultSections: creativeDefaultSections,
-};
-const warmMinimal: SiteTemplate = {
+});
+const warmMinimal = defineTemplate({
   id: "warm-minimal",
   name: "Warm Minimal",
   font: "Fraunces",
@@ -284,8 +292,8 @@ const warmMinimal: SiteTemplate = {
     muted: "#7d7362",
   },
   defaultSections: retailDefaultSections,
-};
-const cleanGrid: SiteTemplate = {
+});
+const cleanGrid = defineTemplate({
   id: "clean-grid",
   name: "Clean Grid",
   font: "Space Grotesk",
@@ -302,13 +310,32 @@ const cleanGrid: SiteTemplate = {
     muted: "#64748b",
   },
   defaultSections: servicesDefaultSections,
-};
+});
 
-export const TEMPLATES = new Map<string, SiteTemplate>([
-  ["editorial-studio", editorialStudio],
-  ["warm-minimal", warmMinimal],
-  ["clean-grid", cleanGrid],
-]);
+/**
+ * Every template, in gallery order. Add a new template's constant here — the
+ * registry, the derived category list, the API gallery, and the editor all read
+ * from this one array, so there is no separate registration step to forget.
+ */
+export const ALL_TEMPLATES: ReadonlyArray<SiteTemplate> = [
+  editorialStudio,
+  warmMinimal,
+  cleanGrid,
+];
+
+export const TEMPLATES = new Map<string, SiteTemplate>(
+  ALL_TEMPLATES.map((template) => [template.id, template]),
+);
+
+/**
+ * Gallery filter options, derived from the templates themselves so a template
+ * with a new `category` appears in the filter without touching the editor.
+ * `"all"` leads; the rest follow first-seen order.
+ */
+export const TEMPLATE_CATEGORIES: ReadonlyArray<string> = [
+  "all",
+  ...new Set(ALL_TEMPLATES.map((template) => template.category)),
+];
 
 export const templateFor = (site: { templateId?: string }): SiteTemplate =>
   TEMPLATES.get(site.templateId ?? "") ?? editorialStudio;

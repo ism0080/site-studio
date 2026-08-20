@@ -25,8 +25,22 @@ interface SectionProps<P> {
   layout: TemplateLayout;
 }
 
-const mod = (layout: TemplateLayout): string =>
-  layout === "warm" ? " warm" : layout === "grid" ? " grid" : "";
+// Each layout's section-class modifier and its CSS block live in these records
+// keyed by TemplateLayout. Adding a value to the union makes both records a
+// compile error until the new layout is wired here — the type is the checklist.
+const LAYOUT_MOD: Record<TemplateLayout, string> = {
+  editorial: "",
+  warm: " warm",
+  grid: " grid",
+};
+
+const LAYOUT_CSS: Record<TemplateLayout, string> = {
+  editorial: "",
+  warm: warmCss(),
+  grid: gridCss(),
+};
+
+const mod = (layout: TemplateLayout): string => LAYOUT_MOD[layout];
 
 function Hero({ props, layout }: SectionProps<HeroProps>) {
   return (
@@ -139,6 +153,27 @@ function themeCss(site: Site): string {
   `.trim();
 }
 
+// The uppercase eyebrow label and the bordered card surface each appear in two
+// sections; naming them keeps the shape in one place so a new section (or a
+// layout override) reuses the exact same rule instead of re-deriving it.
+const eyebrowRule = (scope: string, margin: string): string => `
+  ${scope} .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--accent);
+    margin: ${margin};
+  }`;
+
+const cardSurface = (scope: string): string => `
+  ${scope} .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 1.5rem;
+  }`;
+
 // Section styles are scoped under their root class (the repo's scoping
 // convention) instead of Astro's hashed attributes, so each section's bare
 // element selectors (h2, p, .grid, .card) cannot leak into its neighbours.
@@ -149,14 +184,7 @@ function sectionCss(layout: TemplateLayout): string {
     gap: 1rem;
     max-width: 46rem;
   }
-  .hero .eyebrow {
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    font-weight: 700;
-    font-size: 0.85rem;
-    color: var(--accent);
-    margin: 0;
-  }
+  ${eyebrowRule(".hero", "0")}
   .hero h1 {
     font-size: clamp(2.5rem, 6vw, 4rem);
     line-height: 1.05;
@@ -206,12 +234,7 @@ function sectionCss(layout: TemplateLayout): string {
     grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
     gap: 1rem;
   }
-  .services .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 1rem;
-    padding: 1.5rem;
-  }
+  ${cardSurface(".services")}
   .services .card h3 {
     margin: 0 0 0.5rem;
     font-size: 1.1rem;
@@ -223,14 +246,7 @@ function sectionCss(layout: TemplateLayout): string {
   .about {
     max-width: 40rem;
   }
-  .about .eyebrow {
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    font-weight: 700;
-    font-size: 0.85rem;
-    color: var(--accent);
-    margin: 0 0 0.5rem;
-  }
+  ${eyebrowRule(".about", "0 0 0.5rem")}
   .about h2 {
     font-size: clamp(1.75rem, 4vw, 2.5rem);
     letter-spacing: -0.02em;
@@ -252,11 +268,8 @@ function sectionCss(layout: TemplateLayout): string {
     grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
     gap: 1rem;
   }
+  ${cardSurface(".testimonials")}
   .testimonials .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 1rem;
-    padding: 1.5rem;
     margin: 0;
   }
   .testimonials .card .quote {
@@ -276,11 +289,11 @@ function sectionCss(layout: TemplateLayout): string {
     color: var(--muted);
   }
 
-  ${layout === "warm" ? warmCss(layout) : layout === "grid" ? gridCss(layout) : ""}
+  ${LAYOUT_CSS[layout]}
   `.trim();
 }
 
-function warmCss(_layout: TemplateLayout): string {
+function warmCss(): string {
   return `
   .hero.warm {
     max-width: 40rem;
@@ -332,7 +345,7 @@ function warmCss(_layout: TemplateLayout): string {
   `.trim();
 }
 
-function gridCss(_layout: TemplateLayout): string {
+function gridCss(): string {
   return `
   .hero.grid {
     max-width: 100%;
