@@ -71,7 +71,9 @@ export default function Sidebar({
             <strong>{user?.name}</strong>
             <small>{user?.email}</small>
           </div>
-          <SignOutIcon onClick={onSignOut} size={18} />
+          <button type="button" data-slot="sign-out" onClick={onSignOut} aria-label="Sign out">
+            <SignOutIcon size={18} />
+          </button>
         </div>
       </div>
     </aside>

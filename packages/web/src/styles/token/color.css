@@ -12,14 +12,14 @@
   --color-accent-wash: #f0ede5;
 
   /* Surfaces */
-  --color-bg: #ffffff;
+  --color-bg: #f8f8f4;
   --color-bg-input: #fbfcf9;
   --color-bg-subtle: #f4f5f0;
   --color-bg-wash: #eceee7;
   --color-bg-toolbar: #f6f6f2;
   --color-bg-toggle: #e7e9e2;
   --color-bg-canvas: #e9eae5;
-  --color-bg-page: #f7f7f3;
+  --color-bg-page: #f8f8f4;
 
   /* Text */
   --color-text: #343832;
@@ -62,7 +62,7 @@
   --color-sidebar-text-faint: #7f817b;
 
   /* Shadows */
-  --color-shadow: #c9cbc4;
+  --color-shadow: hsla(100, 8%, 20%, 0.12);
 
   /* Buttons */
   --color-primary: var(--color-accent);

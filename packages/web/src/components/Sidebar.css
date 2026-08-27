@@ -1,15 +1,16 @@
 [data-component="sidebar"] {
-  width: 238px;
+  width: 240px;
+  flex: 0 0 240px;
   min-height: 100vh;
   background: var(--color-sidebar);
   color: var(--color-sidebar-text);
-  padding: var(--space-7) var(--space-3-5) var(--space-4-5);
+  padding: var(--space-8) var(--space-3) var(--space-4);
   display: flex;
   flex-direction: column;
 
   [data-slot="workspace-label"] {
     color: var(--color-sidebar-text-faint);
-    padding: var(--space-0) var(--space-4) var(--space-3);
+    padding: var(--space-0) var(--space-4) var(--space-4);
   }
 
   [data-slot="nav-item"] {
@@ -23,8 +24,9 @@
     padding: var(--space-3) var(--space-4);
     border-radius: var(--border-radius-lg);
     text-align: left;
-    font-size: 13px;
-    margin-bottom: var(--space-0-75);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    margin-bottom: var(--space-1);
 
     &:hover,
     &[data-active] {
@@ -33,7 +35,8 @@
     }
 
     &[data-active] {
-      font-weight: 700;
+      box-shadow: inset 2px 0 var(--color-accent);
+      font-weight: 600;
     }
   }
 
@@ -59,19 +62,59 @@
     align-items: center;
 
     strong {
-      font-size: 11px;
+      font-size: var(--font-size-xs);
       display: block;
       color: var(--color-sidebar-text-strong);
     }
 
     small {
-      font-size: 10px;
+      font-size: var(--font-size-2xs);
       color: var(--color-sidebar-text-faint);
     }
 
-    svg {
+    [data-slot="sign-out"] {
       margin-left: auto;
+      border: 0;
+      padding: var(--space-2);
+      background: transparent;
       color: var(--color-sidebar-text-faint);
+      cursor: pointer;
+
+      &:hover {
+        color: var(--color-sidebar-text-strong);
+      }
+    }
+  }
+
+  @media (max-width: 900px) {
+    width: 68px;
+    flex-basis: 68px;
+    padding-left: var(--space-2);
+    padding-right: var(--space-2);
+
+    [data-slot="workspace-label"],
+    [data-slot="nav-item"] span,
+    [data-slot="profile"] div:not([data-component="avatar"]),
+    [data-slot="sign-out"] {
+      display: none;
+    }
+
+    [data-slot="nav-item"] {
+      justify-content: center;
+      padding: var(--space-3);
+    }
+
+    [data-slot="nav-badge"] {
+      display: block;
+      position: absolute;
+      margin: var(--space-0) var(--space-0) var(--space-6) var(--space-6);
+      padding: var(--space-0-5) var(--space-1-5);
+    }
+
+    [data-slot="profile"] {
+      justify-content: center;
+      padding-left: var(--space-0);
+      padding-right: var(--space-0);
     }
   }
 }

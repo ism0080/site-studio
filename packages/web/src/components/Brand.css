@@ -14,4 +14,12 @@
   [data-slot="dot"] {
     color: var(--color-accent);
   }
+
+  @media (max-width: 900px) {
+    padding-left: var(--space-2-5);
+
+    [data-slot="text"] {
+      display: none;
+    }
+  }
 }

@@ -11,14 +11,20 @@ export default function Overview({ site }: { site: Site }) {
     <div data-component="overview">
       <section data-slot="stat-grid">
         <div data-slot="stat-card">
-          <span>Site visits</span>
+          <div data-slot="stat-heading">
+            <span>Site visits</span>
+            <small>Last 30 days</small>
+          </div>
           <strong>—</strong>
-          <small>coming with analytics</small>
+          <p>Analytics will appear here once connected.</p>
         </div>
         <div data-slot="stat-card">
-          <span>New leads</span>
+          <div data-slot="stat-heading">
+            <span>New leads</span>
+            <small>Last 30 days</small>
+          </div>
           <strong>—</strong>
-          <small>coming soon</small>
+          <p>New enquiries will be tracked here.</p>
         </div>
       </section>
 
@@ -37,29 +43,31 @@ export default function Overview({ site }: { site: Site }) {
         </div>
       </section>
 
-      <div data-slot="site-list-card">
-        <div data-slot="site-info">
-          <div data-slot="site-info-title">
-            <div>
-              <h3>{site.business.name}</h3>
-              <p>{site.customDomain || "no custom domain yet"}</p>
+      <div data-slot="overview-grid">
+        <div data-slot="site-list-card">
+          <div data-slot="site-info">
+            <div data-slot="site-info-title">
+              <div>
+                <h3>{site.business.name}</h3>
+                <p>{site.customDomain || "No custom domain yet"}</p>
+              </div>
+              <span className="status-pill">
+                <i /> {buildStatusLabel(site)}
+              </span>
             </div>
-            <span className="status-pill">
-              <i /> {buildStatusLabel(site)}
-            </span>
           </div>
         </div>
-      </div>
 
-      <div data-slot="tip-card">
-        <div data-slot="tip-icon">✦</div>
-        <div>
-          <strong>Make your first impression count</strong>
-          <p>Add a profile photo and your best work to help visitors get to know your business.</p>
+        <div data-slot="tip-card">
+          <div data-slot="tip-icon">✦</div>
+          <div>
+            <strong>Make your first impression count</strong>
+            <p>Add a profile photo and your best work to help visitors get to know your business.</p>
+          </div>
+          <button data-component="button">
+            View checklist <ArrowRightIcon data-slot="icon" size={15} />
+          </button>
         </div>
-        <button data-component="button">
-          View checklist <ArrowRightIcon data-slot="icon" size={15} />
-        </button>
       </div>
     </div>
   );
