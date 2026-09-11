@@ -9,10 +9,10 @@ out/
 # Alchemy state / local credentials
 .alchemy/
 
-# Environment (keep examples)
+# Environment (the .env.schema is committed; values are not)
 .env
 .env.*
-!.env.example
+!.env.schema
 
 # Installed skills (managed by skills-lock.json)
 .agents/

@@ -62,7 +62,9 @@ export default function Overview({ site }: { site: Site }) {
           <div data-slot="tip-icon">✦</div>
           <div>
             <strong>Make your first impression count</strong>
-            <p>Add a profile photo and your best work to help visitors get to know your business.</p>
+            <p>
+              Add a profile photo and your best work to help visitors get to know your business.
+            </p>
           </div>
           <button data-component="button">
             View checklist <ArrowRightIcon data-slot="icon" size={15} />

@@ -7,16 +7,16 @@
     "./contract": "./src/contract.ts"
   },
   "scripts": {
-    "dev": "bun node_modules/alchemy/bin/alchemy.ts dev --env-file .env",
-    "plan": "bun alchemy plan",
-    "deploy": "bun alchemy deploy",
-    "destroy": "bun alchemy destroy",
+    "dev": "varlock run -- bun node_modules/alchemy/bin/alchemy.ts dev",
+    "plan": "varlock run -- bun alchemy plan",
+    "deploy": "varlock run -- bun alchemy deploy",
+    "destroy": "varlock run -- bun alchemy destroy",
     "typecheck": "tsc --noEmit",
     "typecheck:test": "tsc -p tsconfig.test.json --noEmit",
     "smoke": "bun run scripts/smoke.ts",
     "smoke:serving": "bun run scripts/smoke-serving.ts",
     "smoke:dns": "bun run scripts/smoke-dns.ts",
-    "build-publish": "bun run scripts/build-publish.ts",
+    "build-publish": "varlock run -- bun run scripts/build-publish.ts",
     "test": "vitest run"
   },
   "dependencies": {
@@ -32,7 +32,9 @@
     "@effect/language-service": "^0.87.2",
     "@effect/vitest": "^4.0.0-beta.106",
     "@types/node": "^24.0.0",
+    "@varlock/1password-plugin": "^2.0.4",
     "typescript": "^7.0.2",
+    "varlock": "^1.18.0",
     "vitest": "^4.1.10"
   }
 }

@@ -29,8 +29,10 @@
     "@tanstack/router-plugin": "^1.168.33",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
+    "@varlock/vite-integration": "^1.5.1",
     "msw": "^2.15.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "varlock": "^1.18.0"
   },
   "msw": {
     "workerDirectory": [
