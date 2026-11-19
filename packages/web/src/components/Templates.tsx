@@ -2,11 +2,12 @@ import "./Templates.css";
 import { useQuery } from "@tanstack/react-query";
 import { TEMPLATE_CATEGORIES } from "@site-studio/site-template/templates";
 import type { Template } from "../siteTypes.ts";
-import { templateQueries } from "../lib/apiQueries.ts";
+import { billingQueries, templateQueries } from "../lib/apiQueries.ts";
 
 function TemplateArt({ template }: { template: Template }) {
   return (
     <div data-slot="art" data-template={template.id}>
+      {template.tier === "pro" && <span data-slot="pro-badge">PRO</span>}
       <div data-slot="art-brand">{template.brand}</div>
       <div data-slot="art-title">
         {template.title.map((line) => (
@@ -31,6 +32,8 @@ export default function Templates({
   onSelect: (template: Template) => void;
 }) {
   const { data: templates = [] } = useQuery(templateQueries.list());
+  const { data: billing } = useQuery(billingQueries.status());
+  const plan = billing?.plan ?? "free";
   const visible = category === "all" ? templates : templates.filter((t) => t.category === category);
 
   return (
@@ -48,18 +51,27 @@ export default function Templates({
         </button>
       </div>
       <div data-slot="grid">
-        {visible.map((template) => (
-          <button data-slot="card" key={template.id} onClick={() => onSelect(template)}>
-            <TemplateArt template={template} />
-            <div data-slot="card-footer">
-              <div>
-                <strong>{template.name}</strong>
-                <small>{template.category}</small>
+        {visible.map((template) => {
+          const locked = plan === "free" && template.tier === "pro";
+          return (
+            <button
+              data-slot="card"
+              data-locked={locked}
+              key={template.id}
+              disabled={locked}
+              onClick={() => onSelect(template)}
+            >
+              <TemplateArt template={template} />
+              <div data-slot="card-footer">
+                <div>
+                  <strong>{template.name}</strong>
+                  <small>{template.category}</small>
+                </div>
+                <span>{locked ? "Upgrade to Pro" : "Use template ↗"}</span>
               </div>
-              <span>Use template ↗</span>
-            </div>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

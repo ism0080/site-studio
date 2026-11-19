@@ -7,16 +7,15 @@
     "./contract": "./src/contract.ts"
   },
   "scripts": {
-    "dev": "varlock run -- bun node_modules/alchemy/bin/alchemy.ts dev",
-    "plan": "varlock run -- bun alchemy plan",
-    "deploy": "varlock run -- bun alchemy deploy",
+    "dev": "bun run --filter @site-studio/site-template build && varlock run -- bun node_modules/alchemy/bin/alchemy.ts dev",
+    "plan": "bun run --filter @site-studio/site-template build && varlock run -- bun alchemy plan",
+    "deploy": "bun run --filter @site-studio/site-template build && varlock run -- bun alchemy deploy",
     "destroy": "varlock run -- bun alchemy destroy",
     "typecheck": "tsc --noEmit",
     "typecheck:test": "tsc -p tsconfig.test.json --noEmit",
     "smoke": "bun run scripts/smoke.ts",
     "smoke:serving": "bun run scripts/smoke-serving.ts",
     "smoke:dns": "bun run scripts/smoke-dns.ts",
-    "build-publish": "varlock run -- bun run scripts/build-publish.ts",
     "test": "vitest run"
   },
   "dependencies": {
@@ -25,7 +24,8 @@
     "@site-studio/site-template": "workspace:*",
     "alchemy": "^2.0.0-beta.70",
     "better-auth": "1.6.26",
-    "effect": "4.0.0-beta.103"
+    "effect": "4.0.0-beta.103",
+    "stripe": "^23.2.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260808.1",

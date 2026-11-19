@@ -22,11 +22,20 @@ export const toTemplateInfo = (template: SiteTemplate): TemplateInfo => ({
   id: template.id,
   name: template.name,
   font: template.font,
+  tier: template.tier,
   category: template.category,
   brand: template.brand,
   title: template.title,
   theme: template.theme,
 });
+
+/**
+ * The plan a template requires. Unknown ids read as Pro: only registered
+ * templates are creatable, and the conservative answer never unlocks a paid
+ * template for a free account.
+ */
+export const templateTier = (templateId: string): TemplateInfo["tier"] =>
+  TEMPLATES.get(templateId)?.tier ?? "pro";
 
 /** The full template list served to the editor's template gallery. */
 export const listTemplateInfo = (): ReadonlyArray<TemplateInfo> =>

@@ -12,6 +12,7 @@ import {
   UsersIcon,
   ShareIcon,
   ShieldIcon,
+  CreditCardIcon,
 } from "@phosphor-icons/react";
 
 interface SidebarProps {
@@ -63,6 +64,15 @@ export default function Sidebar({
             {label === "Leads" && <span data-slot="nav-badge">3</span>}
           </Link>
         ))}
+        <Link
+          to="/billing"
+          data-slot="nav-item"
+          activeOptions={{ exact: true }}
+          activeProps={{ "data-active": "true" }}
+        >
+          <CreditCardIcon size={18} />
+          <span>Billing</span>
+        </Link>
       </nav>
       <div data-slot="sidebar-bottom">
         <div data-slot="profile">

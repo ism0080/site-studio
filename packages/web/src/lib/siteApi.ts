@@ -1,5 +1,6 @@
 import type {
   Agency,
+  BillingStatus,
   CreateSitePayload,
   DomainSetup,
   Lead,
@@ -58,14 +59,26 @@ export const siteApi = {
   listAgencies: (): Promise<readonly Agency[]> => siteApiHttpClient.listAgencies(),
   inviteAgency: (email: string): Promise<Agency> => siteApiHttpClient.inviteAgency(email),
   removeAgency: (email: string): Promise<void> => siteApiHttpClient.removeAgency(email),
+  billingStatus: (): Promise<BillingStatus> => siteApiHttpClient.billingStatus(),
+  startCheckout: (successUrl: string): Promise<{ url: string }> =>
+    siteApiHttpClient.startCheckout(successUrl),
+  startPortal: (returnUrl: string): Promise<{ url: string }> =>
+    siteApiHttpClient.startPortal(returnUrl),
 };
 
 // Public URL for a published site: the custom domain when verified, otherwise
-// the www worker URL (VITE_WWW_URL) under /<siteId>/.
+// the reserved `<subdomain>.<www host>` when available, otherwise the www worker
+// URL (VITE_WWW_URL) under /<siteId>/.
+const wwwUrl = import.meta.env?.VITE_WWW_URL ?? "";
+
+/** Hostname of the public www worker; reserved site subdomains hang off it. */
+export const WWW_HOST = wwwUrl ? new URL(wwwUrl).hostname : "";
+
 /** Public URL for a published site, or null when it is not built or not live. */
 export const liveUrlFor = (site: Site): string | null => {
   if (site.status !== "published" || site.buildStatus !== "built") return null;
   if (site.customDomain) return `https://${site.customDomain}/`;
-  const www = (import.meta.env?.VITE_WWW_URL ?? "").replace(/\/+$/, "");
+  if (site.subdomain && WWW_HOST) return `https://${site.subdomain}.${WWW_HOST}/`;
+  const www = wwwUrl.replace(/\/+$/, "");
   return www ? `${www}/${site.id}/` : null;
 };

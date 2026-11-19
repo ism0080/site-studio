@@ -81,6 +81,15 @@ export const agencyQueries = {
     }),
 };
 
+export const billingQueries = {
+  all: () => ["billing"] as const,
+  status: () =>
+    queryOptions({
+      queryKey: billingQueries.all(),
+      queryFn: siteApi.billingStatus,
+    }),
+};
+
 export function useCreateSite() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -1,4 +1,5 @@
 import * as Cloudflare from "alchemy/Cloudflare";
+import type { RateLimitClient } from "alchemy/Cloudflare";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -17,32 +18,26 @@ import { listTemplateInfo } from "./site/templateDefaults.ts";
 import { LeadRepository, LeadRepositoryLayer } from "./leads/LeadRepository.ts";
 import { LeadNotifier, LeadNotifierLayer } from "./leads/LeadNotifier.ts";
 import { LeadRateLimiter, submitLead } from "./leads/submitLead.ts";
+import { EmailEnv, EmailSender, EmailSenderLayer } from "./email/EmailSender.ts";
+import { agencyInviteEmail, siteInviteEmail } from "./email/inviteEmails.ts";
 import { SiteStorage, R2SiteStorageLayer } from "./storage/SiteStorage.ts";
 import { WebCrypto } from "./platform/WebCrypto.ts";
 import { BuildQueue, encodeBuildJob } from "./publish/BuildQueue.ts";
 import { BuildJobSink } from "./publish/BuildJobSink.ts";
 import { AUTH_PATH, CurrentUser, createAuth } from "./auth/auth.ts";
-import { requesterFor, type GlobalRole } from "./access/access.ts";
+import { AuthConfig, AuthEnv } from "./auth/config.ts";
+import { requesterFor, type GlobalRole, type Requester } from "./access/access.ts";
 import { MemberRepository, MemberRepositoryLayer } from "./members/MemberRepository.ts";
 import { AdminRepository, AdminRepositoryLayer } from "./admin/AdminRepository.ts";
 import { Forbidden, SiteNotFound } from "./site/site.ts";
 import { CloudflareSaasLayer, CloudflareSaasService } from "./site/cloudflareSaas.ts";
-
-const AuthEnv = {
-  authSecret: Config.redacted("AUTH_SECRET").pipe(
-    Config.withDefault(Redacted.make("dev-only-secret-0123456789abcdef0123456789abcdef")),
-  ),
-  authBaseUrl: Config.string("AUTH_BASE_URL").pipe(Config.withDefault("http://localhost:8787")),
-  trustedOrigins: Config.string("TRUSTED_ORIGINS").pipe(
-    Config.withDefault("http://localhost:5173"),
-  ),
-  googleClientId: Config.string("GOOGLE_CLIENT_ID").pipe(Config.withDefault("")),
-  googleClientSecret: Config.redacted("GOOGLE_CLIENT_SECRET").pipe(
-    Config.withDefault(Redacted.make("")),
-  ),
-};
-
-const AuthConfig = Effect.all(AuthEnv);
+import { BillingRepository, BillingRepositoryLayer } from "./billing/BillingRepository.ts";
+import { BillingEnv, StripeBilling, StripeBillingLayer } from "./billing/StripeBilling.ts";
+import { handleStripeEvent } from "./billing/WebhookEvents.ts";
+import { BillingCustomerNotFound, billingStatus } from "./billing/billing.ts";
+import { planGate, type PlanAction } from "./billing/planGates.ts";
+import { guardMutation, MutationRateLimiter } from "./platform/rateLimit.ts";
+import { nowIso } from "./platform/Time.ts";
 
 const CloudflareSaasEnv = {
   zoneId: Config.string("CF_SAAS_ZONE_ID"),
@@ -65,6 +60,8 @@ export default Cloudflare.Worker(
   {
     main: import.meta.url,
     dev: { port: 8787 },
+    // Invocation + error logs in the dashboard and `wrangler tail`.
+    observability: { enabled: true, logs: { enabled: true, invocationLogs: true } },
     env: {
       AUTH_SECRET: AuthEnv.authSecret,
       AUTH_BASE_URL: AuthEnv.authBaseUrl,
@@ -74,6 +71,12 @@ export default Cloudflare.Worker(
       CF_SAAS_ZONE_ID: CloudflareSaasEnv.zoneId,
       CF_API_TOKEN: CloudflareSaasEnv.apiToken,
       CF_SAAS_CNAME_TARGET: CloudflareSaasEnv.cnameTarget,
+      STRIPE_API_KEY: BillingEnv.apiKey,
+      STRIPE_PRICE_ID: BillingEnv.priceId,
+      STRIPE_WEBHOOK_SECRET: BillingEnv.webhookSecret,
+      RESEND_API_KEY: EmailEnv.apiKey,
+      EMAIL_FROM: EmailEnv.from,
+      WEB_URL: EmailEnv.webUrl,
     },
   },
   Effect.gen(function* () {
@@ -90,6 +93,18 @@ export default Cloudflare.Worker(
     const throttle = yield* Cloudflare.RateLimit("LeadsRateLimit", {
       namespaceId: 1001,
       simple: { limit: 5, period: 60 },
+    });
+
+    // Rate-limit better-auth endpoints per IP (30/min).
+    const authThrottle = yield* Cloudflare.RateLimit("AuthRateLimit", {
+      namespaceId: 1002,
+      simple: { limit: 30, period: 60 },
+    });
+
+    // Rate-limit expensive authenticated mutations per account (20/min).
+    const mutationThrottle = yield* Cloudflare.RateLimit("MutationRateLimit", {
+      namespaceId: 1003,
+      simple: { limit: 20, period: 60 },
     });
 
     // Service implementations. These are the swap points: the interfaces are
@@ -124,15 +139,25 @@ export default Cloudflare.Worker(
     const adminRepo = yield* Effect.gen(function* () {
       return yield* AdminRepository;
     }).pipe(Effect.provide(AdminRepositoryLayer(db)));
+    const billingRepo = yield* Effect.gen(function* () {
+      return yield* BillingRepository;
+    }).pipe(Effect.provide(BillingRepositoryLayer(db)));
+    const stripeBilling = yield* Effect.gen(function* () {
+      return yield* StripeBilling;
+    }).pipe(Effect.provide(StripeBillingLayer));
     const siteStorage = yield* Effect.gen(function* () {
       return yield* SiteStorage;
     }).pipe(Effect.provide(R2SiteStorageLayer(bucket)));
     const leadNotifier = yield* Effect.gen(function* () {
       return yield* LeadNotifier;
     }).pipe(Effect.provide(LeadNotifierLayer));
+    const emailSender = yield* Effect.gen(function* () {
+      return yield* EmailSender;
+    }).pipe(Effect.provide(EmailSenderLayer));
 
     const config = yield* Effect.all({
-      auth: AuthConfig,
+      auth: AuthConfig.pipe(Effect.orDie),
+      webUrl: EmailEnv.webUrl,
       adminEmails: Config.string("ADMIN_EMAILS").pipe(
         Config.withDefault(""),
         Config.map((raw) =>
@@ -143,25 +168,31 @@ export default Cloudflare.Worker(
         ),
       ),
     });
+    // One parsed list shared by Better Auth and CORS.
+    const trustedOrigins = config.auth.trustedOrigins
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
     const auth = createAuth(rawDb, {
       secret: Redacted.value(config.auth.authSecret),
       baseURL: config.auth.authBaseUrl,
-      trustedOrigins: config.auth.trustedOrigins
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
+      trustedOrigins,
       googleClientId: config.auth.googleClientId,
       googleClientSecret: Redacted.value(config.auth.googleClientSecret),
     });
 
-    const rateLimiter = {
+    const limiterFor = (binding: RateLimitClient) => ({
       limit: (key: string) =>
-        throttle.limit({ key }).pipe(
+        binding.limit({ key }).pipe(
           // Fail open: allow the request if the limiter itself errors.
           Effect.catchTag("RateLimitError", () => Effect.succeed({ success: true })),
           Effect.map((result) => result.success),
         ),
-    };
+    });
+
+    const leadRateLimiter = limiterFor(throttle);
+    const authRateLimiter = limiterFor(authThrottle);
+    const mutationRateLimiter = limiterFor(mutationThrottle);
 
     // Published sites are handed to the build queue; the `build` worker runs
     // the static build and reports the outcome back onto the site.
@@ -169,6 +200,35 @@ export default Cloudflare.Worker(
     const buildJobSink: BuildJobSink["Service"] = {
       send: (job) => buildQueue.send(encodeBuildJob(job)),
     };
+
+    // The account's plan, creating its free row on first touch.
+    const planFor = (userId: string) =>
+      Effect.gen(function* () {
+        const billing = yield* BillingRepository;
+        const now = yield* nowIso;
+        return (yield* billing.ensure(userId, now)).plan;
+      });
+
+    // Rejects the request when the account's plan does not cover the action.
+    const planGuard = (userId: string, action: PlanAction) =>
+      Effect.gen(function* () {
+        const sites = yield* SiteRepository;
+        const rejection = planGate(action, {
+          plan: yield* planFor(userId),
+          siteCount: action.kind === "createSite" ? yield* sites.countForOwner(userId) : 0,
+        });
+        if (rejection !== null) return yield* rejection;
+      });
+
+    // Null when the site does not exist or the requester cannot see it; the
+    // repository's own update then reports SiteNotFound.
+    const currentTemplateId = (siteId: string, requester: Requester) =>
+      Effect.gen(function* () {
+        const repo = yield* SiteRepository;
+        const access = yield* repo.access(siteId, requester);
+        if (access === null) return null;
+        return (yield* repo.get(siteId, requester)).templateId;
+      });
 
     const sitesGroup = HttpApi.HttpApiBuilder.group(SiteApi, "Sites", (handlers) =>
       handlers
@@ -198,12 +258,27 @@ export default Cloudflare.Worker(
         )
         .handle("create", ({ payload }) =>
           CurrentUser.use((user) =>
-            SiteRepository.use((repo) => repo.create(payload, requesterFor(user))),
+            Effect.gen(function* () {
+              yield* guardMutation(user.id);
+              yield* planGuard(user.id, { kind: "createSite", templateId: payload.templateId });
+              const repo = yield* SiteRepository;
+              return yield* repo.create(payload, requesterFor(user));
+            }),
           ),
         )
         .handle("update", ({ params, payload }) =>
           CurrentUser.use((user) =>
-            SiteRepository.use((repo) => repo.update(params.id, payload, requesterFor(user))),
+            Effect.gen(function* () {
+              const requester = requesterFor(user);
+              yield* planGuard(user.id, {
+                kind: "updateSite",
+                templateId: payload.templateId,
+                currentTemplateId: yield* currentTemplateId(params.id, requester),
+                analytics: payload.settings.analytics !== undefined,
+              });
+              const repo = yield* SiteRepository;
+              return yield* repo.update(params.id, payload, requester);
+            }),
           ),
         )
         .handle("remove", ({ params }) =>
@@ -211,7 +286,14 @@ export default Cloudflare.Worker(
             SiteRepository.use((repo) => repo.remove(params.id, requesterFor(user))),
           ),
         )
-        .handle("publish", ({ params }) => publishSite(params.id))
+        .handle("publish", ({ params }) =>
+          CurrentUser.use((user) =>
+            Effect.gen(function* () {
+              yield* guardMutation(user.id);
+              return yield* publishSite(params.id);
+            }),
+          ),
+        )
         .handle("setDomain", ({ params, payload }) =>
           CurrentUser.use((user) =>
             SiteRepository.use((repo) =>
@@ -272,9 +354,22 @@ export default Cloudflare.Worker(
         )
         .handle("invite", ({ params, payload }) =>
           Effect.gen(function* () {
-            yield* requireManage(params.id);
-            const repo = yield* MemberRepository;
-            return yield* repo.invite(params.id, payload);
+            const user = yield* requireManage(params.id);
+            const members = yield* MemberRepository;
+            const member = yield* members.invite(params.id, payload);
+            const sites = yield* SiteRepository;
+            const site = yield* sites.get(params.id, requesterFor(user));
+            const email = yield* EmailSender;
+            yield* email.send(
+              siteInviteEmail({
+                to: payload.email,
+                siteName: site.business.name,
+                siteId: params.id,
+                webUrl: config.webUrl,
+                inviterEmail: user.email,
+              }),
+            );
+            return member;
           }),
         )
         .handle("update", ({ params, payload }) =>
@@ -311,9 +406,18 @@ export default Cloudflare.Worker(
         )
         .handle("inviteAgency", ({ payload }) =>
           Effect.gen(function* () {
-            yield* requireAdmin();
+            const user = yield* requireAdmin();
             const repo = yield* AdminRepository;
-            return yield* repo.invite(payload.email);
+            const agency = yield* repo.invite(payload.email);
+            const email = yield* EmailSender;
+            yield* email.send(
+              agencyInviteEmail({
+                to: payload.email,
+                webUrl: config.webUrl,
+                inviterEmail: user.email,
+              }),
+            );
+            return agency;
           }),
         )
         .handle("removeAgency", ({ params }) =>
@@ -331,6 +435,58 @@ export default Cloudflare.Worker(
           Effect.succeed({ id: user.id, email: user.email, role: user.role }),
         ),
       ),
+    );
+
+    const billingGroup = HttpApi.HttpApiBuilder.group(SiteApi, "Billing", (handlers) =>
+      handlers
+        .handle("status", () =>
+          CurrentUser.use((user) =>
+            Effect.gen(function* () {
+              const repo = yield* BillingRepository;
+              const stripe = yield* StripeBilling;
+              const now = yield* nowIso;
+              const row = yield* repo.ensure(user.id, now);
+              return billingStatus(row, stripe.configured);
+            }),
+          ),
+        )
+        .handle("checkout", ({ payload }) =>
+          CurrentUser.use((user) =>
+            Effect.gen(function* () {
+              yield* guardMutation(user.id);
+              const repo = yield* BillingRepository;
+              const stripe = yield* StripeBilling;
+              const now = yield* nowIso;
+              const row = yield* repo.ensure(user.id, now);
+              const session = yield* stripe.createCheckoutSession({
+                successUrl: payload.successUrl,
+                customerEmail: user.email,
+                customerId: row.stripeCustomerId,
+                userId: user.id,
+              });
+              if (row.stripeCustomerId === null) {
+                yield* repo.setStripeCustomer(user.id, session.stripeCustomerId, now);
+              }
+              return { url: session.url };
+            }),
+          ),
+        )
+        .handle("portal", ({ payload }) =>
+          CurrentUser.use((user) =>
+            Effect.gen(function* () {
+              const repo = yield* BillingRepository;
+              const stripe = yield* StripeBilling;
+              const now = yield* nowIso;
+              const row = yield* repo.ensure(user.id, now);
+              if (row.stripeCustomerId === null) return yield* new BillingCustomerNotFound({});
+              const session = yield* stripe.createPortalSession({
+                customerId: row.stripeCustomerId,
+                returnUrl: payload.returnUrl,
+              });
+              return { url: session.url };
+            }),
+          ),
+        ),
     );
 
     // Public — visitor contact-form submissions (no session).
@@ -351,10 +507,11 @@ export default Cloudflare.Worker(
         Layer.provide(membersGroup),
         Layer.provide(adminGroup),
         Layer.provide(meGroup),
+        Layer.provide(billingGroup),
         Layer.provide([Http.Etag.layer, HttpPlatformStub, Path.layer]),
         Layer.provide(
           Http.HttpRouter.cors({
-            allowedOrigins: ["*"],
+            allowedOrigins: trustedOrigins,
             allowedMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             allowedHeaders: ["Content-Type"],
           }),
@@ -375,9 +532,13 @@ export default Cloudflare.Worker(
         Effect.provideService(LeadRepository, leadRepo),
         Effect.provideService(MemberRepository, memberRepo),
         Effect.provideService(AdminRepository, adminRepo),
+        Effect.provideService(BillingRepository, billingRepo),
+        Effect.provideService(StripeBilling, stripeBilling),
         Effect.provideService(SiteStorage, siteStorage),
         Effect.provideService(LeadNotifier, leadNotifier),
-        Effect.provideService(LeadRateLimiter, rateLimiter),
+        Effect.provideService(EmailSender, emailSender),
+        Effect.provideService(LeadRateLimiter, leadRateLimiter),
+        Effect.provideService(MutationRateLimiter, mutationRateLimiter),
         Effect.provideService(BuildJobSink, buildJobSink),
       );
 
@@ -387,16 +548,45 @@ export default Cloudflare.Worker(
         const request = yield* HttpServerRequest;
         // SAFETY: The web adapter stores the incoming platform Request on HttpServerRequest.source.
         const nativeRequest = request.source as Request;
+        const pathname = new URL(nativeRequest.url).pathname;
 
         // Better Auth handles everything under /api/auth (sign-in, callbacks,
         // session) with its own native fetch handler.
-        if (new URL(nativeRequest.url).pathname.startsWith(AUTH_PATH)) {
+        if (pathname.startsWith(AUTH_PATH)) {
+          const allowed = yield* authRateLimiter.limit(
+            nativeRequest.headers.get("cf-connecting-ip") ?? "unknown",
+          );
+          if (!allowed) {
+            return yield* HttpServerResponse.json({ error: "Too many requests" }, { status: 429 });
+          }
           const response = yield* Effect.promise(() => auth.handler(nativeRequest));
           return HttpServerResponse.fromWeb(response);
         }
 
+        // Stripe webhooks are signature-verified against the raw body, so they
+        // bypass the typed router and session lookup.
+        if (pathname === "/api/billing/webhook") {
+          if (!stripeBilling.configured) {
+            return yield* HttpServerResponse.json(
+              { error: "Billing is not configured" },
+              { status: 503 },
+            );
+          }
+          const rawBody = yield* Effect.promise(() => nativeRequest.text());
+          const signature = nativeRequest.headers.get("stripe-signature") ?? "";
+          const verified = yield* Effect.result(stripeBilling.verifyWebhook(rawBody, signature));
+          if (verified._tag === "Failure") {
+            return yield* verified.failure._tag === "BillingNotConfigured"
+              ? HttpServerResponse.json({ error: "Billing is not configured" }, { status: 503 })
+              : HttpServerResponse.json({ error: "Invalid Stripe signature" }, { status: 400 });
+          }
+          const now = yield* nowIso;
+          yield* handleStripeEvent(verified.success, billingRepo, now);
+          return yield* HttpServerResponse.json({ received: true });
+        }
+
         // Public contact-form submissions — no session required.
-        if (new URL(nativeRequest.url).pathname.startsWith("/api/leads")) {
+        if (pathname.startsWith("/api/leads")) {
           return yield* provideServices(guestUser);
         }
 

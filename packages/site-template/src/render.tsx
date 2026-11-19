@@ -27,8 +27,8 @@ export interface RenderOptions {
 export const DEFAULT_API_BASE = "https://api.site-studio.dev";
 
 // The site document is validated against the Site schema at the render
-// boundary (the API encodes it before the sandbox build); these props are
-// trusted domain values from that point on.
+// boundary (the API encodes it before the build worker renders it); these
+// props are trusted domain values from that point on.
 
 interface SectionProps<P> {
   props: P;

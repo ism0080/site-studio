@@ -1,6 +1,7 @@
 import "./EditorPanel.css";
 import { type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import type {
   DomainSetup,
   Page,
@@ -23,7 +24,7 @@ import {
 } from "../lib/siteUpdates.ts";
 import DomainSettings from "./DomainSettings.tsx";
 import { AboutFields, HeroFields, ServicesFields, TestimonialsFields } from "./SectionFields.tsx";
-import { templateQueries } from "../lib/apiQueries.ts";
+import { billingQueries, templateQueries } from "../lib/apiQueries.ts";
 
 type ColorKey = Exclude<StringSettingKey, "font" | "border" | "muted">;
 
@@ -171,6 +172,18 @@ function BusinessFields({ site, onUpdate }: { site: Site; onUpdate: (site: Site)
 }
 
 function AnalyticsField({ site, onUpdate }: { site: Site; onUpdate: (site: Site) => void }) {
+  const { data: billing } = useQuery(billingQueries.status());
+  if (billing === undefined) return <p className="domain-hint">Loading your plan…</p>;
+  if (billing.plan === "free") {
+    return (
+      <div className="field-group">
+        <label>Analytics (OneDollarStats)</label>
+        <p className="domain-hint">
+          Site analytics are part of Pro. <Link to="/billing">Upgrade to Pro to unlock this.</Link>
+        </p>
+      </div>
+    );
+  }
   const siteId = site.settings.analytics?.siteId ?? "";
   return (
     <div className="field-group">

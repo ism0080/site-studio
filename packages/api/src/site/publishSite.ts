@@ -17,9 +17,9 @@ export const publishSite = Effect.fn("api.publishSite")(function* (siteId: strin
   const storage = yield* SiteStorage;
   const site = yield* repo.get(siteId, requester);
   const publishedAt = yield* nowIso;
-  // Store the site document as the buildable artifact, then build the static
-  // HTML from it in the background (Astro template pipeline,
-  // packages/site-template) and upload it to R2.
+  // Store the site document as the buildable artifact, then render the static
+  // HTML from it in the background (site-template renderer in the build
+  // worker) and upload it to R2.
   const path = `sites/${site.id}/site.json`;
   yield* storage.putSiteDocument(site.id, encodeSiteDocument(site)).pipe(Effect.orDie);
   yield* repo.markPublished(siteId, requester, publishedAt);

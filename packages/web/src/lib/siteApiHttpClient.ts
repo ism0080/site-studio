@@ -3,6 +3,7 @@ import { FetchHttpClient } from "effect/unstable/http";
 import { HttpApiClient } from "effect/unstable/httpapi";
 import {
   SiteApi,
+  type BillingStatus,
   type CreateSite,
   type MemberInput,
   type Site,
@@ -56,4 +57,8 @@ export const siteApiHttpClient = {
   listAgencies: () => _run((c) => c.Admin.listAgencies({})),
   inviteAgency: (email: string) => _run((c) => c.Admin.inviteAgency({ payload: { email } })),
   removeAgency: (email: string) => _run((c) => c.Admin.removeAgency({ params: { email } })),
+  billingStatus: (): Promise<BillingStatus> => _run((c) => c.Billing.status({})),
+  startCheckout: (successUrl: string) =>
+    _run((c) => c.Billing.checkout({ payload: { successUrl } })),
+  startPortal: (returnUrl: string) => _run((c) => c.Billing.portal({ payload: { returnUrl } })),
 };

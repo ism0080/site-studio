@@ -1,5 +1,6 @@
 import * as HttpApi from "effect/unstable/httpapi";
 import * as Schema from "effect/Schema";
+import { TooManyRequests } from "../platform/rateLimit.ts";
 import { Forbidden, SiteId, SiteNotFound } from "../site/site.ts";
 
 export const LeadId = Schema.String.pipe(Schema.brand("LeadId"));
@@ -27,13 +28,6 @@ export class LeadNotFound extends Schema.TaggedErrorClass<LeadNotFound>()(
   "LeadNotFound",
   {},
   { httpApiStatus: 404 },
-) {}
-
-/** The visitor hit the public lead-submission rate limit (429). */
-export class TooManyRequests extends Schema.TaggedErrorClass<TooManyRequests>()(
-  "TooManyRequests",
-  {},
-  { httpApiStatus: 429 },
 ) {}
 
 const LeadParams = Schema.Struct({

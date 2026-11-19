@@ -21,9 +21,18 @@ const noopSink: BuildJobSink["Service"] = {
   send: () => Effect.void,
 };
 
+const _addUser = (db: ReturnType<typeof makeDb>, id: string) =>
+  db
+    .prepare(
+      `INSERT INTO "user" (id, name, email, "emailVerified", "createdAt", "updatedAt")
+       VALUES (?, 'Test', ?, 1, '2026-01-01', '2026-01-01')`,
+    )
+    .run(id, `${id}@example.test`);
+
 describe("publishSite", () => {
   it("stores the site document, marks it published+building, then enqueues a build", async () => {
     const db = makeDb();
+    _addUser(db, owner.id);
     const repo = makeSiteRepository(d1(db));
     const created = await run(
       repo.create({ name: "Aurora Studio", templateId: "editorial-studio" }, requester),
@@ -77,8 +86,33 @@ describe("publishSite", () => {
     expect(site.publishedAt).toBe(result.publishedAt);
   });
 
+  it("publishes a free account's site without a billing row", async () => {
+    const db = makeDb();
+    _addUser(db, owner.id);
+    const repo = makeSiteRepository(d1(db));
+    const created = await run(
+      repo.create({ name: "Aurora Studio", templateId: "editorial-studio" }, requester),
+    );
+
+    await run(
+      publishSite(created.id).pipe(
+        Effect.provideService(CurrentUser, owner),
+        Effect.provideService(SiteRepository, repo),
+        Effect.provideService(SiteStorage, {
+          putSiteDocument: () => Effect.void,
+          getSiteDocument: () => Effect.succeed(null),
+        }),
+        Effect.provideService(BuildJobSink, noopSink),
+      ),
+    );
+
+    const site = await run(repo.get(created.id, requester));
+    expect(site.status).toBe("published");
+  });
+
   it("fails with PublishError when the build cannot be enqueued", async () => {
     const db = makeDb();
+    _addUser(db, owner.id);
     const repo = makeSiteRepository(d1(db));
     const created = await run(
       repo.create({ name: "Aurora Studio", templateId: "editorial-studio" }, requester),

@@ -38,6 +38,19 @@ export const normalizeDomain = (input: string): string =>
     .replace(/\.$/, "");
 
 /**
+ * Single-label subdomain of `zoneHost`, or `null` when `host` is not a direct
+ * subdomain of it. `bobs.site.test` under `site.test` yields `bobs`; the zone
+ * root, deeper labels, and an empty zone yield `null`.
+ */
+export const subdomainLabel = (host: string, zoneHost: string): string | null => {
+  if (zoneHost.length === 0) return null;
+  const suffix = `.${zoneHost}`;
+  if (!host.endsWith(suffix)) return null;
+  const label = host.slice(0, -suffix.length);
+  return label.length > 0 && !label.includes(".") ? label : null;
+};
+
+/**
  * Resolves a site-relative request path to the object path within a site's
  * R2 prefix. Directory-style paths map to `index.html`; paths with a file
  * extension are returned as-is. An empty path (site root) maps to `index.html`.

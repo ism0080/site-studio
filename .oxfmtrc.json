@@ -1,4 +1,9 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": ["**/*.astro", "**/*.gen.ts"]
+  "ignorePatterns": [
+    "**/*.astro",
+    "**/*.gen.ts",
+    "packages/web/env.d.ts",
+    "packages/web/tsconfig.json"
+  ]
 }

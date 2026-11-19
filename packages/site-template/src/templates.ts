@@ -11,12 +11,17 @@ export interface TemplateTheme {
 
 export type TemplateLayout = "editorial" | "warm" | "grid";
 
+/** The plan a template requires: the starter is free, the rest are Pro. */
+export type TemplateTier = "free" | "pro";
+
 export interface SiteTemplate {
   id: string;
   name: string;
   font: string;
   layout: TemplateLayout;
   theme: TemplateTheme;
+  /** The plan required to start a new site from this template. */
+  tier: TemplateTier;
   /** Short label shown in the template gallery. */
   category: string;
   /** Demo brand mark rendered in the gallery card. */
@@ -273,6 +278,7 @@ const editorialStudio = defineTemplate({
   name: "Editorial Studio",
   font: "Manrope",
   layout: "editorial",
+  tier: "pro",
   category: "Creative",
   brand: "KŌWHAI",
   title: ["Local craft,", "thoughtfully", "made."],
@@ -291,6 +297,7 @@ const warmMinimal = defineTemplate({
   name: "Warm Minimal",
   font: "Fraunces",
   layout: "warm",
+  tier: "pro",
   category: "Retail",
   brand: "AROHA",
   title: ["Fresh daily,", "warmly", "served."],
@@ -309,6 +316,7 @@ const cleanGrid = defineTemplate({
   name: "Clean Grid",
   font: "Space Grotesk",
   layout: "grid",
+  tier: "free",
   category: "Services",
   brand: "TASMAN",
   title: ["Local plumbing,", "done right,", "first time."],

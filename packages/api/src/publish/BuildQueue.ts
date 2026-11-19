@@ -4,7 +4,7 @@ import * as Schema from "effect/Schema";
 /**
  * The queue that decouples publishing from the static build. The api worker
  * enqueues a {@link BuildJob} on publish; the `build` worker (a queue
- * consumer) runs the Astro build in a sandbox and records the result.
+ * consumer) renders the site's static output and records the result.
  */
 export const BuildQueue = Cloudflare.Queues.Queue("BuildQueue");
 

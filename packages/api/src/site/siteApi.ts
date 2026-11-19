@@ -5,6 +5,9 @@ import { MembersGroup } from "../members/members.ts";
 import { AdminGroup } from "../admin/admin.ts";
 import { MeGroup } from "../access/me.ts";
 import { SiteAccess } from "../access/access.ts";
+import { BillingGroup } from "../billing/billingApi.ts";
+import { UpgradeRequired } from "../billing/billing.ts";
+import { TooManyRequests } from "../platform/rateLimit.ts";
 import {
   CreateSite,
   CloudflareSaasError,
@@ -36,7 +39,7 @@ const listSites = HttpApi.HttpApiEndpoint.get("list", "/", {
 const createSite = HttpApi.HttpApiEndpoint.post("create", "/", {
   payload: CreateSite,
   success: Site,
-  error: SubdomainInUse,
+  error: Schema.Union([SubdomainInUse, UpgradeRequired, TooManyRequests]),
 });
 
 const getSite = HttpApi.HttpApiEndpoint.get("get", "/:id", {
@@ -61,7 +64,7 @@ const updateSite = HttpApi.HttpApiEndpoint.put("update", "/:id", {
   params: SiteParams,
   payload: Site,
   success: Site,
-  error: Schema.Union([SiteNotFound, Forbidden, SubdomainInUse]),
+  error: Schema.Union([SiteNotFound, Forbidden, SubdomainInUse, UpgradeRequired]),
 });
 
 const deleteSite = HttpApi.HttpApiEndpoint.delete("remove", "/:id", {
@@ -73,7 +76,7 @@ const deleteSite = HttpApi.HttpApiEndpoint.delete("remove", "/:id", {
 const publishSite = HttpApi.HttpApiEndpoint.post("publish", "/:id/publish", {
   params: SiteParams,
   success: PublishResult,
-  error: Schema.Union([SiteNotFound, PublishError, Forbidden]),
+  error: Schema.Union([SiteNotFound, PublishError, Forbidden, TooManyRequests]),
 });
 
 const DomainInput = Schema.Struct({
@@ -126,4 +129,5 @@ export class SiteApi extends HttpApi.HttpApi.make("SiteApi")
   .add(LeadsPublicGroup)
   .add(MembersGroup)
   .add(AdminGroup)
-  .add(MeGroup) {}
+  .add(MeGroup)
+  .add(BillingGroup) {}

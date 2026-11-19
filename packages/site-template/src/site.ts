@@ -54,12 +54,12 @@ export interface Settings {
   accent: string;
   font: string;
   showDirectory: boolean;
-  bg?: string;
-  ink?: string;
-  surface?: string;
-  border?: string;
-  muted?: string;
-  analytics?: Analytics;
+  bg?: string | undefined;
+  ink?: string | undefined;
+  surface?: string | undefined;
+  border?: string | undefined;
+  muted?: string | undefined;
+  analytics?: Analytics | undefined;
 }
 
 export type SiteStatus = "draft" | "published";
@@ -76,9 +76,9 @@ export interface Site {
   pages: ReadonlyArray<Page>;
   createdAt: string;
   updatedAt: string;
-  publishedAt?: string;
-  customDomain?: string;
-  buildStatus?: BuildStatus;
-  lastBuiltAt?: string;
-  buildError?: string;
+  publishedAt?: string | undefined;
+  customDomain?: string | undefined;
+  buildStatus?: BuildStatus | undefined;
+  lastBuiltAt?: string | undefined;
+  buildError?: string | undefined;
 }

@@ -2,7 +2,8 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import { LeadRepository } from "./LeadRepository.ts";
 import { LeadNotifier } from "./LeadNotifier.ts";
-import { LeadInput, TooManyRequests } from "./leads.ts";
+import { TooManyRequests } from "../platform/rateLimit.ts";
+import { LeadInput } from "./leads.ts";
 
 /**
  * Rate-limit boundary for public lead submissions. The Cloudflare impl lives

@@ -454,7 +454,14 @@ export const appMachine = setup({
                   actions: assign({
                     publishing: false,
                     banner: ({ event }) =>
-                      _bannerFor("error", `Publish failed: ${readableErrorMessage(event.error)}`),
+                      _bannerFor(
+                        "error",
+                        event.error instanceof Error &&
+                          "_tag" in event.error &&
+                          event.error._tag === "UpgradeRequired"
+                          ? "Upgrade to Pro to unlock this."
+                          : `Publish failed: ${readableErrorMessage(event.error)}`,
+                      ),
                   }),
                 },
               },

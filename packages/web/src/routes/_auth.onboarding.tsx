@@ -5,8 +5,9 @@ import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Check, GlobeHemisphereWest } from "@phosphor-icons/react";
 
-import { siteQueries, templateQueries, useCreateSite } from "../lib/apiQueries.ts";
-import type { Business, Template } from "../siteTypes.ts";
+import { siteQueries, billingQueries, templateQueries, useCreateSite } from "../lib/apiQueries.ts";
+import { WWW_HOST } from "../lib/siteApi.ts";
+import type { Business, Plan, Template } from "../siteTypes.ts";
 
 export const Route = createFileRoute("/_auth/onboarding")({ component: Onboarding });
 
@@ -67,6 +68,8 @@ function Onboarding() {
   const [snapshot, send] = useMachine(onboardingMachine);
   const { data: sites = [] } = useQuery(siteQueries.list());
   const { data: templates = [] } = useQuery(templateQueries.list());
+  const { data: billing } = useQuery(billingQueries.status());
+  const plan = billing?.plan ?? "free";
   const createSite = useCreateSite();
   const { step, profile } = snapshot.context;
 
@@ -111,6 +114,7 @@ function Onboarding() {
         {step === 3 && (
           <TemplateStep
             templates={templates}
+            plan={plan}
             selected={profile.templateId}
             onSelect={(template) => send({ type: "UPDATE", changes: { templateId: template.id } })}
           />
@@ -244,10 +248,12 @@ function CategoryStep({
 
 function TemplateStep({
   templates,
+  plan,
   selected,
   onSelect,
 }: {
   templates: readonly Template[];
+  plan: Plan;
   selected: string;
   onSelect: (template: Template) => void;
 }) {
@@ -258,25 +264,33 @@ function TemplateStep({
       description="Pick the visual direction that feels closest. Everything can be changed later."
       body={
         <div data-slot="onboarding-templates">
-          {templates.map((template) => (
-            <button
-              key={template.id}
-              data-slot="template-choice"
-              data-selected={selected === template.id}
-              onClick={() => onSelect(template)}
-            >
-              <div data-slot="template-art" data-template={template.id}>
-                <b>{template.brand}</b>
-                <strong>{template.title.join(" ")}</strong>
-                <i />
-              </div>
-              <span>
-                <strong>{template.name}</strong>
-                <small>{template.category}</small>
-              </span>
-              {selected === template.id && <Check data-slot="selected-icon" />}
-            </button>
-          ))}
+          {templates.map((template) => {
+            const locked = plan === "free" && template.tier === "pro";
+            return (
+              <button
+                key={template.id}
+                data-slot="template-choice"
+                data-selected={selected === template.id}
+                data-locked={locked}
+                disabled={locked}
+                onClick={() => onSelect(template)}
+              >
+                <div data-slot="template-art" data-template={template.id}>
+                  {template.tier === "pro" && <span data-slot="pro-badge">PRO</span>}
+                  <b>{template.brand}</b>
+                  <strong>{template.title.join(" ")}</strong>
+                  <i />
+                </div>
+                <span>
+                  <strong>{template.name}</strong>
+                  <small>
+                    {locked ? `${template.category} · Upgrade to Pro` : template.category}
+                  </small>
+                </span>
+                {selected === template.id && <Check data-slot="selected-icon" />}
+              </button>
+            );
+          })}
         </div>
       }
     />
@@ -324,7 +338,7 @@ function ContactStep({
             <span>Starting with</span>
             <strong>{template?.name ?? "Your chosen template"}</strong>
             <small>
-              {profile.business.category} · {profile.subdomain}.sitestudio.site
+              {profile.business.category} · {profile.subdomain}.{WWW_HOST}
             </small>
           </div>
         </>

@@ -177,6 +177,9 @@ export const TemplateTheme = Schema.Struct({
   muted: Schema.String,
 });
 
+/** The plan that unlocks a template: the starter is free, the rest are Pro. */
+export const TemplateTier = Schema.Literals(["free", "pro"]);
+
 /**
  * A site template as served to the editor: the metadata the gallery shows and
  * the theme the editor derives its colour defaults from. Sourced from the
@@ -186,6 +189,7 @@ export const TemplateInfo = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
   font: Schema.String,
+  tier: TemplateTier,
   category: Schema.String,
   brand: Schema.String,
   title: Schema.Array(Schema.String),

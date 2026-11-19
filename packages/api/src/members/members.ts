@@ -1,5 +1,6 @@
 import * as HttpApi from "effect/unstable/httpapi";
 import * as Schema from "effect/Schema";
+import { EmailError } from "../email/email.ts";
 import { Forbidden, SiteId, SiteNotFound } from "../site/site.ts";
 
 export const Member = Schema.Struct({
@@ -49,7 +50,7 @@ const inviteMember = HttpApi.HttpApiEndpoint.post("invite", "/:id/members", {
   params: SiteParams,
   payload: MemberInput,
   success: Member,
-  error: Schema.Union([SiteNotFound, Forbidden]),
+  error: Schema.Union([SiteNotFound, Forbidden, EmailError]),
 });
 
 const updateMember = HttpApi.HttpApiEndpoint.put("update", "/:id/members/:email", {

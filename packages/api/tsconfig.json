@@ -5,6 +5,7 @@
     "module": "preserve",
     "moduleResolution": "bundler",
     "moduleDetection": "force",
+    "jsx": "react-jsx",
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "lib": ["ES2022"],

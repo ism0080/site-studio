@@ -3,6 +3,7 @@ import {
   normalizeDomain,
   resolveRequestKey,
   resolveSiteObjectKey,
+  subdomainLabel,
 } from "../src/site/objectKeys.ts";
 
 let failed = 0;
@@ -44,6 +45,12 @@ _check(
   resolveRequestKey("/site_b/contact", null),
   "sites/site_b/contact/index.html",
 );
+
+// Reserved subdomain host (<subdomain>.<www domain>)
+_check("subdomain label", subdomainLabel("bobs.site-studio.dev", "site-studio.dev"), "bobs");
+_check("zone root has no label", subdomainLabel("site-studio.dev", "site-studio.dev"), null);
+_check("nested labels rejected", subdomainLabel("a.b.site-studio.dev", "site-studio.dev"), null);
+_check("empty zone rejected", subdomainLabel("bobs.site-studio.dev", ""), null);
 
 // Domain normalization
 _check("lowercase", normalizeDomain("Aurora.co"), "aurora.co");

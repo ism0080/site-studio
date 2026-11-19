@@ -7,6 +7,7 @@ import {
   Site,
   SiteId,
   type Agency,
+  type BillingStatus,
   type DomainSetup,
   type Lead,
   type Member,
@@ -17,6 +18,8 @@ import { TEMPLATES } from "@site-studio/site-template/templates";
 import { mockMe, mockUser, seedAgencies, seedLeads, seedMembers, seedSites } from "./mockData.ts";
 
 const DomainInput = Schema.Struct({ domain: Schema.String });
+const CheckoutInput = Schema.Struct({ successUrl: Schema.String });
+const PortalInput = Schema.Struct({ returnUrl: Schema.String });
 
 // Mutable working copies of the seed data, so create/update/publish/delete
 // flows behave like the real backend across the dev session.
@@ -24,6 +27,10 @@ const sites: Site[] = [...seedSites];
 const leads: Lead[] = [...seedLeads];
 const members: Member[] = [...seedMembers];
 const agencies: Agency[] = [...seedAgencies];
+const billing: BillingStatus = {
+  plan: "free",
+  billingConfigured: true,
+};
 
 const _now = () => new Date().toISOString();
 
@@ -55,10 +62,11 @@ export const mockApiHandlers: HttpHandler[] = [
   // --- Sites ----------------------------------------------------------------
   http.get("/api/sites/templates", () =>
     HttpResponse.json(
-      [...TEMPLATES.values()].map(({ id, name, font, category, brand, title, theme }) => ({
+      [...TEMPLATES.values()].map(({ id, name, font, tier, category, brand, title, theme }) => ({
         id,
         name,
         font,
+        tier,
         category,
         brand,
         title,
@@ -199,6 +207,17 @@ export const mockApiHandlers: HttpHandler[] = [
     );
     if (index !== -1) members.splice(index, 1);
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  // --- Billing --------------------------------------------------------------
+  http.get("/api/billing/status", () => HttpResponse.json(billing)),
+  http.post("/api/billing/checkout", async ({ request }) => {
+    const { successUrl } = Schema.decodeUnknownSync(CheckoutInput)(await request.json());
+    return HttpResponse.json({ url: successUrl });
+  }),
+  http.post("/api/billing/portal", async ({ request }) => {
+    const { returnUrl } = Schema.decodeUnknownSync(PortalInput)(await request.json());
+    return HttpResponse.json({ url: returnUrl });
   }),
 
   // --- Admin ----------------------------------------------------------------

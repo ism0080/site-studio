@@ -1,0 +1,44 @@
+[data-component="billing"] {
+  width: min(560px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: var(--space-13) var(--space-0) var(--space-20);
+
+  .eyebrow {
+    color: var(--color-accent);
+  }
+
+  h1 {
+    margin: var(--space-3) 0 var(--space-8);
+    font-size: clamp(32px, 6vw, 48px);
+    line-height: 1.05;
+    letter-spacing: -1.5px;
+  }
+
+  [data-slot="plan"] h2 {
+    margin: 0 0 var(--space-2);
+    font-size: var(--font-size-2xl);
+  }
+
+  [data-slot="plan"] p {
+    margin: 0 0 var(--space-3);
+    color: var(--color-text-muted);
+    line-height: 1.6;
+  }
+
+  [data-slot="note"] {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  [data-slot="actions"] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-8);
+  }
+
+  [data-slot="form-error"] {
+    color: var(--color-danger-strong);
+    font-size: 12px;
+  }
+}

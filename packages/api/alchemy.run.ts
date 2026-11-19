@@ -32,6 +32,20 @@ export default Alchemy.Stack(
         zoneId: saasZoneId,
         origin: wwwDomain,
       });
+      // Reserved site subdomains (`<subdomain>.<wwwDomain>`) resolve to the www
+      // worker through a proxied wildcard CNAME plus a zone-level route.
+      yield* Cloudflare.DNS.Record("SitesWildcardDns", {
+        zoneId: saasZoneId,
+        name: `*.${wwwDomain}`,
+        type: "CNAME",
+        content: wwwDomain,
+        proxied: true,
+      });
+      yield* Cloudflare.Workers.WorkerRoute("SitesWildcardRoute", {
+        zoneId: saasZoneId,
+        pattern: `*.${wwwDomain}/*`,
+        script: www.workerName,
+      });
     }
     const web = yield* Command.Dev("Web", {
       command: "node node_modules/vite/bin/vite.js",

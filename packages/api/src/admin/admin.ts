@@ -1,5 +1,6 @@
 import * as HttpApi from "effect/unstable/httpapi";
 import * as Schema from "effect/Schema";
+import { EmailError } from "../email/email.ts";
 import { Forbidden } from "../site/site.ts";
 
 export const Agency = Schema.Struct({
@@ -28,7 +29,7 @@ const listAgencies = HttpApi.HttpApiEndpoint.get("listAgencies", "/", {
 const inviteAgency = HttpApi.HttpApiEndpoint.post("inviteAgency", "/", {
   payload: AgencyInvite,
   success: Agency,
-  error: Forbidden,
+  error: Schema.Union([Forbidden, EmailError]),
 });
 
 const removeAgency = HttpApi.HttpApiEndpoint.delete("removeAgency", "/:email", {

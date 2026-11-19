@@ -22,5 +22,6 @@ skills-lock.json
 *.log
 .DS_Store
 
-docs/
+docs/*
+!docs/DEPLOY.md
 brand.md

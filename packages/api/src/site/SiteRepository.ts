@@ -43,6 +43,8 @@ export interface SiteRepositoryService {
   readonly list: (
     requester: Requester,
   ) => Effect.Effect<ReadonlyArray<Site>, never, RuntimeContext>;
+  /** How many sites the account owns (the free plan allows one). */
+  readonly countForOwner: (ownerId: string) => Effect.Effect<number, never, RuntimeContext>;
   readonly get: (
     id: string,
     requester: Requester,
@@ -168,6 +170,13 @@ export const makeSiteRepository = (
           Effect.map((result) => result.results.map((row) => row.document)),
           Effect.flatMap((documents) => Effect.all(documents.map(_parseSiteDocument))),
         );
+    }),
+    countForOwner: Effect.fn("SiteRepository.countForOwner")(function* (ownerId: string) {
+      const row = yield* db
+        .prepare("SELECT COUNT(*) AS count FROM sites WHERE owner_id = ?")
+        .bind(ownerId)
+        .first<{ count: number }>();
+      return row?.count ?? 0;
     }),
     get: Effect.fn("SiteRepository.get")(function* (id: string, requester: Requester) {
       const row = yield* db

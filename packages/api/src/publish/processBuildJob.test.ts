@@ -72,7 +72,7 @@ describe("processBuildJob", () => {
     const { repo, site } = await _seed(db);
 
     const build: BuildRunner["Service"] = {
-      publish: (s) => Effect.succeed({ buildId: `build-${s.id}`, exitCode: 0, output: "rendered" }),
+      publish: (s) => Effect.succeed({ keys: [`sites/${s.id}/index.html`] }),
     };
 
     await run(
@@ -93,7 +93,7 @@ describe("processBuildJob", () => {
     const { repo, site } = await _seed(db);
 
     const build: BuildRunner["Service"] = {
-      publish: () => Effect.fail(new BuildError({ message: "astro build failed" })),
+      publish: () => Effect.fail(new BuildError({ message: "render failed" })),
     };
 
     const failure = await run(
@@ -108,6 +108,6 @@ describe("processBuildJob", () => {
     expect(failure._tag).toBe("BuildError");
     const stored = await run(repo.get(site.id, owner));
     expect(stored.buildStatus).toBe("failed");
-    expect(stored.buildError).toContain("astro build failed");
+    expect(stored.buildError).toContain("render failed");
   });
 });
